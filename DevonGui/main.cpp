@@ -822,7 +822,7 @@ int main(int, char**)
 			{
 				ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
 				ImGui::Begin("Symbol List", &Show_SymbolList_Window);
-				ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetItemsLineHeightWithSpacing()));
+				ImGui::BeginChild("##scrolling", ImVec2(0, -ImGui::GetFrameHeightWithSpacing()));
 				std::map<std::string, int>::iterator SymbolsIt;
 
 				ImGui::Columns(3);

@@ -6,7 +6,7 @@
 #include <pegtl.hpp>
 #include "DASM.h"
 
-namespace pegtl = tao::TAOCPP_PEGTL_NAMESPACE;
+namespace pegtl = TAO_PEGTL_NAMESPACE;
 using namespace pegtl;
 using namespace Devon;
 
@@ -516,7 +516,7 @@ namespace DevonASM
 					return;
 				}
 			}
-			catch (pegtl::input_error & err)
+			catch (std::system_error & err)
 			{
 				std::cout << err.what() << "\n";
 				ASM.ErrorMessage(ErrorIncludeFileFailed);
