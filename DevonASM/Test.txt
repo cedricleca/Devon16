@@ -1,0 +1,32 @@
+define bbb 123
+entry $0xff
+
+org $0x20000
+bra.P #!label01
+
+long 0xfAd1c129
+word 0xddee, 123, %1100, 'X'
+byte 'x', 123, "abcX", 0xFa
+
+STR #%1111111
+mov #!-3, R4
+neg r0;sdj;fh()
+label01:	not r9
+mov.l -(r1), R2
+mov R6, (r7)
+mov #bbb, R3
+mov #'\n', R3
+mov #label02, R3
+bra.N #label01
+mov #+63, R3
+jmp.PZ #label01
+
+org $0x21000
+bsr #label01
+mov #0xF3aa, R4
+mov #%1001110000, R5
+nop
+label02: neg.L (r5)+;nn
+label_03:
+MOV $0x3fff, R3
+MOV $0x3fff, R8
