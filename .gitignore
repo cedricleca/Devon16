@@ -50,4 +50,4 @@ x64/Debug/*
 *.ini
 *.ini
 DevonGui/imgui.ini
-DevonGui/imgui.ini
+DevonGui/DevonGui.ini
