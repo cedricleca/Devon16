@@ -63,51 +63,51 @@ public:
 		mOldBuffer(inOriginal.rdbuf(inRedirect.rdbuf()))
 	{ }
 
-    ~ScopedRedirect()
-    {
-        mOriginal.rdbuf(mOldBuffer);
-    }    
+	~ScopedRedirect()
+	{
+		mOriginal.rdbuf(mOldBuffer);
+	}    
 
 private:
-    ScopedRedirect(const ScopedRedirect&);
-    ScopedRedirect& operator=(const ScopedRedirect&);
+	ScopedRedirect(const ScopedRedirect&);
+	ScopedRedirect& operator=(const ScopedRedirect&);
 
-    std::ostream & mOriginal;
-    std::streambuf * mOldBuffer;
+	std::ostream & mOriginal;
+	std::streambuf * mOldBuffer;
 };
 
 extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-        return true;
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
+		return true;
 
-    switch (msg)
-    {
-    case WM_SIZE:
-        if (g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED)
-        {
-            ImGui_ImplDX11_InvalidateDeviceObjects();
-            DXTools::CleanupRenderTarget();
-            g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
-            DXTools::CreateRenderTarget();
-            ImGui_ImplDX11_CreateDeviceObjects();
-        }
-        return 0;
-    case WM_SYSCOMMAND:
-        if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
-            return 0;
-        break;
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        return 0;
-    }
-    return DefWindowProc(hWnd, msg, wParam, lParam);
+	switch (msg)
+	{
+	case WM_SIZE:
+		if (g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED)
+		{
+			ImGui_ImplDX11_InvalidateDeviceObjects();
+			DXTools::CleanupRenderTarget();
+			g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
+			DXTools::CreateRenderTarget();
+			ImGui_ImplDX11_CreateDeviceObjects();
+		}
+		return 0;
+	case WM_SYSCOMMAND:
+		if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
+			return 0;
+		break;
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	}
+	return DefWindowProc(hWnd, msg, wParam, lParam);
 }
 
 static void SaveIniSettingsToDisk()
 {
-    // Write .ini file
+	// Write .ini file
 	FILE * f;
 	fopen_s(&f, IniName, "wt");
 	if(f)
@@ -153,11 +153,11 @@ static void LoadIniSettingsFromDisk()
 			int IntValue;
 			float FloatValue;
 			if (sscanf_s(line_start, "dcafile=%s", Value, (unsigned)_countof(Value)) == 1)
-                CartridgeFileName = Value;
-            else if (sscanf_s(line_start, "dasfile=%s", Value, (unsigned)_countof(Value)) == 1)
-                DASFileName = Value;
-            else if (sscanf_s(line_start, "romfile=%s", Value, (unsigned)_countof(Value)) == 1)
-                ROMFileName = Value;
+				CartridgeFileName = Value;
+			else if (sscanf_s(line_start, "dasfile=%s", Value, (unsigned)_countof(Value)) == 1)
+				DASFileName = Value;
+			else if (sscanf_s(line_start, "romfile=%s", Value, (unsigned)_countof(Value)) == 1)
+				ROMFileName = Value;
 			else if (sscanf_s(line_start, "Palette=%d", &IntValue) == 1)
 				TEditorPalette = IntValue;
 			else if (sscanf_s(line_start, "ShowWhitespaces=%d", &IntValue) == 1)
@@ -509,61 +509,55 @@ void WorkThreadFunc(LogWindow* _LogWindow)
 
 int main(int, char**)
 {
-    // Create application window
-    WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, LoadCursor(nullptr, IDC_ARROW), nullptr, nullptr, _T("Devon16"), nullptr };
-    RegisterClassEx(&wc);
-    HWND hwnd = CreateWindow(_T("Devon16"), _T("Devon 16 (press F11 to switch control UI)"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
+	// Create application window
+	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, LoadCursor(nullptr, IDC_ARROW), nullptr, nullptr, _T("Devon16"), nullptr };
+	RegisterClassEx(&wc);
+	HWND hwnd = CreateWindow(_T("Devon16"), _T("Devon 16 (press F11 to switch control UI)"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
 
 	TextEditor Teditor;
 	auto lang = TextEditor::LanguageDefinition::DevonASM();
 	Teditor.SetLanguageDefinition(lang);
 
 	// Initialize Direct3D
-    if(!DXTools::CreateDeviceD3D(hwnd))
-    {
-        DXTools::CleanupDeviceD3D();
-        UnregisterClass(_T("Devon16"), wc.hInstance);
-        return 1;
-    }
+	if(!DXTools::CreateDeviceD3D(hwnd))
+	{
+		DXTools::CleanupDeviceD3D();
+		UnregisterClass(_T("Devon16"), wc.hInstance);
+		return 1;
+	}
 
 	DSoundTools::Init(hwnd, Machine);
 
 	// Show the window
-    ShowWindow(hwnd, SW_SHOWDEFAULT);
-    UpdateWindow(hwnd);
+	ShowWindow(hwnd, SW_SHOWDEFAULT);
+	UpdateWindow(hwnd);
 
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
 	// Setup ImGui binding
-    ImGui_ImplWin32_Init(hwnd);
-    ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
+	ImGui_ImplWin32_Init(hwnd);
+	ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
 
-    ImGui::PushStyleColor(ImGuiCol_TitleBg,				ImColor(0xFF015AE3).Value);
-    ImGui::PushStyleColor(ImGuiCol_TitleBgActive,		ImColor(0xFF015AE3 + 0x00111111).Value);
-    ImGui::PushStyleColor(ImGuiCol_TitleBgCollapsed,	ImColor(0xFF015AE3 - 0x00001111).Value);
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered,		ImColor(0xFF717C4C).Value);
-    ImGui::PushStyleColor(ImGuiCol_Button,				ImColor(0xFF717C4C - 0x00001111).Value);
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive,		ImColor(0xFF717C4C + 0x00222211).Value);
-    ImGui::PushStyleColor(ImGuiCol_WindowBg,			ImColor(0xEE2E261F).Value);
-    ImGui::PushStyleColor(ImGuiCol_ScrollbarBg,			ImColor(0xEE2E261F / 2).Value);
+	ImGui::PushStyleColor(ImGuiCol_TitleBg,				ImColor(0xFF015AE3).Value);
+	ImGui::PushStyleColor(ImGuiCol_TitleBgActive,		ImColor(0xFF015AE3 + 0x00111111).Value);
+	ImGui::PushStyleColor(ImGuiCol_TitleBgCollapsed,	ImColor(0xFF015AE3 - 0x00001111).Value);
+	ImGui::PushStyleColor(ImGuiCol_ButtonHovered,		ImColor(0xFF717C4C).Value);
+	ImGui::PushStyleColor(ImGuiCol_Button,				ImColor(0xFF717C4C - 0x00001111).Value);
+	ImGui::PushStyleColor(ImGuiCol_ButtonActive,		ImColor(0xFF717C4C + 0x00222211).Value);
+	ImGui::PushStyleColor(ImGuiCol_WindowBg,			ImColor(0xEE2E261F).Value);
+	ImGui::PushStyleColor(ImGuiCol_ScrollbarBg,			ImColor(0xEE2E261F / 2).Value);
 
 	// Load Fonts
-    // (there is a default font, this is only if you want to change it. see extra_fonts/README.txt for more details)
-    //ImGuiIO& io = ImGui::GetIO();
-    //io.Fonts->AddFontDefault();
-    //ImFont* pFont = io.Fonts->AddFontFromFileTTF("../../extra_fonts/Cousine-Regular.ttf", 15.0f);
-    //io.Fonts->AddFontFromFileTTF("../../extra_fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyClean.ttf", 13.0f);
-    //io.Fonts->AddFontFromFileTTF("../../extra_fonts/ProggyTiny.ttf", 10.0f);
-    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
+	//ImFont * HackFont = io.Fonts->AddFontFromFileTTF("HackRegular.TTF", 17.0f);
+	ImFont * HackFont = io.Fonts->AddFontFromFileTTF("CONSOLA.TTF", 16.0f);
 
 	bool Show_UI = false;
 	bool Show_Disassembly_Window = true;
-    bool Show_Memory_Window = false;
-    bool Show_SymbolList_Window = false;
+	bool Show_Memory_Window = false;
+	bool Show_SymbolList_Window = false;
 	bool Show_TextEditor_Window = true;
 	MemoryEditor MemWindow;
 	MemWindow.OptMidRowsCount = 0;
@@ -600,21 +594,21 @@ int main(int, char**)
 
 	std::thread WorkThread(WorkThreadFunc, &LogWindow);	
 
-    // Main loop
-    MSG msg;
-    ZeroMemory(&msg, sizeof(msg));
-    while (msg.message != WM_QUIT)
-    {
-        if (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-            continue;
-        }
-        
+	// Main loop
+	MSG msg;
+	ZeroMemory(&msg, sizeof(msg));
+	while (msg.message != WM_QUIT)
+	{
+		if (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+			continue;
+		}
+		
 		ImGui_ImplDX11_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
+		ImGui_ImplWin32_NewFrame();
+		ImGui::NewFrame();
 
 		if (Show_UI)
 		{
@@ -762,8 +756,8 @@ int main(int, char**)
 				ImGui::EndMainMenuBar();
 			}
 
-			//		bool bShowTestWindow = true;
-			//		ImGui::ShowTestWindow(&bShowTestWindow);
+//					bool bShowTestWindow = true;
+//					ImGui::ShowTestWindow(&bShowTestWindow);
 
 					//        ImGui::SetNextWindowSize(ImVec2(600,400));
 			ImGui::Begin("Devon");
@@ -900,23 +894,23 @@ int main(int, char**)
 		DSoundTools::Render(Machine, Volume);
 		DXTools::Render((float*)&clear_col, ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y);
 		
-        ImGui::Render();
-        ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		ImGui::Render();
+		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
-        g_pSwapChain->Present(1, 0); // Present with vsync
-    }
+		g_pSwapChain->Present(1, 0); // Present with vsync
+	}
 
 	WorkThreadQuit = true;
 	WorkThread.join();
 
 	DSoundTools::Release();
 
-    ImGui_ImplDX11_Shutdown();
-    ImGui_ImplWin32_Shutdown();
-    ImGui::DestroyContext();
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
 
 	DXTools::CleanupDeviceD3D();
-    UnregisterClass(_T("Devon16"), wc.hInstance);
+	UnregisterClass(_T("Devon16"), wc.hInstance);
 
-    return 0;
+	return 0;
 }
