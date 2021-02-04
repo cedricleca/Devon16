@@ -85,44 +85,47 @@ struct DisassemblyWindow
 				ImGui::SetScrollY(Jump * ImGui::GetTextLineHeight());
 
 			ImGuiListClipper clipper(0xA0000, ImGui::GetTextLineHeight());
-			unsigned int CurAdr = clipper.DisplayStart;
-			for(int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+			while (clipper.Step())
 			{
-				if(CurAdr == CPU.R[Devon::CPU::PC].u)
+				unsigned int CurAdr = clipper.DisplayStart;
+				for(int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
 				{
-					ImVec2 pos = ImGui::GetCursorScreenPos();
-					draw_list->AddRectFilled(pos, ImVec2(pos.x + ImGui::GetWindowWidth(), pos.y + ImGui::GetFontSize() + 1), IM_COL32(200, 70, 0, 140));
+					if(CurAdr == CPU.R[Devon::CPU::PC].u)
+					{
+						ImVec2 pos = ImGui::GetCursorScreenPos();
+						draw_list->AddRectFilled(pos, ImVec2(pos.x + ImGui::GetWindowWidth(), pos.y + ImGui::GetFontSize() + 1), IM_COL32(200, 20, 0, 140));
+					}
+
+					std::string Line;
+					int InstSize = DisassembleInstruction(Line, CurAdr, (DevonMMU &)MMU);
+					ImGui::Text("%05X    %s", CurAdr, Line.c_str());
+
+					ImGui::SameLine(320.0f);
+					uWORD InstData;
+					((DevonMMU &)MMU).ReadWord(InstData, CurAdr, true);
+					ImGui::TextDisabled("%04X", InstData);
+
+					if(InstSize > 1)
+					{
+						ImGui::SameLine();
+						((DevonMMU &)MMU).ReadWord(InstData, CurAdr+1, true);
+						ImGui::TextDisabled("%04X ", InstData);
+					}
+
+					CurAdr += InstSize;
 				}
 
-				std::string Line;
-				int InstSize = DisassembleInstruction(Line, CurAdr, (DevonMMU &)MMU);
-				ImGui::Text("%05X:    %s", CurAdr, Line.c_str());
-
-				ImGui::SameLine(250.0f);
-				uWORD InstData;
-				((DevonMMU &)MMU).ReadWord(InstData, CurAdr, true);
-				ImGui::TextDisabled("%04X", InstData);
-
-				if(InstSize > 1)
+				NextJump = -1;
+				if(OldPC != CPU.R[Devon::CPU::PC].u)
 				{
-					ImGui::SameLine();
-					((DevonMMU &)MMU).ReadWord(InstData, CurAdr+1);
-					ImGui::TextDisabled("%04X ", InstData);
+					if(CPU.R[Devon::CPU::PC].u > CurAdr - 4 || CPU.R[Devon::CPU::PC].u < (unsigned)clipper.DisplayStart)
+					{
+						NextJump = CPU.R[Devon::CPU::PC].u - 3;
+					}
 				}
-
-				CurAdr += InstSize;
+				OldPC = CPU.R[Devon::CPU::PC].u;
 			}
-			clipper.End();
 
-			NextJump = -1;
-			if(OldPC != CPU.R[Devon::CPU::PC].u)
-			{
-				if(CPU.R[Devon::CPU::PC].u > CurAdr - 4 || CPU.R[Devon::CPU::PC].u < (unsigned)clipper.DisplayStart)
-				{
-					NextJump = CPU.R[Devon::CPU::PC].u - 3;
-				}
-			}
-			OldPC = CPU.R[Devon::CPU::PC].u;
 		
 			ImGui::EndChild();
 		}
@@ -196,7 +199,7 @@ struct DisassemblyWindow
 		case Devon::CPU::EOpcode::CMP:		out = "cmp";		break;
 		case Devon::CPU::EOpcode::MOV:		out = "mov";		break;
 		case Devon::CPU::EOpcode::XOR:		out = "xor";		break;
-		case Devon::CPU::EOpcode::OR:		out = "or ";		break;
+		case Devon::CPU::EOpcode::OR:		out = "or";			break;
 		case Devon::CPU::EOpcode::AND:		out = "and";		break;
 		case Devon::CPU::EOpcode::MOVB:		out = "movb";		break;
 		case Devon::CPU::EOpcode::SWP:		out = "swp";		break;
@@ -378,7 +381,7 @@ struct DisassemblyWindow
 			)
 		{
 			uWORD Extra = 0;
-			MMU.ReadWord(Extra, addr+1);
+			MMU.ReadWord(Extra, addr+1, true);
 			LongOP = (Inst.Op<<16) | Extra;
 		}
 		else if(Inst.AdMode == Devon::CPU::EAdMode::Imm8)
