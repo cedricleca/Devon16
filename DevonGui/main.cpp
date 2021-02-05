@@ -551,8 +551,8 @@ int main(int, char**)
 	ImGui::PushStyleColor(ImGuiCol_ScrollbarBg,			ImColor(0xEE2E261F / 2).Value);
 
 	// Load Fonts
-	//ImFont * HackFont = io.Fonts->AddFontFromFileTTF("HackRegular.TTF", 17.0f);
-	ImFont * HackFont = io.Fonts->AddFontFromFileTTF("CONSOLA.TTF", 16.0f);
+	ImFont * HackFont = io.Fonts->AddFontFromFileTTF("HackRegular.TTF", 16.0f);
+	//ImFont * HackFont = io.Fonts->AddFontFromFileTTF("CONSOLA.TTF", 16.0f);
 
 	bool Show_UI = false;
 	bool Show_Disassembly_Window = true;

@@ -213,6 +213,7 @@ struct MemoryEditor
         const ImU32 color_text = ImGui::GetColorU32(ImGuiCol_Text);
         const ImU32 color_disabled = OptGreyOutZeroes ? ImGui::GetColorU32(ImGuiCol_TextDisabled) : color_text;
 
+		while(clipper.Step())
         for (int line_i = clipper.DisplayStart; line_i < clipper.DisplayEnd; line_i++) // display only visible lines
         {
             size_t addr = (size_t)(line_i * Rows);

@@ -85,7 +85,7 @@ struct DisassemblyWindow
 				ImGui::SetScrollY(Jump * ImGui::GetTextLineHeight());
 
 			ImGuiListClipper clipper(0xA0000, ImGui::GetTextLineHeight());
-			while (clipper.Step())
+			while(clipper.Step())
 			{
 				unsigned int CurAdr = clipper.DisplayStart;
 				for(int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)

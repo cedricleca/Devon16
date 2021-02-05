@@ -20,29 +20,6 @@ org $0x20000
 	mov		#!1, r1
 	mov.w	r1, $RAM_SendKeyToWriter
 
-
-;              mov                       #CLUTData, r2
-;              mov                       #Cort_Clut00, r3
-;              mov                       #8, r4
-;              mov                       #!0, r0   ; Memcpy
-;              trap       #!0
-
-;              mov                       #BPLData, r2
-;              mov                       #0x40000, r3
-;              mov                       #6000, r4
-;              mov                       #!1, r0   ; Memcpy_L
-;              trap       #!0
-
-;              mov                       #FontInRAM, r2
-;              mov                       #0x40000, r3
-;              mov                       #423, r4
-;loop:
-;              mov.w  (r2)+, r0
-;              mov.w  r0, (r3)
-;              add                        #20, r3
-;              sub                        #!1, r4
-;              bra.p     #!loop
-
 	mov		#!0, r1
 CharLoop:
 	mov		r1, r0
@@ -509,5 +486,6 @@ CLUTData:
 	include "TestPCXPal.das"
 BPLData:
 	incbin "TestPCX.bin"
+
 
 
