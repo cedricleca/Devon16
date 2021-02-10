@@ -80,8 +80,6 @@ class CorticoChip
 
 	uLONG CycleCount;
 	unsigned char * OutputSurface;
-	int	OutputSurfaceWidth;
-	int	OutputSurfaceHeight;
 
 public:
 	CorticoChip(BaseMMU & InMMU, Devon::CPU & InCPU) : OutputSurface(nullptr), MMU(InMMU), CPU(InCPU)
@@ -274,15 +272,13 @@ public:
 			BPL.VActive = 0;
 		}
 
-		SetOutputSurface(0, 0, 0);
+		SetOutputSurface(0);
 		Tick = &CorticoChip::Tick_PreFrame;
 	}
 
-	void SetOutputSurface(unsigned char * _OutputSurface, int _OutputSurfaceWidth, int _OutputSurfaceHeight)
+	void SetOutputSurface(unsigned char * _OutputSurface)
 	{
 		OutputSurface = _OutputSurface;
-		OutputSurfaceWidth = _OutputSurfaceWidth;
-		OutputSurfaceHeight = _OutputSurfaceHeight;
 	}
 };
 

@@ -2,11 +2,16 @@
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 
 #include <imgui.h>
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
+
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
+
+//#include "imgui_impl_win32.h"
+//#include "imgui_impl_dx11.h"
 #include <dsound.h>
 #define DIRECTINPUT_VERSION 0x0800
 #include <dinput.h>
+
 #include <math.h>
 #include <tchar.h>
 #include <string>
@@ -22,10 +27,54 @@
 #include "LogWindow.h"
 #include "TextEditor.h"
 #include "PictureToolWindow.h"
-#include "DXTools.h"
 #include "DSoundTools.h"
 #include <fstream>
 #include <streambuf>
+
+import GLTools;
+import Settings;
+
+// About Desktop OpenGL function loaders:
+//  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
+//  Helper libraries are often used for this purpose! Here we are supporting a few common ones (gl3w, glew, glad).
+//  You may use another loader/header of your choice (glext, glLoadGen, etc.), or chose to manually implement your own.
+#if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
+#include <GL/gl3w.h>            // Initialize with gl3wInit()
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
+#include <GL/glew.h>            // Initialize with glewInit()
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
+#include <glad/glad.h>          // Initialize with gladLoadGL()
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD2)
+#include <glad/gl.h>            // Initialize with gladLoadGL(...) or gladLoaderLoadGL()
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLBINDING2)
+#define GLFW_INCLUDE_NONE       // GLFW including OpenGL headers causes ambiguity or multiple definition errors.
+#include <glbinding/Binding.h>  // Initialize with glbinding::Binding::initialize()
+#include <glbinding/gl/gl.h>
+using namespace gl;
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLBINDING3)
+#define GLFW_INCLUDE_NONE       // GLFW including OpenGL headers causes ambiguity or multiple definition errors.
+#include <glbinding/glbinding.h>// Initialize with glbinding::initialize()
+#include <glbinding/gl/gl.h>
+using namespace gl;
+#else
+#include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
+#endif
+
+// Include glfw3.h after our OpenGL definitions
+#include <GLFW/glfw3.h>
+
+// [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
+// To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
+// Your own project should not be affected, as you are likely to link with a newer binary of GLFW that is adequate for your version of Visual Studio.
+#if defined(_MSC_VER) && (_MSC_VER >= 1900) && !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
+#pragma comment(lib, "legacy_stdio_definitions")
+#endif
+
+static void glfw_error_callback(int error, const char* description)
+{
+	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
+}
+
 
 // Data
 static DevonASM::Assembler ASM;
@@ -75,106 +124,6 @@ private:
 	std::ostream & mOriginal;
 	std::streambuf * mOldBuffer;
 };
-
-extern LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
-		return true;
-
-	switch (msg)
-	{
-	case WM_SIZE:
-		if (g_pd3dDevice != nullptr && wParam != SIZE_MINIMIZED)
-		{
-			ImGui_ImplDX11_InvalidateDeviceObjects();
-			DXTools::CleanupRenderTarget();
-			g_pSwapChain->ResizeBuffers(0, (UINT)LOWORD(lParam), (UINT)HIWORD(lParam), DXGI_FORMAT_UNKNOWN, 0);
-			DXTools::CreateRenderTarget();
-			ImGui_ImplDX11_CreateDeviceObjects();
-		}
-		return 0;
-	case WM_SYSCOMMAND:
-		if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
-			return 0;
-		break;
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		return 0;
-	}
-	return DefWindowProc(hWnd, msg, wParam, lParam);
-}
-
-static void SaveIniSettingsToDisk()
-{
-	// Write .ini file
-	FILE * f;
-	fopen_s(&f, IniName, "wt");
-	if(f)
-	{
-		if(CartridgeFileName.length() > 0)
-			fprintf(f, "dcafile=%s\n", CartridgeFileName.c_str());
-		if(DASFileName.length() > 0)
-			fprintf(f, "dasfile=%s\n", DASFileName.c_str());
-		if(ROMFileName.length() > 0)
-			fprintf(f, "romfile=%s\n", ROMFileName.c_str());
-
-		fprintf(f, "Palette=%d\n", TEditorPalette);
-		fprintf(f, "ShowWhitespaces=%d\n", (int)Show_TextEditor_Whitespaces);
-		fprintf(f, "Volume=%f\n", Volume);
-		fprintf(f, "CRTRoundness=%f\n", CRTRoundness);
-		fprintf(f, "CRTScanline=%f\n", CRTScanline);
-
-		fclose(f);
-	}
-}
-
-static void LoadIniSettingsFromDisk()
-{
-	FILE * f;
-	fopen_s(&f, IniName, "rt");
-	if(f)
-	{
-		fseek(f, 0, SEEK_END);
-		size_t IniSize = ftell(f);
-		rewind(f);
-		char * IniDat = new char[IniSize];
-		fread_s(IniDat, IniSize, 1, IniSize, f);
-		fclose(f);
-
-		const char* buf_end = IniDat + IniSize;
-		for (const char* line_start = IniDat; line_start < buf_end; )
-		{
-			const char* line_end = line_start;
-			while (line_end < buf_end && *line_end != '\n' && *line_end != '\r')
-				line_end++;
-
-			char Value[256];
-			int IntValue;
-			float FloatValue;
-			if (sscanf_s(line_start, "dcafile=%s", Value, (unsigned)_countof(Value)) == 1)
-				CartridgeFileName = Value;
-			else if (sscanf_s(line_start, "dasfile=%s", Value, (unsigned)_countof(Value)) == 1)
-				DASFileName = Value;
-			else if (sscanf_s(line_start, "romfile=%s", Value, (unsigned)_countof(Value)) == 1)
-				ROMFileName = Value;
-			else if (sscanf_s(line_start, "Palette=%d", &IntValue) == 1)
-				TEditorPalette = IntValue;
-			else if (sscanf_s(line_start, "ShowWhitespaces=%d", &IntValue) == 1)
-				Show_TextEditor_Whitespaces = IntValue;
-			else if (sscanf_s(line_start, "Volume=%f", &FloatValue) == 1)
-				Volume = FloatValue;
-			else if (sscanf_s(line_start, "CRTRoundness=%f", &FloatValue) == 1)
-				CRTRoundness = FloatValue;
-			else if (sscanf_s(line_start, "CRTScanline=%f", &FloatValue) == 1)
-				CRTScanline = FloatValue;
-
-			line_start = line_end+1;
-		}
-
-		return;
-	}
-}
 
 bool LoadROM(const char * ROMFileName, unsigned char* & ROM, long & ROMSize)
 {
@@ -264,7 +213,6 @@ void SetDASFile()
 	if (GetOpenFileNameA( &ofn ))
 	{
 		DASFileName = filename;
-		SaveIniSettingsToDisk();
 
 		AssemblyDone = false;
 		DASLoadDone = true;
@@ -289,7 +237,6 @@ void SetROMFile(LogWindow & LogWindow)
 	{
 		ROMFileName = filename;
 		PlugROM(ROM, ROMSize, LogWindow);
-		SaveIniSettingsToDisk();
 	}
 }
 
@@ -310,7 +257,6 @@ void SetDCAFile(LogWindow & LogWindow)
 	if (GetOpenFileNameA( &ofn ))
 	{
 		CartridgeFileName = filename;
-		SaveIniSettingsToDisk();
 		PlugCartridge(Cartridge, CartridgeSize, LogWindow);
 	}
 }
@@ -332,7 +278,6 @@ void ExportCartridge(std::string Filename, LogWindow & LogWindow)
 	if(Success)
 	{
 		CartridgeFileName = DCAExportName;
-		SaveIniSettingsToDisk();
 		CartridgeReadyToPlugin = true;
 	}
 }
@@ -507,39 +452,94 @@ void WorkThreadFunc(LogWindow* _LogWindow)
 	}
 }
 
-int main(int, char**)
+int main(int argn, char**arg)
 {
-	// Create application window
-	WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, LoadCursor(nullptr, IDC_ARROW), nullptr, nullptr, _T("Devon16"), nullptr };
-	RegisterClassEx(&wc);
-	HWND hwnd = CreateWindow(_T("Devon16"), _T("Devon 16 (press F11 to switch control UI)"), WS_OVERLAPPEDWINDOW, 100, 100, 1280, 800, nullptr, nullptr, wc.hInstance, nullptr);
+	// Setup window
+	glfwSetErrorCallback(glfw_error_callback);
+	if (!glfwInit())
+		return 1;
+
+	// Decide GL+GLSL versions
+#ifdef __APPLE__
+	// GL 3.2 + GLSL 150
+	const char* glsl_version = "#version 150";
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
+#else
+	// GL 3.0 + GLSL 130
+	const char* glsl_version = "#version 130";
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	//glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+	//glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+#endif
+
+	auto HasArg = [argn, arg](const char * ToTest)->bool 
+	{
+		for(int i = 0; i < argn; i++)
+			if(0 == std::strcmp(arg[i], ToTest))
+				return true;
+		return false;
+	};
+
+	// Create window with graphics context
+	int W = 1280;
+	int H = 720;
+	GLFWmonitor * Monitor = HasArg("-fullscreen") ? glfwGetPrimaryMonitor() : nullptr;
+	if(Monitor)
+	{
+		if(auto * VideoMode = glfwGetVideoMode(Monitor))
+		{
+			W = VideoMode->width;
+			H = VideoMode->height;
+		}
+	}
+	GLFWwindow* window = glfwCreateWindow(W, H, "Orbital20 Framework (gl)", Monitor, nullptr);
+	if (window == nullptr)
+		return 1;
+	glfwMakeContextCurrent(window);
+	glfwSwapInterval(1); // Enable vsync
+
+	// Initialize OpenGL loader
+#if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
+	bool err = gl3wInit() != 0;
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
+	bool err = glewInit() != GLEW_OK;
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
+	bool err = gladLoadGL() == 0;
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD2)
+	bool err = gladLoadGL(glfwGetProcAddress) == 0; // glad2 recommend using the windowing library loader instead of the (optionally) bundled one.
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLBINDING2)
+	bool err = false;
+	glbinding::Binding::initialize();
+#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLBINDING3)
+	bool err = false;
+	glbinding::initialize([](const char* name) { return (glbinding::ProcAddress)glfwGetProcAddress(name); });
+#else
+	bool err = false; // If you use IMGUI_IMPL_OPENGL_LOADER_CUSTOM, your loader is likely to requires some form of initialization.
+#endif
+	if (err)
+	{
+		fprintf(stderr, "Failed to initialize OpenGL loader!\n");
+		return 1;
+	}
 
 	TextEditor Teditor;
 	auto lang = TextEditor::LanguageDefinition::DevonASM();
 	Teditor.SetLanguageDefinition(lang);
 
-	// Initialize Direct3D
-	if(!DXTools::CreateDeviceD3D(hwnd))
-	{
-		DXTools::CleanupDeviceD3D();
-		UnregisterClass(_T("Devon16"), wc.hInstance);
-		return 1;
-	}
-
-	DSoundTools::Init(hwnd, Machine);
-
-	// Show the window
-	ShowWindow(hwnd, SW_SHOWDEFAULT);
-	UpdateWindow(hwnd);
+//	DSoundTools::Init(hwnd, Machine);
 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
 
-	// Setup ImGui binding
-	ImGui_ImplWin32_Init(hwnd);
-	ImGui_ImplDX11_Init(g_pd3dDevice, g_pd3dDeviceContext);
+	// Setup Platform/Renderer backends
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init(glsl_version);
 
 	ImGui::PushStyleColor(ImGuiCol_TitleBg,				ImColor(0xFF015AE3).Value);
 	ImGui::PushStyleColor(ImGuiCol_TitleBgActive,		ImColor(0xFF015AE3 + 0x00111111).Value);
@@ -565,9 +565,33 @@ int main(int, char**)
 	MemWindow.ReadFn = ReadMMUWord;
 	MemWindow.WriteFn = WriteMMUWord;
 	DisassemblyWindow DisassemblyWindow;
+	LogWindow GeneralLog;
+	GeneralLog.Show = true;
 	LogWindow LogWindow;
+	TextEditor PShaderEditor;
+	PShaderEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
+	TextEditor VShaderEditor;
+	VShaderEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
+	TextEditor CRTShaderEditor;
+	CRTShaderEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
 
-	LoadIniSettingsFromDisk();
+	CRTShaderEditor.SetText(Settings::ReadTxtFile("CRTShader.glsl").value());
+
+	GLTools::GlVersion();
+
+	auto CompileShaders = [&GeneralLog, &PShaderEditor, &VShaderEditor, &CRTShaderEditor]()
+	{
+		GLTools::ReCompileShaders(GLTools::ShaderId::CRT, GeneralLog, CRTShaderEditor.GetText().c_str(), GLTools::PPVS);
+	};
+
+	CompileShaders();
+	GLTools::CompileShaders(GLTools::ShaderId::BloomH, GeneralLog, GLTools::BloomHPS, GLTools::PPVS);
+	GLTools::CompileShaders(GLTools::ShaderId::BloomV, GeneralLog, GLTools::BloomVPS, GLTools::PPVS);
+	GLTools::CompileShaders(GLTools::ShaderId::Final, GeneralLog, GLTools::FinalPS, GLTools::PPVS);
+	GLTools::ConstructQuadBuffers();
+	GLTools::ConstructRenderTargets(1280, 720);
+
+	Settings::LoadIniSettings();
 	switch(TEditorPalette)
 	{
 	case 0:	Teditor.SetPalette(TextEditor::GetDarkPalette());		break;
@@ -595,19 +619,14 @@ int main(int, char**)
 	std::thread WorkThread(WorkThreadFunc, &LogWindow);	
 
 	// Main loop
-	MSG msg;
-	ZeroMemory(&msg, sizeof(msg));
-	while (msg.message != WM_QUIT)
+	while(!glfwWindowShouldClose(window))
 	{
-		if (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-			continue;
-		}
-		
-		ImGui_ImplDX11_NewFrame();
-		ImGui_ImplWin32_NewFrame();
+		glfwPollEvents();
+
+		Settings::SaveIniSettings();
+
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
 		if (Show_UI)
@@ -723,31 +742,30 @@ int main(int, char**)
 					if (ImGui::MenuItem("Symbols", "", Show_SymbolList_Window, AssemblySuccess && AssemblyDone))
 						Show_SymbolList_Window = !Show_SymbolList_Window;
 
+					if (ImGui::MenuItem("CRT Shader Editor", "", Settings::Current.Show_CRTShaderEditor_Window))
+						Settings::Current.Show_CRTShaderEditor_Window = !Settings::Current.Show_CRTShaderEditor_Window;				
+
 					ImGui::Separator();
 
 					if (ImGui::MenuItem("Dark palette"))
 					{
 						Teditor.SetPalette(TextEditor::GetDarkPalette());
-						TEditorPalette = 0;
-						SaveIniSettingsToDisk();
+						Settings::Current.TEditorPalette = 0;
 					}
 					if (ImGui::MenuItem("Light palette"))
 					{
 						Teditor.SetPalette(TextEditor::GetLightPalette());
-						TEditorPalette = 1;
-						SaveIniSettingsToDisk();
+						Settings::Current.TEditorPalette = 1;
 					}
 					if (ImGui::MenuItem("Retroblue palette"))
 					{
 						Teditor.SetPalette(TextEditor::GetRetroBluePalette());
-						TEditorPalette = 2;
-						SaveIniSettingsToDisk();
+						Settings::Current.TEditorPalette = 2;
 					}
 					if (ImGui::MenuItem("Show Whitespaces", "Ctrl+8", Show_TextEditor_Whitespaces))
 					{
-						Show_TextEditor_Whitespaces = !Show_TextEditor_Whitespaces;
-						Teditor.SetShowWhitespaces(Show_TextEditor_Whitespaces);
-						SaveIniSettingsToDisk();
+						Settings::Current.bShowWhiteSpaces = !Settings::Current.bShowWhiteSpaces;
+						Teditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
 					}
 
 					ImGui::EndMenu();
@@ -762,7 +780,10 @@ int main(int, char**)
 					//        ImGui::SetNextWindowSize(ImVec2(600,400));
 			ImGui::Begin("Devon");
 
-			if (ImGui::IsKeyPressed(VK_F9, false))
+			if(ImGui::IsKeyPressed(GLFW_KEY_F5, false))
+				CompileShaders();
+
+			if (ImGui::IsKeyPressed(GLFW_KEY_F9, false))
 				Machine.HardReset();
 
 			if (ImGui::Button("Set ROM (.dro) File"))
@@ -799,17 +820,20 @@ int main(int, char**)
 				Show_Disassembly_Window = DisassemblyWindow.Open;
 			}
 
-			if (!DASFileName.empty() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(VK_F7, false))
+			if (!DASFileName.empty() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(GLFW_KEY_F7, false))
 				StartCompileThread = true;
 
 			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed('S', false))
+			{
 				SaveDASFile(Teditor);
+				CRTShaderEditor.SaveText("CRTShader.glsl");
+			}
+
 
 			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed('8', false))
 			{
 				Show_TextEditor_Whitespaces = !Show_TextEditor_Whitespaces;
 				Teditor.SetShowWhitespaces(Show_TextEditor_Whitespaces);
-				SaveIniSettingsToDisk();
 			}
 
 			if (Show_SymbolList_Window && AssemblySuccess)
@@ -838,11 +862,9 @@ int main(int, char**)
 				ImGui::End();
 			}
 
-			if(ImGui::SliderFloat("Sound Volume", &Volume, 0.0f, 1.0f, "%.2f")
-				|| ImGui::SliderFloat("CRT Roundness", &CRTRoundness, 0.0f, 0.3f, "%.2f")
-				|| ImGui::SliderFloat("CRT Scanline", &CRTScanline, 0.0f, 1.0f, "%.2f")
-				)
-				SaveIniSettingsToDisk();
+			ImGui::SliderFloat("Sound Volume", &Volume, 0.0f, 1.0f, "%.2f");
+			ImGui::SliderFloat("CRT Roundness", &CRTRoundness, 0.0f, 0.3f, "%.2f");
+			ImGui::SliderFloat("CRT Scanline", &CRTScanline, 0.0f, 1.0f, "%.2f");
 
 			if (!PicToolWindow.Show && ImGui::Button("Image Tool"))
 				LaunchImageTool();
@@ -854,6 +876,9 @@ int main(int, char**)
 
 			if (Show_TextEditor_Window)
 				TextEditor::EditorWindow(Teditor, DASFileName, &Show_TextEditor_Window);
+
+			if(Settings::Current.Show_CRTShaderEditor_Window)
+				TextEditor::EditorWindow(CRTShaderEditor, "CRT Shader (F5 to compile)", &Settings::Current.Show_CRTShaderEditor_Window);
 
 			if (CartridgeReadyToPlugin)
 			{
@@ -877,40 +902,74 @@ int main(int, char**)
 			}
 		}
 
-		if (ImGui::IsKeyPressed(VK_F11, false))
+		if (ImGui::IsKeyPressed(GLFW_KEY_F11, false))
 			Show_UI = !Show_UI;
 
-		DXTools::UpdateConstants(CRTRoundness, CRTScanline);
-
-		unsigned char * pTexels = DXTools::MapEmulationTexture();
+		ImGui::Render();
+		int display_w, display_h;
+		glfwGetFramebufferSize(window, &display_w, &display_h);
+		GLTools::UpdateRenderTargets(display_w, display_h); // maybe resize
 
 		// Machine evaluation
-		Machine.Cortico.SetOutputSurface(pTexels, 512, 512);
+		Machine.Cortico.SetOutputSurface((unsigned char *)GLTools::PrimaryBuffer.data());
 		Machine.KeyB.PushKeyEvents();
 		Machine.TickFrame();
 
-		DXTools::UnmapEmulationTexture();
-
-		DSoundTools::Render(Machine, Volume);
-		DXTools::Render((float*)&clear_col, ImGui::GetIO().DisplaySize.x, ImGui::GetIO().DisplaySize.y);
+//		DSoundTools::Render(Machine, Volume);
 		
-		ImGui::Render();
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		GLTools::SetupPostProcessRenderStates();
+		GLTools::UpdatePrimaryTexture();
+		GLTools::SetRenderTarget(GLTools::RenderTextureId::CRT);
+		GLTools::RenderCRT(GLTools::RenderTextureId::Primary, display_w, display_h, 
+							 Settings::Current.Scanline, 
+							 Settings::Current.Roundness, 
+							 Settings::Current.BorderSharpness,
+							 Settings::Current.Vignetting,
+							 Settings::Current.Brightness,
+							 Settings::Current.Contrast,
+							 Settings::Current.Sharpness,
+							 Settings::Current.GridDep,
+							 Settings::Current.GhostAmount,
+							 Settings::Current.ChromaAmount
+							);
 
-		g_pSwapChain->Present(1, 0); // Present with vsync
+		// Bloom H
+		GLTools::SetRenderTarget(GLTools::RenderTextureId::BloomH);
+		GLTools::RenderBloomH(GLTools::RenderTextureId::CRT, display_w, display_h, GLTools::PrimaryH, Settings::Current.BloomRadius);
+
+		// Bloom V
+		GLTools::SetRenderTarget(GLTools::RenderTextureId::BloomV);
+		GLTools::RenderBloomV(GLTools::RenderTextureId::BloomH, display_w, display_h, GLTools::PrimaryH, Settings::Current.BloomRadius);
+
+		GLTools::SetRenderTarget(GLTools::RenderTextureId::Max);
+		glViewport(0, 0, display_w, display_h);
+		glClearColor(0.f, 0.f, 0.f, 1.f);
+		glClear(GL_COLOR_BUFFER_BIT);
+		
+		GLTools::RenderFinal(GLTools::RenderTextureId::CRT, GLTools::RenderTextureId::BloomV, display_w, display_h, Settings::Current.BloomAmount);
+
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		glfwSwapBuffers(window);
 	}
 
 	WorkThreadQuit = true;
 	WorkThread.join();
 
-	DSoundTools::Release();
+//	DSoundTools::Release();
 
-	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
+	// Cleanup
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
 
-	DXTools::CleanupDeviceD3D();
-	UnregisterClass(_T("Devon16"), wc.hInstance);
+	GLTools::DestroyShaders(GLTools::ShaderId::CRT);
+	GLTools::DestroyShaders(GLTools::ShaderId::BloomH);
+	GLTools::DestroyShaders(GLTools::ShaderId::BloomV);
+	GLTools::DestroyShaders(GLTools::ShaderId::Final);
+	GLTools::DestroyBuffers();
+
+	glfwDestroyWindow(window);
+	glfwTerminate();
 
 	return 0;
 }
