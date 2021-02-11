@@ -81,7 +81,6 @@ static DevonASM::Assembler ASM;
 static const char * IniName = "DevonGui.ini";
 static std::string DCAExportName;
 static std::string DROExportName;
-static int TEditorPalette = 0;
 static PictureToolWindow PicToolWindow;
 
 static unsigned char * ROM = nullptr;
@@ -90,7 +89,6 @@ static unsigned char * Cartridge = nullptr;
 static long CartridgeSize = 0;
 static bool AssemblySuccess = false;
 static bool AssemblyDone = false;
-static bool Show_TextEditor_Whitespaces = true;
 static float Volume = 0.5f;
 static float CRTRoundness = 0.15f;
 static float CRTScanline = 0.05f;
@@ -493,9 +491,10 @@ int main(int argn, char**arg)
 			H = VideoMode->height;
 		}
 	}
-	GLFWwindow* window = glfwCreateWindow(W, H, "Orbital20 Framework (gl)", Monitor, nullptr);
+	GLFWwindow* window = glfwCreateWindow(W, H, "Devon16 (gl)", Monitor, nullptr);
 	if (window == nullptr)
 		return 1;
+
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // Enable vsync
 
@@ -589,13 +588,20 @@ int main(int argn, char**arg)
 	GLTools::ConstructRenderTargets(1280, 720);
 
 	Settings::LoadIniSettings();
-	switch(TEditorPalette)
+	switch(int(Settings::Current.TEditorPalette))
 	{
 	case 0:	Teditor.SetPalette(TextEditor::GetDarkPalette());		break;
 	case 1:	Teditor.SetPalette(TextEditor::GetLightPalette());		break;
 	case 2:	Teditor.SetPalette(TextEditor::GetRetroBluePalette());	break;
 	}
-	Teditor.SetShowWhitespaces(Show_TextEditor_Whitespaces);
+	Teditor.SetShowWhitespaces(int(Settings::Current.TEditorPalette));
+	switch(int(Settings::Current.TEditorPalette))
+	{
+	case 0:	CRTShaderEditor.SetPalette(TextEditor::GetDarkPalette());		break;
+	case 1:	CRTShaderEditor.SetPalette(TextEditor::GetLightPalette());		break;
+	case 2:	CRTShaderEditor.SetPalette(TextEditor::GetRetroBluePalette());	break;
+	}
+	CRTShaderEditor.SetShowWhitespaces(int(Settings::Current.TEditorPalette));
 
 	// text editor 
 	{
@@ -747,22 +753,26 @@ int main(int argn, char**arg)
 					if (ImGui::MenuItem("Dark palette"))
 					{
 						Teditor.SetPalette(TextEditor::GetDarkPalette());
+						CRTShaderEditor.SetPalette(TextEditor::GetDarkPalette());
 						Settings::Current.TEditorPalette = 0;
 					}
 					if (ImGui::MenuItem("Light palette"))
 					{
 						Teditor.SetPalette(TextEditor::GetLightPalette());
+						CRTShaderEditor.SetPalette(TextEditor::GetLightPalette());
 						Settings::Current.TEditorPalette = 1;
 					}
 					if (ImGui::MenuItem("Retroblue palette"))
 					{
 						Teditor.SetPalette(TextEditor::GetRetroBluePalette());
+						CRTShaderEditor.SetPalette(TextEditor::GetRetroBluePalette());
 						Settings::Current.TEditorPalette = 2;
 					}
-					if (ImGui::MenuItem("Show Whitespaces", "Ctrl+8", Show_TextEditor_Whitespaces))
+					if (ImGui::MenuItem("Show Whitespaces", "Ctrl+8", Settings::Current.bShowWhiteSpaces))
 					{
 						Settings::Current.bShowWhiteSpaces = !Settings::Current.bShowWhiteSpaces;
 						Teditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
+						CRTShaderEditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
 					}
 
 					ImGui::EndMenu();
@@ -829,8 +839,9 @@ int main(int argn, char**arg)
 
 			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed('8', false))
 			{
-				Show_TextEditor_Whitespaces = !Show_TextEditor_Whitespaces;
-				Teditor.SetShowWhitespaces(Show_TextEditor_Whitespaces);
+				Settings::Current.bShowWhiteSpaces = !Settings::Current.bShowWhiteSpaces;
+				Teditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
+				CRTShaderEditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
 			}
 
 			if (Show_SymbolList_Window && AssemblySuccess)
