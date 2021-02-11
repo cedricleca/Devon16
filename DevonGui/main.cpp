@@ -158,9 +158,9 @@ void WriteMMUWord(MemoryEditor::u16* data, size_t off, MemoryEditor::u16 d)
 
 void PlugCartridge(unsigned char * Cartridge, long CartridgeSize, LogWindow & Log)
 {
-	if(Settings::Current.CartridgeFileName.length() > 0)
+	if(Settings::CartridgeFileName.length() > 0)
 	{
-		if(LoadROM(Settings::Current.CartridgeFileName.c_str(), Cartridge, CartridgeSize))
+		if(LoadROM(Settings::CartridgeFileName.c_str(), Cartridge, CartridgeSize))
 		{
 			Machine.MMU.PlugCartrige((uWORD*)Cartridge, CartridgeSize/sizeof(uWORD));
 			Log.AddLog("Cartridge file loaded\n");
@@ -168,7 +168,7 @@ void PlugCartridge(unsigned char * Cartridge, long CartridgeSize, LogWindow & Lo
 		}
 		else
 		{
-			Log.AddLog("Can't load Cartridge file %s\n", Settings::Current.CartridgeFileName);
+			Log.AddLog("Can't load Cartridge file %s\n", Settings::CartridgeFileName);
 			Log.Show = true;
 		}
 	}
@@ -176,9 +176,9 @@ void PlugCartridge(unsigned char * Cartridge, long CartridgeSize, LogWindow & Lo
 
 void PlugROM(unsigned char * ROM, long ROMSize, LogWindow & Log)
 {
-	if(Settings::Current.ROMFileName.length() > 0)
+	if(Settings::ROMFileName.length() > 0)
 	{
-		if(LoadROM(Settings::Current.ROMFileName.c_str(), ROM, ROMSize))
+		if(LoadROM(Settings::ROMFileName.c_str(), ROM, ROMSize))
 		{
 			Machine.MMU.SetROM((uWORD*)ROM, ROMSize/sizeof(uWORD));
 			Log.AddLog("ROM file loaded\n");
@@ -186,7 +186,7 @@ void PlugROM(unsigned char * ROM, long ROMSize, LogWindow & Log)
 		}
 		else
 		{
-			Log.AddLog("Can't load ROM file %s\n", Settings::Current.ROMFileName.c_str());
+			Log.AddLog("Can't load ROM file %s\n", Settings::ROMFileName.c_str());
 			Log.Show = true;
 		}
 	}
@@ -209,7 +209,7 @@ void SetDASFile()
   
 	if (GetOpenFileNameA( &ofn ))
 	{
-		Settings::Current.DASFileName = filename;
+		Settings::DASFileName = filename;
 
 		AssemblyDone = false;
 		DASLoadDone = true;
@@ -232,7 +232,7 @@ void SetROMFile(LogWindow & LogWindow)
   
 	if (GetOpenFileNameA( &ofn ))
 	{
-		Settings::Current.ROMFileName = filename;
+		Settings::ROMFileName = filename;
 		PlugROM(ROM, ROMSize, LogWindow);
 	}
 }
@@ -253,7 +253,7 @@ void SetDCAFile(LogWindow & LogWindow)
   
 	if (GetOpenFileNameA( &ofn ))
 	{
-		Settings::Current.CartridgeFileName = filename;
+		Settings::CartridgeFileName = filename;
 		PlugCartridge(Cartridge, CartridgeSize, LogWindow);
 	}
 }
@@ -274,7 +274,7 @@ void ExportCartridge(std::string Filename, LogWindow & LogWindow)
 
 	if(Success)
 	{
-		Settings::Current.CartridgeFileName = DCAExportName;
+		Settings::CartridgeFileName = DCAExportName;
 		CartridgeReadyToPlugin = true;
 	}
 }
@@ -312,7 +312,7 @@ void ExportROM(std::string Filename, LogWindow & LogWindow)
 
 	if(Success)
 	{
-		Settings::Current.ROMFileName = DROExportName;
+		Settings::ROMFileName = DROExportName;
 		PlugROM(ROM, ROMSize, LogWindow);
 	}
 	else
@@ -342,7 +342,7 @@ void ExportROM(LogWindow & LogWindow)
 
 void SaveDASFile(TextEditor & Teditor, bool bForceDialog=false)
 {
-	if(Settings::Current.DASFileName.empty() || bForceDialog)
+	if(Settings::DASFileName.empty() || bForceDialog)
 	{
 		char filename[ MAX_PATH ];
 		OPENFILENAMEA ofn;
@@ -357,11 +357,11 @@ void SaveDASFile(TextEditor & Teditor, bool bForceDialog=false)
 		ofn.Flags        = OFN_DONTADDTORECENT;
   
 		if (GetSaveFileNameA( &ofn ))
-			Settings::Current.DASFileName = filename;
+			Settings::DASFileName = filename;
 	}
 
-	if(!Settings::Current.DASFileName.empty())
-		Teditor.SaveText(Settings::Current.DASFileName);
+	if(!Settings::DASFileName.empty())
+		Teditor.SaveText(Settings::DASFileName);
 }
 
 struct logstream : public std::ostream, std::streambuf
@@ -379,13 +379,13 @@ void AssembleAndExport(LogWindow & LogWindow)
 {
 	logstream LogStream(LogWindow);
 	ScopedRedirect redirect(std::cout, LogStream);
-	AssemblySuccess = ASM.AssembleFile(Settings::Current.DASFileName.c_str()) && (ASM.NbErrors == 0);
+	AssemblySuccess = ASM.AssembleFile(Settings::DASFileName.c_str()) && (ASM.NbErrors == 0);
 	AssemblyDone = true;
 	LogWindow.Show = true;
 	
 	if(AssemblySuccess)
 	{
-		std::string outfname = Settings::Current.DASFileName;
+		std::string outfname = Settings::DASFileName;
 		size_t idx = outfname.find(".das");
 		if(idx >= 0)
 		{
@@ -599,7 +599,7 @@ int main(int argn, char**arg)
 
 	// text editor 
 	{
-		std::ifstream tfile(Settings::Current.DASFileName.c_str());
+		std::ifstream tfile(Settings::DASFileName.c_str());
 		if (tfile.good())
 		{
 			std::string str((std::istreambuf_iterator<char>(tfile)), std::istreambuf_iterator<char>());
@@ -634,7 +634,7 @@ int main(int argn, char**arg)
 				{
 					if (ImGui::MenuItem("New .das", ""))
 					{
-						Settings::Current.DASFileName = "";
+						Settings::DASFileName = "";
 						Teditor.SetText("");
 					}
 					if (ImGui::MenuItem("Open .das...", "", false, !IsWorkThreadBusy()))
@@ -686,7 +686,7 @@ int main(int argn, char**arg)
 
 				if (ImGui::BeginMenu("Assembler"))
 				{
-					if (!Settings::Current.DASFileName.empty() && ImGui::MenuItem("Assemble", "Ctrl+F7", nullptr, !IsWorkThreadBusy()))
+					if (!Settings::DASFileName.empty() && ImGui::MenuItem("Assemble", "Ctrl+F7", nullptr, !IsWorkThreadBusy()))
 						StartCompileThread = true;
 
 					if (ImGui::MenuItem("Symbols", "", Show_SymbolList_Window, AssemblySuccess && AssemblyDone))
@@ -786,19 +786,19 @@ int main(int argn, char**arg)
 			if (ImGui::Button("Set ROM (.dro) File"))
 				SetROMFile(LogWindow);
 
-			if (!Settings::Current.ROMFileName.empty())
+			if (!Settings::ROMFileName.empty())
 			{
 				ImGui::SameLine();
-				ImGui::Text(Settings::Current.ROMFileName.c_str());
+				ImGui::Text(Settings::ROMFileName.c_str());
 			}
 
 			if (ImGui::Button("Set Cartridge (.dca) File"))
 				SetDCAFile(LogWindow);
 
-			if (!Settings::Current.CartridgeFileName.empty())
+			if (!Settings::CartridgeFileName.empty())
 			{
 				ImGui::SameLine();
-				ImGui::Text(Settings::Current.CartridgeFileName.c_str());
+				ImGui::Text(Settings::CartridgeFileName.c_str());
 			}
 
 			ImGui::Separator();
@@ -817,7 +817,7 @@ int main(int argn, char**arg)
 				Show_Disassembly_Window = DisassemblyWindow.Open;
 			}
 
-			if (!Settings::Current.DASFileName.empty() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(GLFW_KEY_F7, false))
+			if (!Settings::DASFileName.empty() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(GLFW_KEY_F7, false))
 				StartCompileThread = true;
 
 			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed('S', false))
@@ -872,7 +872,7 @@ int main(int argn, char**arg)
 				PicToolWindow.Draw("Image Tool");
 
 			if (Show_TextEditor_Window)
-				TextEditor::EditorWindow(Teditor, Settings::Current.DASFileName, &Show_TextEditor_Window);
+				TextEditor::EditorWindow(Teditor, Settings::DASFileName, &Show_TextEditor_Window);
 
 			if(Settings::Current.Show_CRTShaderEditor_Window)
 				TextEditor::EditorWindow(CRTShaderEditor, "CRT Shader (F5 to compile)", &Settings::Current.Show_CRTShaderEditor_Window);
@@ -887,7 +887,7 @@ int main(int argn, char**arg)
 			{
 				Show_SymbolList_Window = false;
 
-				std::ifstream t(Settings::Current.DASFileName.c_str());
+				std::ifstream t(Settings::DASFileName.c_str());
 				if (t.good())
 				{
 					std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());

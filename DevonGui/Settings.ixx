@@ -28,11 +28,16 @@ namespace Settings
 		return Ret;
 	}
 
+	export std::string CartridgeFileName;
+	export std::string DASFileName;
+	export std::string ROMFileName = ".\\ROM.dro";
+
+	std::string Old_CartridgeFileName;
+	std::string Old_DASFileName;
+	std::string Old_ROMFileName;
+
 	struct Values
 	{
-		std::string CartridgeFileName;
-		std::string DASFileName;
-		std::string ROMFileName = ".\\ROM.dro";
 		bool bShowWhiteSpaces = true;
 		bool Show_Setup_Window = true;
 		bool Show_MeshEditor_Window = true;
@@ -82,9 +87,9 @@ namespace Settings
 			if(f)
 			{
 				SaveIniMutex.lock();
-				fprintf(f, "CartridgeFileName=%s\n",				Current.CartridgeFileName.c_str());
-				fprintf(f, "DASFileName=%s\n",						Current.DASFileName.c_str());
-				fprintf(f, "ROMFileName=%s\n",						Current.ROMFileName.c_str());
+				fprintf(f, "CartridgeFileName=%s\n",				CartridgeFileName.c_str());
+				fprintf(f, "DASFileName=%s\n",						DASFileName.c_str());
+				fprintf(f, "ROMFileName=%s\n",						ROMFileName.c_str());
 				fprintf(f, "bShowWhiteSpaces=%d\n",					Current.bShowWhiteSpaces);
 				fprintf(f, "Show_Setup_Window=%d\n",				Current.Show_Setup_Window);
 				fprintf(f, "Show_MeshEditor_Window=%d\n",			Current.Show_MeshEditor_Window);
@@ -125,13 +130,22 @@ namespace Settings
 
 	export void SaveIniSettings()
 	{
-		if(Current == OldSettings)
+		if(Current == OldSettings
+		   && Old_CartridgeFileName == CartridgeFileName
+		   && Old_DASFileName == DASFileName
+		   && Old_ROMFileName == ROMFileName
+		   )
 			return;
 
 		SaveIniFileRequest = true;
 
 		if(SavingIniFile)
 			return;
+
+		OldSettings = Current;
+		Old_CartridgeFileName = CartridgeFileName;
+		Old_DASFileName = DASFileName;
+		Old_ROMFileName = ROMFileName;
 
 		std::thread WorkThread(SaveIniFileThreadFunc);
 		WorkThread.detach();
@@ -179,7 +193,9 @@ namespace Settings
 					}
 				};
 
-				TryGetString("CartridgeFileName=",				Current.CartridgeFileName);
+				TryGetString("CartridgeFileName=",				CartridgeFileName);
+				TryGetString("DASFileName=",					DASFileName);
+				TryGetString("ROMFileName=",					ROMFileName);
 
 				TryGetBool("bShowWhiteSpaces=%d",				Current.bShowWhiteSpaces);
 				TryGetBool("Show_Setup_Window=%d",				Current.Show_Setup_Window);
