@@ -12,13 +12,11 @@ uniform float GhostAmount;
 uniform float ChromaAmount;
 in vec2 Frag_UV;
 out vec4 Out_Color;
-//#define GridW 560.
-//#define GridH 320.
 #define GridW 660.
 #define GridH 520.
 #define GridPow 1.1
 #define Gain 1.
-#define GHOST_DIST 0.004
+#define GHOST_DIST 0.005
 #define CHROMA_DIST 0.002
 
 void main()
@@ -49,7 +47,7 @@ void main()
 
     Out_Color += ChromaAmount * vec4(1., 0., 0.5, 0.) * texture(Texture, uv + vec2(CHROMA_DIST, 0.));
     Out_Color += ChromaAmount * vec4(0., 1., 0.5, 0.) * texture(Texture, uv - vec2(CHROMA_DIST, 0.));
-    Out_Color /= 1. + 2.*ChromaAmount;
+    Out_Color /= 1. + ChromaAmount;
 
 	Out_Color += GhostAmount * (0.3-texture(Texture, uv - vec2(GHOST_DIST, 0.)));
 
