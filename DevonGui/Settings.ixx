@@ -32,7 +32,7 @@ namespace Settings
 	{
 		std::string CartridgeFileName;
 		std::string DASFileName;
-		std::string ROMFileName;
+		std::string ROMFileName = ".\\ROM.dro";
 		bool bShowWhiteSpaces = true;
 		bool Show_Setup_Window = true;
 		bool Show_MeshEditor_Window = true;
@@ -159,6 +159,27 @@ namespace Settings
 					if(sscanf_s(IniStr.c_str() + line, fmt, &FloatValue) == 1)
 						Value = FloatValue;
 				};
+
+				auto TryGetString = [IniStr, line](const char * fmt, std::string & Value)
+				{
+					const char * Start = IniStr.c_str() + line;
+					if(0 == strncmp(Start, fmt, strlen(fmt)))
+					{
+						const char * ValStart = Start + strlen(fmt);
+						if(const auto * br = strchr(ValStart, '\n'))
+						{
+							if(br - ValStart < 255)
+							{
+								char StrValue[256];
+								strncpy_s(StrValue, ValStart, br - ValStart);
+								StrValue[br - ValStart] = 0;
+								Value = StrValue;
+							}
+						}
+					}
+				};
+
+				TryGetString("CartridgeFileName=",				Current.CartridgeFileName);
 
 				TryGetBool("bShowWhiteSpaces=%d",				Current.bShowWhiteSpaces);
 				TryGetBool("Show_Setup_Window=%d",				Current.Show_Setup_Window);

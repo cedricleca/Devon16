@@ -3224,16 +3224,17 @@ bool TextEditor::SaveText(const std::string& Filename)
 
 void TextEditor::EditorWindow(TextEditor& Editor, const std::string& Filename, bool* Open)
 {
+	const auto Title = Filename.length() == 0 ? "DASEditor" : Filename;
 	auto cpos = Editor.GetCursorPosition();
-	ImGui::Begin(Filename.c_str(), Open, ImGuiWindowFlags_HorizontalScrollbar);
+	ImGui::Begin(Title.c_str(), Open, ImGuiWindowFlags_HorizontalScrollbar);
 	ImGui::SetWindowSize(ImVec2(800, 600), ImGuiCond_FirstUseEver);
 
 	ImGui::Text("%6d/%-6d %6d lines  | %s | %s | %s | %s", cpos.mLine + 1, cpos.mColumn + 1, Editor.GetTotalLines(),
 		Editor.IsOverwrite() ? "Ovr" : "Ins",
 		Editor.CanUndo() ? "*" : " ",
-		Editor.GetLanguageDefinition().mName.c_str(), Filename.c_str());
+		Editor.GetLanguageDefinition().mName.c_str(), Title.c_str());
 
-	Editor.Render(Filename.c_str());
+	Editor.Render(Title.c_str());
 	ImGui::End();
 
 }
