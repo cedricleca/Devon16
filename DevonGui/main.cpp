@@ -618,8 +618,9 @@ int main(int argn, char**arg)
 
 	std::thread WorkThread(WorkThreadFunc, &LogWindow);	
 
+	bool bQuitRequest = false;
 	// Main loop
-	while(!glfwWindowShouldClose(window))
+	while(!glfwWindowShouldClose(window) && !bQuitRequest)
 	{
 		glfwPollEvents();
 
@@ -651,6 +652,10 @@ int main(int argn, char**arg)
 					if (ImGui::MenuItem("Save .das As...", ""))
 					{
 						SaveDASFile(Teditor, true);
+					}
+					if (ImGui::MenuItem("Quit", ""))
+					{
+						bQuitRequest = true;
 					}
 
 					ImGui::EndMenu();
