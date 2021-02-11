@@ -12,10 +12,12 @@ uniform float GhostAmount;
 uniform float ChromaAmount;
 in vec2 Frag_UV;
 out vec4 Out_Color;
-#define GridW 560.
-#define GridH 320.
-#define GridPow 2.1
-#define Gain 1.15
+//#define GridW 560.
+//#define GridH 320.
+#define GridW 660.
+#define GridH 520.
+#define GridPow 1.1
+#define Gain 1.
 #define GHOST_DIST 0.004
 #define CHROMA_DIST 0.002
 
@@ -37,13 +39,13 @@ void main()
     uv.x *= 416. / 512.;
     uv.y = (1. - uv.y) * (NbScanlines / 512.);
     
-	vec2 SubUV = vec2(floor(uv.x * W) / W, floor(uv.y * H) / H);
-	vec2 SubUVDelta = Sharpness*vec2(.5/W, .5/H);
+	vec2 SubUVDelta = (2.-Sharpness)*vec2(.2/W, .2/H);
 	Out_Color = texture(Texture, uv);
 	Out_Color += texture(Texture, uv + vec2(SubUVDelta.x, 0));
+	Out_Color += texture(Texture, uv - vec2(SubUVDelta.x, 0));
 	Out_Color += texture(Texture, uv + vec2(0, SubUVDelta.y));
-	Out_Color += texture(Texture, uv + SubUVDelta);
-	Out_Color *= .25;
+	Out_Color += texture(Texture, uv - vec2(0, SubUVDelta.y));
+	Out_Color *= .2;
 
     Out_Color += ChromaAmount * vec4(1., 0., 0.5, 0.) * texture(Texture, uv + vec2(CHROMA_DIST, 0.));
     Out_Color += ChromaAmount * vec4(0., 1., 0.5, 0.) * texture(Texture, uv - vec2(CHROMA_DIST, 0.));
@@ -61,8 +63,8 @@ void main()
     vec4 Mask = vec4(0.);
     float P = (uv.x*GridW + floor(uv.y * GridH)) * 3.14159;
     Mask.x = mix(pow(max(0., sin(P)), GridPow), 1.15*Gain, GridDep);
-    Mask.y = mix(pow(max(0., sin(P+2.2)), GridPow), 1.25*Gain, GridDep);
-    Mask.z = mix(pow(max(0., sin(P+4.4)), GridPow), 1.25*Gain, GridDep);
+    Mask.y = mix(.97*pow(max(0., sin(P+2.2)), GridPow), 1.25*Gain, GridDep);
+    Mask.z = mix(1.2*pow(max(0., sin(P+4.4)), GridPow), 1.25*Gain, GridDep);
     Out_Color *= Mask;
 }
 
