@@ -18,7 +18,7 @@ namespace Settings
 		std::ifstream tfile(FileName.c_str());
 		if(tfile.good())
 		{
-			std::string t = std::string((std::istreambuf_iterator<char>(tfile)), std::istreambuf_iterator<char>());
+			std::string t = std::string(std::istreambuf_iterator<char>(tfile), std::istreambuf_iterator<char>());
 			if(t.size() > 0)
 				t.resize(t.size() - 1);
 			Ret = t;
@@ -128,7 +128,7 @@ namespace Settings
 		SavingIniFile = false;
 	}
 
-	export void LockSettings(bool bLock)
+	export void Lock(bool bLock)
 	{
 		if(bLock)
 			SaveIniMutex.lock();

@@ -204,7 +204,9 @@ void SetDASFile()
   
 	if (GetOpenFileNameA( &ofn ))
 	{
+		Settings::Lock(true);
 		Settings::DASFileName = filename;
+		Settings::Lock(false);
 
 		AssemblyDone = false;
 		DASLoadDone = true;
@@ -227,7 +229,9 @@ void SetROMFile(LogWindow & LogWindow)
   
 	if (GetOpenFileNameA( &ofn ))
 	{
+		Settings::Lock(true);
 		Settings::ROMFileName = filename;
+		Settings::Lock(false);
 		PlugROM(ROM, ROMSize, LogWindow);
 	}
 }
@@ -248,7 +252,9 @@ void SetDCAFile(LogWindow & LogWindow)
   
 	if (GetOpenFileNameA( &ofn ))
 	{
+		Settings::Lock(true);
 		Settings::CartridgeFileName = filename;
+		Settings::Lock(false);
 		PlugCartridge(Cartridge, CartridgeSize, LogWindow);
 	}
 }
@@ -269,7 +275,9 @@ void ExportCartridge(std::string Filename, LogWindow & LogWindow)
 
 	if(Success)
 	{
+		Settings::Lock(true);
 		Settings::CartridgeFileName = DCAExportName;
+		Settings::Lock(false);
 		CartridgeReadyToPlugin = true;
 	}
 }
@@ -307,7 +315,9 @@ void ExportROM(std::string Filename, LogWindow & LogWindow)
 
 	if(Success)
 	{
+		Settings::Lock(true);
 		Settings::ROMFileName = DROExportName;
+		Settings::Lock(false);
 		PlugROM(ROM, ROMSize, LogWindow);
 	}
 	else
@@ -352,7 +362,11 @@ void SaveDASFile(TextEditor & Teditor, bool bForceDialog=false)
 		ofn.Flags        = OFN_DONTADDTORECENT;
   
 		if (GetSaveFileNameA( &ofn ))
+		{
+			Settings::Lock(true);
 			Settings::DASFileName = filename;
+			Settings::Lock(false);
+		}
 	}
 
 	if(!Settings::DASFileName.empty())
@@ -545,7 +559,6 @@ int main(int argn, char**arg)
 
 	// Load Fonts
 	ImFont * HackFont = io.Fonts->AddFontFromFileTTF("HackRegular.TTF", 16.0f);
-	//ImFont * HackFont = io.Fonts->AddFontFromFileTTF("CONSOLA.TTF", 16.0f);
 
 	bool Show_UI = false;
 	bool Show_Disassembly_Window = true;
@@ -568,7 +581,10 @@ int main(int argn, char**arg)
 	TextEditor CRTShaderEditor;
 	CRTShaderEditor.SetLanguageDefinition(TextEditor::LanguageDefinition::GLSL());
 
+	Settings::LoadIniSettings();
+
 	CRTShaderEditor.SetText(Settings::ReadTxtFile("CRTShader.glsl").value());
+	Teditor.SetText(Settings::ReadTxtFile(Settings::DASFileName.c_str()).value());
 
 	GLTools::GlVersion();
 
@@ -584,7 +600,6 @@ int main(int argn, char**arg)
 	GLTools::ConstructQuadBuffers();
 	GLTools::ConstructRenderTargets(1280, 720);
 
-	Settings::LoadIniSettings();
 	switch(int(Settings::Current.TEditorPalette))
 	{
 	case 0:	Teditor.SetPalette(TextEditor::GetDarkPalette());		break;
@@ -599,17 +614,6 @@ int main(int argn, char**arg)
 	case 2:	CRTShaderEditor.SetPalette(TextEditor::GetRetroBluePalette());	break;
 	}
 	CRTShaderEditor.SetShowWhitespaces(int(Settings::Current.TEditorPalette));
-
-	// text editor 
-	{
-		std::ifstream tfile(Settings::DASFileName.c_str());
-		if (tfile.good())
-		{
-			std::string str((std::istreambuf_iterator<char>(tfile)), std::istreambuf_iterator<char>());
-			Teditor.SetText(str);
-			tfile.close();
-		}
-	}
 
 	PlugROM(ROM, ROMSize, LogWindow);
 	PlugCartridge(Cartridge, CartridgeSize, LogWindow);
@@ -732,7 +736,7 @@ int main(int argn, char**arg)
 
 				if (ImGui::BeginMenu("View"))
 				{
-					Settings::LockSettings(true);
+					Settings::Lock(true);
 
 					if (ImGui::MenuItem(".das Editor", "", Show_TextEditor_Window))
 						Show_TextEditor_Window = !Show_TextEditor_Window;
@@ -779,7 +783,7 @@ int main(int argn, char**arg)
 						CRTShaderEditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
 					}
 
-					Settings::LockSettings(false);
+					Settings::Lock(false);
 
 					ImGui::EndMenu();
 				}
@@ -842,14 +846,13 @@ int main(int argn, char**arg)
 				CRTShaderEditor.SaveText("CRTShader.glsl");
 			}
 
-
 			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed('8', false))
 			{
-				Settings::LockSettings(true);
+				Settings::Lock(true);
 				Settings::Current.bShowWhiteSpaces = !Settings::Current.bShowWhiteSpaces;
 				Teditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
 				CRTShaderEditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
-				Settings::LockSettings(false);
+				Settings::Lock(false);
 			}
 
 			if (Show_SymbolList_Window && AssemblySuccess)
@@ -878,7 +881,7 @@ int main(int argn, char**arg)
 				ImGui::End();
 			}
 
-			Settings::LockSettings(true);
+			Settings::Lock(true);
 			ImGui::SliderFloat("Sound Volume",		&Settings::Current.Volume, 0.0f, 1.0f, "%.2f");
 			ImGui::Text("CRT effect:");
 			ImGui::SliderFloat("Scanline",			&Settings::Current.Scanline, 0.f, 1.f);
@@ -893,7 +896,7 @@ int main(int argn, char**arg)
 			ImGui::SliderFloat("ChromaAmount",		&Settings::Current.ChromaAmount, 0.0f, 1.f);
 			ImGui::SliderFloat("BloomAmount",		&Settings::Current.BloomAmount, 0.0f, 1.f);
 			ImGui::SliderFloat("BloomRadius",		&Settings::Current.BloomRadius, 1.f, 100.f);
-			Settings::LockSettings(false);
+			Settings::Lock(false);
 
 			if (!PicToolWindow.Show && ImGui::Button("Image Tool"))
 				LaunchImageTool();
@@ -908,9 +911,9 @@ int main(int argn, char**arg)
 
 			if(Settings::Current.Show_CRTShaderEditor_Window)
 			{
-				Settings::LockSettings(true);
+				Settings::Lock(true);
 				TextEditor::EditorWindow(CRTShaderEditor, "CRT Shader (F5 to compile)", &Settings::Current.Show_CRTShaderEditor_Window);
-				Settings::LockSettings(false);
+				Settings::Lock(false);
 			}
 
 			if (CartridgeReadyToPlugin)
@@ -923,13 +926,10 @@ int main(int argn, char**arg)
 			{
 				Show_SymbolList_Window = false;
 
-				std::ifstream t(Settings::DASFileName.c_str());
-				if (t.good())
+				if(auto DASStr = Settings::ReadTxtFile(Settings::DASFileName.c_str()))
 				{
-					std::string str((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-					Teditor.SetText(str);
+					Teditor.SetText(DASStr.value());
 					Show_TextEditor_Window = true;
-					t.close();
 				}
 				DASLoadDone = false;
 			}
