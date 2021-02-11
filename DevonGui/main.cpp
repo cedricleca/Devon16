@@ -860,8 +860,19 @@ int main(int argn, char**arg)
 			}
 
 			ImGui::SliderFloat("Sound Volume", &Volume, 0.0f, 1.0f, "%.2f");
-			ImGui::SliderFloat("CRT Roundness", &CRTRoundness, 0.0f, 0.3f, "%.2f");
-			ImGui::SliderFloat("CRT Scanline", &CRTScanline, 0.0f, 1.0f, "%.2f");
+			ImGui::Text("CRT effect:");
+			ImGui::SliderFloat("Scanline",			&Settings::Current.Scanline, 0.f, 1.f);
+			ImGui::SliderFloat("Roundness",			&Settings::Current.Roundness, 0.f, 1.f);
+			ImGui::SliderFloat("BorderSharpness",	&Settings::Current.BorderSharpness, 0.02f, .0006f, "%.5f");
+			ImGui::SliderFloat("Vignetting",		&Settings::Current.Vignetting, 0.f, 1.f);
+			ImGui::SliderFloat("Brightness",		&Settings::Current.Brightness, 0.0f, 2.f);
+			ImGui::SliderFloat("Contrast",			&Settings::Current.Contrast, -1.0f, 1.f);
+			ImGui::SliderFloat("Sharpness",			&Settings::Current.Sharpness, 0.0f, 2.f);
+			ImGui::SliderFloat("GridDep",			&Settings::Current.GridDep, 0.0f, 1.f);
+			ImGui::SliderFloat("GhostAmount",		&Settings::Current.GhostAmount, 0.0f, 1.f);
+			ImGui::SliderFloat("ChromaAmount",		&Settings::Current.ChromaAmount, 0.0f, 1.f);
+			ImGui::SliderFloat("BloomAmount",		&Settings::Current.BloomAmount, 0.0f, 1.f);
+			ImGui::SliderFloat("BloomRadius",		&Settings::Current.BloomRadius, 1.f, 100.f);
 
 			if (!PicToolWindow.Show && ImGui::Button("Image Tool"))
 				LaunchImageTool();

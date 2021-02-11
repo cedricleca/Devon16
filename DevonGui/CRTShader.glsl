@@ -27,6 +27,8 @@ void main()
 
     float BorderCoeff = smoothstep(0.0, BorderSharpness, 0.5 - abs(uv.x - 0.5));
     BorderCoeff *= smoothstep(0.0, BorderSharpness, 0.5 - abs(uv.y - 0.5));
+    
+    float VignetteCoeff = pow(1. - length(uv-vec2(0.5)), Vignetting);
 
 	float H = NbScanlines;
 	float W = H * 4. / 3.;
@@ -54,7 +56,7 @@ void main()
 	Out_Color *= 1. - Contrast * cos(L * 3.14159);
 	Out_Color *= Brightness;
 	Out_Color *= BorderCoeff;
-    Out_Color *= pow(1. - length(uv-vec2(0.5)), Vignetting);
+    Out_Color *= VignetteCoeff;
     
     vec4 Mask = vec4(0.);
     float P = (uv.x*GridW + floor(uv.y * GridH)) * 3.14159;

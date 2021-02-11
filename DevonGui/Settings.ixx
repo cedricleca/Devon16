@@ -229,6 +229,8 @@ namespace Settings
 			}
 			while(line != 0);
 		}
-	}
 
+		if(ROMFileName.length() == 0)
+			ROMFileName = ".\\ROM.dro";
+	}
 };
