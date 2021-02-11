@@ -125,6 +125,7 @@
       <AdditionalDependencies>opengl32.lib;glfw3.lib;dsound.lib;%(AdditionalDependencies);DevonASMLib64D.lib;Devon64D.lib</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
       <AdditionalLibraryDirectories>..\imgui\examples\libs\glfw\lib-vc2010-64;</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>MSVCRT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
