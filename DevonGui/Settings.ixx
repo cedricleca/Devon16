@@ -128,24 +128,40 @@ namespace Settings
 		SavingIniFile = false;
 	}
 
+	export void LockSettings(bool bLock)
+	{
+		if(bLock)
+			SaveIniMutex.lock();
+		else
+			SaveIniMutex.unlock();
+	}
+
 	export void SaveIniSettings()
 	{
+		SaveIniMutex.lock();
 		if(Current == OldSettings
 		   && Old_CartridgeFileName == CartridgeFileName
 		   && Old_DASFileName == DASFileName
 		   && Old_ROMFileName == ROMFileName
 		   )
+		{
+			SaveIniMutex.unlock();
 			return;
+		}
+
+		SaveIniMutex.unlock();
 
 		SaveIniFileRequest = true;
 
 		if(SavingIniFile)
 			return;
 
+		SaveIniMutex.lock();
 		OldSettings = Current;
 		Old_CartridgeFileName = CartridgeFileName;
 		Old_DASFileName = DASFileName;
 		Old_ROMFileName = ROMFileName;
+		SaveIniMutex.unlock();
 
 		std::thread WorkThread(SaveIniFileThreadFunc);
 		WorkThread.detach();

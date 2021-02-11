@@ -89,9 +89,6 @@ static unsigned char * Cartridge = nullptr;
 static long CartridgeSize = 0;
 static bool AssemblySuccess = false;
 static bool AssemblyDone = false;
-static float Volume = 0.5f;
-static float CRTRoundness = 0.15f;
-static float CRTScanline = 0.05f;
 
 static DevonMachine Machine;
 
@@ -730,6 +727,8 @@ int main(int argn, char**arg)
 
 				if (ImGui::BeginMenu("View"))
 				{
+					Settings::LockSettings(true);
+
 					if (ImGui::MenuItem(".das Editor", "", Show_TextEditor_Window))
 						Show_TextEditor_Window = !Show_TextEditor_Window;
 
@@ -774,6 +773,8 @@ int main(int argn, char**arg)
 						Teditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
 						CRTShaderEditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
 					}
+
+					Settings::LockSettings(false);
 
 					ImGui::EndMenu();
 				}
@@ -839,9 +840,11 @@ int main(int argn, char**arg)
 
 			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed('8', false))
 			{
+				Settings::LockSettings(true);
 				Settings::Current.bShowWhiteSpaces = !Settings::Current.bShowWhiteSpaces;
 				Teditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
 				CRTShaderEditor.SetShowWhitespaces(Settings::Current.bShowWhiteSpaces);
+				Settings::LockSettings(false);
 			}
 
 			if (Show_SymbolList_Window && AssemblySuccess)
@@ -870,7 +873,8 @@ int main(int argn, char**arg)
 				ImGui::End();
 			}
 
-			ImGui::SliderFloat("Sound Volume", &Volume, 0.0f, 1.0f, "%.2f");
+			Settings::LockSettings(true);
+			ImGui::SliderFloat("Sound Volume",		&Settings::Current.Volume, 0.0f, 1.0f, "%.2f");
 			ImGui::Text("CRT effect:");
 			ImGui::SliderFloat("Scanline",			&Settings::Current.Scanline, 0.f, 1.f);
 			ImGui::SliderFloat("Roundness",			&Settings::Current.Roundness, 0.f, 1.f);
@@ -884,6 +888,7 @@ int main(int argn, char**arg)
 			ImGui::SliderFloat("ChromaAmount",		&Settings::Current.ChromaAmount, 0.0f, 1.f);
 			ImGui::SliderFloat("BloomAmount",		&Settings::Current.BloomAmount, 0.0f, 1.f);
 			ImGui::SliderFloat("BloomRadius",		&Settings::Current.BloomRadius, 1.f, 100.f);
+			Settings::LockSettings(false);
 
 			if (!PicToolWindow.Show && ImGui::Button("Image Tool"))
 				LaunchImageTool();
@@ -897,7 +902,11 @@ int main(int argn, char**arg)
 				TextEditor::EditorWindow(Teditor, Settings::DASFileName, &Show_TextEditor_Window);
 
 			if(Settings::Current.Show_CRTShaderEditor_Window)
+			{
+				Settings::LockSettings(true);
 				TextEditor::EditorWindow(CRTShaderEditor, "CRT Shader (F5 to compile)", &Settings::Current.Show_CRTShaderEditor_Window);
+				Settings::LockSettings(false);
+			}
 
 			if (CartridgeReadyToPlugin)
 			{
