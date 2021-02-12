@@ -15,11 +15,11 @@
     <Filter Include="pcx">
       <UniqueIdentifier>{4aa31675-f288-40ad-b27c-3938d371c3f0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="gl">
+      <UniqueIdentifier>{458e8e16-b7f6-4d2e-87d1-8a566acad865}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="imgui_impl_dx11.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -28,12 +28,6 @@
     </ClCompile>
     <ClCompile Include="pcx\pcx.cpp">
       <Filter>pcx</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_impl_win32.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="DXTools.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DSountTools.cpp">
       <Filter>Source Files</Filter>
@@ -53,11 +47,23 @@
     <ClCompile Include="..\imgui\imgui_widgets.cpp">
       <Filter>Imgui</Filter>
     </ClCompile>
+    <ClCompile Include="..\imgui\examples\libs\gl3w\GL\gl3w.c">
+      <Filter>gl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>Imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="GLTools.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Settings.ixx">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="imgui_impl_dx11.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="MemoryEditor.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -79,12 +85,6 @@
     <ClInclude Include="resource1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="imgui_impl_win32.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DXTools.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="DSoundTools.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -93,6 +93,12 @@
     </ClInclude>
     <ClInclude Include="..\imgui\imgui_internal.h">
       <Filter>Imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\examples\libs\gl3w\GL\gl3w.h">
+      <Filter>gl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\examples\libs\gl3w\GL\glcorearb.h">
+      <Filter>gl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

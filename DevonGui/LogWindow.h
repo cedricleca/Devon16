@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../imgui/imgui.h"
+
 struct LogWindow
 {
     ImGuiTextBuffer     Buf;

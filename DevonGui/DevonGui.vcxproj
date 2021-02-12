@@ -49,7 +49,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -97,12 +97,16 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>..\imgui\backends;..\imgui\examples\libs\glfw\include;..\imgui\examples\libs\gl3w;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dsound.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);DevonASMLibD.lib;DevonD.lib</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;dsound.lib;%(AdditionalDependencies);DevonASMLibD.lib;DevonD.lib</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <AdditionalLibraryDirectories>..\imgui\examples\libs\glfw\lib-vc2010-32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>MSVCRT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -112,12 +116,16 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>..\imgui\backends;..\imgui\examples\libs\glfw\include;..\imgui\examples\libs\gl3w;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>dsound.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);DevonASMLib64D.lib;Devon64D.lib</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;dsound.lib;%(AdditionalDependencies);DevonASMLib64D.lib;Devon64D.lib</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <AdditionalLibraryDirectories>..\imgui\examples\libs\glfw\lib-vc2010-64;</AdditionalLibraryDirectories>
+      <IgnoreSpecificDefaultLibraries>MSVCRT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -130,28 +138,32 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>..\imgui\backends;..\imgui\examples\libs\glfw\include;..\imgui\examples\libs\gl3w;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>dsound.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);DevonASMLib.lib;Devon.lib</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;dsound.lib;%(AdditionalDependencies);DevonASMLib.lib;Devon.lib</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <AdditionalLibraryDirectories>..\imgui\examples\libs\glfw\lib-vc2010-32;</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
-      <Optimization>Full</Optimization>
+      <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <AdditionalIncludeDirectories>..\imgui\backends;..\imgui\examples\libs\glfw\include;..\imgui\examples\libs\gl3w;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,31 +171,33 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
-      <AdditionalDependencies>dsound.lib;d3d11.lib;d3dcompiler.lib;dxgi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies);DevonASMLib64.lib;Devon64.lib</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;dsound.lib;%(AdditionalDependencies);DevonASMLib64.lib;Devon64.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\imgui\examples\libs\glfw\lib-vc2010-64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\imgui\backends\imgui_impl_glfw.cpp" />
+    <ClCompile Include="..\imgui\backends\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="..\imgui\examples\libs\gl3w\GL\gl3w.c" />
     <ClCompile Include="..\imgui\imgui.cpp" />
     <ClCompile Include="..\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
     <ClCompile Include="DSountTools.cpp" />
-    <ClCompile Include="DXTools.cpp" />
-    <ClCompile Include="imgui_impl_dx11.cpp" />
-    <ClCompile Include="imgui_impl_win32.cpp" />
+    <ClCompile Include="GLTools.ixx" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pcx\pcx.cpp" />
+    <ClCompile Include="Settings.ixx" />
     <ClCompile Include="TextEditor.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\imgui\examples\libs\gl3w\GL\gl3w.h" />
+    <ClInclude Include="..\imgui\examples\libs\gl3w\GL\glcorearb.h" />
     <ClInclude Include="..\imgui\imgui.h" />
     <ClInclude Include="..\imgui\imgui_internal.h" />
     <ClInclude Include="DisassemblyWindow.h" />
     <ClInclude Include="DSoundTools.h" />
-    <ClInclude Include="DXTools.h" />
-    <ClInclude Include="imgui_impl_dx11.h" />
-    <ClInclude Include="imgui_impl_win32.h" />
     <ClInclude Include="LogWindow.h" />
     <ClInclude Include="MemoryEditor.h" />
     <ClInclude Include="pcx\pcx.h" />
