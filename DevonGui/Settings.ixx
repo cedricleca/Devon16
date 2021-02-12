@@ -8,6 +8,12 @@ module;
 #include <optional>
 #include <cstring>
 
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
+
 export module Settings;
 
 namespace Settings
@@ -121,7 +127,7 @@ namespace Settings
 				fclose(f);
 			}
 
-//			Sleep(1000);
+			Sleep(500);
 		}
 		while(SaveIniFileRequest);
 
