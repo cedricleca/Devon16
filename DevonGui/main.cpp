@@ -6,11 +6,8 @@
 #include "backends/imgui_impl_glfw.h"
 #include "backends/imgui_impl_opengl3.h"
 
-//#include "imgui_impl_win32.h"
-//#include "imgui_impl_dx11.h"
 #include <dsound.h>
 #define DIRECTINPUT_VERSION 0x0800
-#include <dinput.h>
 
 #include <math.h>
 #include <tchar.h>
@@ -502,7 +499,9 @@ int main(int argn, char**arg)
 			H = VideoMode->height;
 		}
 	}
-	GLFWwindow* window = glfwCreateWindow(W, H, "Devon16 (gl)", Monitor, nullptr);
+
+	char WinTitle[] = "Devon16 (gl)";
+	GLFWwindow* window = glfwCreateWindow(W, H, WinTitle, Monitor, nullptr);
 	if (window == nullptr)
 		return 1;
 
@@ -537,7 +536,8 @@ int main(int argn, char**arg)
 	auto lang = TextEditor::LanguageDefinition::DevonASM();
 	Teditor.SetLanguageDefinition(lang);
 
-//	DSoundTools::Init(hwnd, Machine);
+	if(auto hwndFound = FindWindow(NULL, WinTitle))
+		DSoundTools::Init(hwndFound, Machine);
 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
@@ -948,7 +948,7 @@ int main(int argn, char**arg)
 		Machine.KeyB.PushKeyEvents();
 		Machine.TickFrame();
 
-//		DSoundTools::Render(Machine, Volume);
+		DSoundTools::Render(Machine, Settings::Current.Volume);
 		
 		GLTools::SetupPostProcessRenderStates();
 		GLTools::UpdatePrimaryTexture();
@@ -988,7 +988,7 @@ int main(int argn, char**arg)
 	WorkThreadQuit = true;
 	WorkThread.join();
 
-//	DSoundTools::Release();
+	DSoundTools::Release();
 
 	// Cleanup
 	ImGui_ImplOpenGL3_Shutdown();
