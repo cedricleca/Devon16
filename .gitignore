@@ -47,5 +47,6 @@ x64/Debug/*
 *.db
 *.ini
 *.user
+*.dca
 DevonGui/imgui.ini
 DevonGui/DevonGui.ini
