@@ -3,7 +3,7 @@ include "ControlRegisters.das"
 
 org $0x20000
 
-	define	Var1 0x85000
+define	Var1 0x85000
 
 	mov		#!2, r0
 	mov.w	r0, $Cort_BPL0_HStart
@@ -55,39 +55,19 @@ org $0x20000
 ;	mov		#117250, r0
 ;	mov		r0, $JKev_R_A_OSC1_OSCSTEP_HI
 ;	mov		r0, $JKev_L_A_OSC1_OSCSTEP_HI
-;	mov		#159, r0
+;	mov		#0x0ff, r0
 ;	mov.w	r0, $JKev_R_A_OSC0_WAVEAMPLITUDE
 ;	mov.w	r0, $JKev_L_A_OSC0_WAVEAMPLITUDE
-;	mov		#287, r0
+;	mov		#0x0a8, r0
 ;	mov.w	r0, $JKev_R_A_OSC1_WAVEAMPLITUDE
 ;	mov.w	r0, $JKev_L_A_OSC1_WAVEAMPLITUDE
-;	mov		#!0, r0
+;	mov		#0x50, r0
 ;	mov.w	r0, $JKev_R_A_PREMODOFFSET
 ;	mov.w	r0, $JKev_L_A_PREMODOFFSET
-;	mov		#6, r0
-;	mov.w	r0, $JKev_R_A_SMOOTH
-;	mov.w	r0, $JKev_L_A_SMOOTH
+;	mov		#0x0010, r0
+;	mov.w	r0, $JKev_R_A_FILTER
+;	mov.w	r0, $JKev_L_A_FILTER
 
-;	mov		#117293, r0
-;	mov		r0, $JKev_R_B_OSC0_OSCSTEP_HI
-;	mov		r0, $JKev_L_B_OSC0_OSCSTEP_HI
-;	mov		#117280, r0
-;	mov		r0, $JKev_R_B_OSC1_OSCSTEP_HI
-;	mov		r0, $JKev_L_B_OSC1_OSCSTEP_HI
-;	mov		#127, r0
-;	mov.w	r0, $JKev_R_B_OSC0_WAVEAMPLITUDE
-;	mov.w	r0, $JKev_L_B_OSC0_WAVEAMPLITUDE
-;	mov		#127, r0
-;	and		#0xff, r0
-;	or		#0x100, r0
-;	mov.w	r0, $JKev_R_B_OSC1_WAVEAMPLITUDE
-;	mov.w	r0, $JKev_L_B_OSC1_WAVEAMPLITUDE
-;	mov		#!0, r0
-;	mov.w	r0, $JKev_R_B_PREMODOFFSET
-;	mov.w	r0, $JKev_L_B_PREMODOFFSET
-;	mov		#0, r0
-;	mov.w	r0, $JKev_R_B_SMOOTH
-;	mov.w	r0, $JKev_L_B_SMOOTH
 stop:
 	bra	#!stop
 	

@@ -41,13 +41,30 @@ class JKevChip
 		uLONG CurOffset;
 	};
 
+	union FilterReg
+	{
+		uWORD uw;
+		struct {uWORD Freq:8, Reso:8;} flags;
+	};
+
 	struct ChannelControl
 	{
-		sLONG Hold;
 		sWORD Out;
-		sWORD Smooth;
+		FilterReg Filter;
 		sWORD PreModOffset;
 		OscillatorControl Oscillator[2];
+
+		// filter stuff
+		float az1 = 0.f;
+		float az2 = 0.f;
+		float az3 = 0.f;
+		float az4 = 0.f;
+		float az5 = 0.f;
+		float ay1 = 0.f;
+		float ay2 = 0.f;
+		float ay3 = 0.f;
+		float ay4 = 0.f;
+		float amf = 0.f;
 	};
 
 	ChannelControl Channel[JKevChannelNr];
@@ -73,74 +90,85 @@ public:
 		if(RenderTimer >= 0.0f)
 			return;
 
-		for(int i = 0; i < JKevChannelNr; i++)
-		{
-			for(int j = 0; j < 2; j++)
-				Channel[i].Oscillator[j].CurOffset += Channel[i].Oscillator[j].OscStep.l * UnrenderedCount;
-		}
+		for(auto & Chan : Channel)
+			for(auto & Osc : Chan.Oscillator)
+				Osc.CurOffset += Osc.OscStep.l * UnrenderedCount;
 
 		UnrenderedCount = 0;
 		RenderTimer += JKevRenderPeriod;
 
-		for(int i = 0; i < JKevChannelNr; i++)
+		for(auto & Chan : Channel)
 		{
-			float OscOut[2];
-			for(int j = 0; j < 2; j++)
+			auto WaveForm = [](const OscillatorControl & OscControl) -> float
 			{
-				switch(Channel[i].Oscillator[j].WaveAmplitude.flags.Waveform)
+				float Amp = (float(OscControl.WaveAmplitude.flags.Amplitude) - 128.f) / 128.f;
+
+				switch(OscControl.WaveAmplitude.flags.Waveform)
 				{
-				case 0:	
-					OscOut[j] = (Channel[i].Oscillator[j].CurOffset > (0xFFFFffff>>1)) ? 127.0f : -128.0f;	
-					break;
-				case 1:	
-					OscOut[j] = float(Channel[i].Oscillator[j].CurOffset>>24) - 128.0f;					
-					break;
-				case 2:	
-					if(Channel[i].Oscillator[j].CurOffset > (0xFFFFffff>>1))
-						OscOut[j] = float(Channel[i].Oscillator[j].CurOffset>>23) - 384.0f;
+				case 1:		return Amp * (float(OscControl.CurOffset>>24) - 128.0f);
+				case 2:
+					if(OscControl.CurOffset > (0xFFFFffff>>1))
+						return Amp * (float(OscControl.CurOffset>>23) - 384.0f);
 					else
-						OscOut[j] = -float(Channel[i].Oscillator[j].CurOffset>>23) + 127.0f;
-					break;
-				case 3:	
-					OscOut[j] = float(std::rand() & 0xff) - 128.0f;					
-					break;
+						return Amp * (-float(OscControl.CurOffset>>23) + 127.0f);
+				case 3:		return Amp * (float(std::rand() & 0xff) - 128.0f);
+				default:	return Amp * ((OscControl.CurOffset > (0xFFFFffff>>1)) ? 127.0f : -128.0f);	
 				}
+			};
 
-				unsigned char Amplitude = Channel[i].Oscillator[j].WaveAmplitude.flags.Amplitude;
-				OscOut[j] *= float(*((char*)&Amplitude)) / 127.0f;
-			}
-
-			float out = Channel[i].PreModOffset + OscOut[1];
-			if(out > 127.0f)		out = 127.0f;
-			else if(out < -128.0f)	out = -128.0f;
-			out *= OscOut[0] * 512.0f;
-
-			float Smooth = 2.0f * float(Channel[i].Smooth);
-			float Hold = float(Channel[i].Hold);
-			Hold = (out + Hold * Smooth) / (Smooth + 1.0f);
-			Channel[i].Hold = int(Hold);
-			Channel[i].Out = Channel[i].Hold>>16;
-
-			/*
-			Channel[i].Hold = (Channel[i].Hold << Channel[i].Smooth) - Channel[i].Hold;
-			Channel[i].Hold += int(out * 65536.0f);
-			Channel[i].Hold >>= Channel[i].Smooth;
-			Channel[i].Out = Channel[i].Hold>>16;
-			*/
+			const float W0 = WaveForm(Chan.Oscillator[0]);
+			const float W1 = WaveForm(Chan.Oscillator[1]);
+			const float out = std::clamp(Chan.PreModOffset + W1, -128.f, 127.f) * W0 / 256.f; // 8b range
+			Chan.Out = sWORD(128.f * ResoFilter(Chan, out / 128.f, float(Chan.Filter.flags.Freq) / 256.f, float(Chan.Filter.flags.Reso) / 255.f));
 		}
 
 		if(OutputBuffer)
 		{
-			int outR = Channel[0].Out + Channel[1].Out;
-			if(outR > 127)				Push(127);
-			else if(outR < -128)		Push(-128);
-			else						Push(outR);
-
-			int outL = Channel[2].Out + Channel[3].Out;
-			if(outL > 127)				Push(127);
-			else if(outL < -128)		Push(-128);
-			else						Push(outL);
+			Push(std::clamp(Channel[0].Out + Channel[1].Out, -128, 127)); // R
+			Push(std::clamp(Channel[2].Out + Channel[3].Out, -128, 127)); // L
 		}
+	}
+
+	float ResoFilter(ChannelControl & Chan, float Input, float Cutoff, float Resonance) 
+	{
+		// filter based on the text "Non linear digital implementation of the moog ladder filter" by Antti Houvilainen
+		// adopted from Csound code at http://www.kunstmusik.com/udo/cache/moogladder.udo
+
+		// resonance [0..1]
+		// cutoff from 0 (0Hz) to 1 (nyquist)
+
+		const float v2 = 40000.f;   // twice the 'thermal voltage of a transistor'
+		static const float sr = 22050.f;
+		const float cutoff_hz = Cutoff * sr;
+		const float kfc = cutoff_hz / sr; // sr is half the actual filter sampling rate
+		const float kf = .5f * kfc;
+		
+		// frequency & amplitude correction
+		const float kfcr = 1.8730f*kfc*kfc*kfc + 0.4955f*kfc*kfc - 0.6490f*kfc + 0.9988f;
+		const float kacr = -3.9364f*kfc*kfc    + 1.8409f*kfc       + 0.9968f;
+		const float k2vg = v2*(1.f-expf(-2.0f * 3.1415926535f * kfcr * kf)); // filter tuning
+
+		// cascade of 4 1st order sections
+		auto F = [k2vg, v2](float & ay, float & az, float t)
+		{
+			ay  = az + k2vg * (tanhf(t/v2) - tanhf(az/v2));
+			az  = ay;
+		};
+
+		auto Pass = [&]()
+		{
+			F(Chan.ay1, Chan.az1, Input - 4.f*Resonance*Chan.amf*kacr);
+			F(Chan.ay2, Chan.az2, Chan.ay1);
+			F(Chan.ay3, Chan.az3, Chan.ay2);
+			F(Chan.ay4, Chan.az4, Chan.ay3);
+			Chan.amf  = (Chan.ay4 + Chan.az5)*0.5f; // 1/2-sample delay for phase compensation
+			Chan.az5  = Chan.ay4;
+		};
+
+		Pass();
+		Pass();
+
+		return Chan.amf;
 	}
 
 	void SetOutputSurface(char * _OutputBuffer, int Size)
@@ -179,9 +207,9 @@ public:
 		for(int i = 0; i < JKevChannelNr; i++)
 		{
 			Channel[i].Out = 0;
-			Channel[i].Hold = 0;
 			Channel[i].PreModOffset = 0;
-			Channel[i].Smooth = 0;
+			Channel[i].Filter.flags.Freq = 255;
+			Channel[i].Filter.flags.Reso = 0;
 
 			for(int j = 0; j < 2; j++)
 			{

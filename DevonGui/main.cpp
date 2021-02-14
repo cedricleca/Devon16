@@ -536,7 +536,7 @@ int main(int argn, char**arg)
 	auto lang = TextEditor::LanguageDefinition::DevonASM();
 	Teditor.SetLanguageDefinition(lang);
 
-	if(auto hwndFound = FindWindow(NULL, WinTitle))
+	if(auto hwndFound = FindWindow(nullptr, WinTitle))
 		DSoundTools::Init(hwndFound, Machine);
 
 	// Setup Dear ImGui context
@@ -583,8 +583,10 @@ int main(int argn, char**arg)
 
 	Settings::LoadIniSettings();
 
-	CRTShaderEditor.SetText(Settings::ReadTxtFile("CRTShader.glsl").value());
-	Teditor.SetText(Settings::ReadTxtFile(Settings::DASFileName.c_str()).value());
+	if(auto txt = Settings::ReadTxtFile("CRTShader.glsl"))
+		CRTShaderEditor.SetText(txt.value());
+	if(auto txt = Settings::ReadTxtFile(Settings::DASFileName.c_str()))
+		Teditor.SetText(txt.value());
 
 	GLTools::GlVersion();
 
@@ -642,7 +644,9 @@ int main(int argn, char**arg)
 				{
 					if (ImGui::MenuItem("New .das", ""))
 					{
+						Settings::Lock(true);
 						Settings::DASFileName = "";
+						Settings::Lock(false);
 						Teditor.SetText("");
 					}
 					if (ImGui::MenuItem("Open .das...", "", false, !IsWorkThreadBusy()))
@@ -838,7 +842,10 @@ int main(int argn, char**arg)
 			}
 
 			if (!Settings::DASFileName.empty() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(GLFW_KEY_F7, false))
+			{
+				SaveDASFile(Teditor);
 				StartCompileThread = true;
+			}
 
 			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed('S', false))
 			{

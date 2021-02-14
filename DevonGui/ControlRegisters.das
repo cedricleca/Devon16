@@ -10,7 +10,7 @@ define JKev_R_A_OSC1_OSCSTEP_LOW		0x11004
 define JKev_R_A_OSC1_WAVEAMPLITUDE		0x11005
 define JKev_R_A_PREMODOFFSET			0x11006	
 define JKev_R_A_OUT						0x11007	
-define JKev_R_A_SMOOTH					0x11008	
+define JKev_R_A_FILTER					0x11008	
 define JKev_R_B_OSC0_OSCSTEP_HI			0x11009
 define JKev_R_B_OSC0_OSCSTEP_LOW		0x1100A
 define JKev_R_B_OSC0_WAVEAMPLITUDE		0x1100B
@@ -19,7 +19,7 @@ define JKev_R_B_OSC1_OSCSTEP_LOW		0x1100D
 define JKev_R_B_OSC1_WAVEAMPLITUDE		0x1100E
 define JKev_R_B_PREMODOFFSET			0x1100F	
 define JKev_R_B_OUT						0x11010	
-define JKev_R_B_SMOOTH					0x11011	
+define JKev_R_B_FILTER					0x11011	
 define JKev_L_A_OSC0_OSCSTEP_HI			0x11012
 define JKev_L_A_OSC0_OSCSTEP_LOW		0x11013
 define JKev_L_A_OSC0_WAVEAMPLITUDE		0x11014
@@ -28,7 +28,7 @@ define JKev_L_A_OSC1_OSCSTEP_LOW		0x11016
 define JKev_L_A_OSC1_WAVEAMPLITUDE		0x11017
 define JKev_L_A_PREMODOFFSET			0x11018	
 define JKev_L_A_OUT						0x11019	
-define JKev_L_A_SMOOTH					0x1101A	
+define JKev_L_A_FILTER					0x1101A	
 define JKev_L_B_OSC0_OSCSTEP_HI			0x1101B
 define JKev_L_B_OSC0_OSCSTEP_LOW		0x1101C
 define JKev_L_B_OSC0_WAVEAMPLITUDE		0x1101D
@@ -37,7 +37,7 @@ define JKev_L_B_OSC1_OSCSTEP_LOW		0x1101F
 define JKev_L_B_OSC1_WAVEAMPLITUDE		0x11020
 define JKev_L_B_PREMODOFFSET			0x11021		
 define JKev_L_B_OUT						0x11022		
-define JKev_L_B_SMOOTH					0x11023		
+define JKev_L_B_FILTER					0x11023		
 
 define Cort_H 					0x12000	
 define Cort_V 					0x12001	
