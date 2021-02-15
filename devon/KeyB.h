@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "devon.h"
 #include "imgui.h"
 
@@ -23,39 +24,8 @@ class KeyBChip
 	uWORD PushEventIndex;
 	uWORD PopEventIndex;
 	KeybType KeybType = KeybType::QWERTY;
+	std::vector<int> AlreadyPressed;
 
-	int TranslateKey(int key)
-	{
-		switch(key)
-		{
-		case VK_OEM_1     :		return ';';
-		case VK_OEM_PLUS  :		return '=';
-		case VK_OEM_COMMA :		return ',';
-		case VK_OEM_MINUS :		return '-';
-		case VK_OEM_PERIOD:		return '.';
-		case VK_OEM_2     :		return '/';
-		case VK_OEM_3     :		return '`';
-		case VK_OEM_4     :		return '[';
-		case VK_OEM_5     :		return '\\';
-		case VK_OEM_6     :		return ']';
-//		case VK_OEM_7     :		return '\'';
-		default:				return key;
-		}
-	}
-
-	void PushEvent(int key, uWORD Toggles)
-	{
-		if(ImGui::IsKeyPressed(key, false))
-		{
-			KeyEvents[PushEventIndex] = Toggles | (TranslateKey(key) & 0xff);
-			PushEventIndex = (PushEventIndex + 1) % EventBufSize;
-		}
-		else if(ImGui::IsKeyReleased(key))
-		{
-			KeyEvents[PushEventIndex] = 0x8000 | Toggles | (TranslateKey(key) & 0xff);
-			PushEventIndex = (PushEventIndex + 1) % EventBufSize;
-		}
-	}
 
 public:
 	KeyBChip()
@@ -100,6 +70,48 @@ public:
 
 	void PushKeyEvents()
 	{
+		auto PushEvent = [this](int key, uWORD Toggles)
+		{
+			auto TranslateKey = [](int key) -> int
+			{
+				switch(key)
+				{
+				case VK_OEM_1     :		return ';';
+				case VK_OEM_PLUS  :		return '=';
+				case VK_OEM_COMMA :		return ',';
+				case VK_OEM_MINUS :		return '-';
+				case VK_OEM_PERIOD:		return '.';
+				case VK_OEM_2     :		return '/';
+				case VK_OEM_3     :		return '`';
+				case VK_OEM_4     :		return '[';
+				case VK_OEM_5     :		return '\\';
+				case VK_OEM_6     :		return ']';
+		//		case VK_OEM_7     :		return '\'';
+				default:				return key;
+				}
+			};
+
+			auto result = std::find(std::begin(AlreadyPressed), std::end(AlreadyPressed), key);
+			if(GetKeyState(key) < 0)
+			{
+				if(result == std::end(AlreadyPressed))
+				{
+					KeyEvents[PushEventIndex] = Toggles | (TranslateKey(key) & 0xff);
+					PushEventIndex = (PushEventIndex + 1) % EventBufSize;
+					AlreadyPressed.push_back(key);
+				}
+			}
+			else
+			{
+				if(result != std::end(AlreadyPressed))
+				{
+					KeyEvents[PushEventIndex] = 0x8000 | Toggles | (TranslateKey(key) & 0xff);
+					PushEventIndex = (PushEventIndex + 1) % EventBufSize;
+					AlreadyPressed.erase(result);
+				}
+			}
+		};
+
 		uWORD Toggles = ((GetKeyState(VK_CAPITAL) & 1)<<8)
 				| ((GetKeyState(VK_NUMLOCK) & 1)<<9)
 				| ((GetKeyState(VK_SCROLL) & 1)<<10)
