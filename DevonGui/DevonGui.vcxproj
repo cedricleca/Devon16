@@ -184,11 +184,11 @@
     <ClCompile Include="..\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="DSountTools.cpp" />
     <ClCompile Include="GLTools.ixx" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="pcx\pcx.cpp" />
     <ClCompile Include="Settings.ixx" />
+    <ClCompile Include="SoundTools.ixx" />
     <ClCompile Include="TextEditor.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -197,7 +197,6 @@
     <ClInclude Include="..\imgui\imgui.h" />
     <ClInclude Include="..\imgui\imgui_internal.h" />
     <ClInclude Include="DisassemblyWindow.h" />
-    <ClInclude Include="DSoundTools.h" />
     <ClInclude Include="LogWindow.h" />
     <ClInclude Include="MemoryEditor.h" />
     <ClInclude Include="pcx\pcx.h" />

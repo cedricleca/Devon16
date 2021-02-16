@@ -24,10 +24,10 @@
 #include "LogWindow.h"
 #include "TextEditor.h"
 #include "PictureToolWindow.h"
-#include "DSoundTools.h"
 #include <fstream>
 #include <streambuf>
 
+import SoundTools;
 import GLTools;
 import Settings;
 
