@@ -62,6 +62,9 @@
     <ClCompile Include="SoundTools.ixx">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ImFileDialog.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MemoryEditor.h">
@@ -96,6 +99,9 @@
     </ClInclude>
     <ClInclude Include="..\imgui\examples\libs\gl3w\GL\glcorearb.h">
       <Filter>gl</Filter>
+    </ClInclude>
+    <ClInclude Include="ImFileDialog.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

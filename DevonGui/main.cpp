@@ -26,6 +26,7 @@
 #include "PictureToolWindow.h"
 #include <fstream>
 #include <streambuf>
+#include "imFileDialog.h"
 
 import SoundTools;
 import GLTools;
@@ -184,32 +185,6 @@ void PlugROM(unsigned char * ROM, long ROMSize, LogWindow & Log)
 	}
 }
 
-std::atomic<bool> DASLoadDone = false;
-void SetDASFile()
-{
-	char filename[ MAX_PATH ];
-	OPENFILENAMEA ofn;
-	ZeroMemory( &filename, sizeof( filename ) );
-	ZeroMemory( &ofn,      sizeof( ofn ) );
-	ofn.lStructSize  = sizeof( ofn );
-	ofn.hwndOwner    = nullptr;  // If you have a window to center over, put its HANDLE here
-	ofn.lpstrFilter  = "Devon Asm Files\0*.das\0Any File\0*.*\0";
-	ofn.lpstrFile    = filename;
-	ofn.nMaxFile     = MAX_PATH;
-	ofn.lpstrTitle   = "Select a File";
-	ofn.Flags        = OFN_DONTADDTORECENT | OFN_FILEMUSTEXIST;
-  
-	if (GetOpenFileNameA( &ofn ))
-	{
-		Settings::Lock(true);
-		Settings::DASFileName = filename;
-		Settings::Lock(false);
-
-		AssemblyDone = false;
-		DASLoadDone = true;
-	}
-}
-
 void SetROMFile(LogWindow & LogWindow)
 {
 	char filename[ MAX_PATH ];
@@ -345,26 +320,7 @@ void ExportROM(LogWindow & LogWindow)
 void SaveDASFile(TextEditor & Teditor, bool bForceDialog=false)
 {
 	if(Settings::DASFileName.empty() || bForceDialog)
-	{
-		char filename[ MAX_PATH ];
-		OPENFILENAMEA ofn;
-		ZeroMemory( &filename, sizeof( filename ) );
-		ZeroMemory( &ofn,      sizeof( ofn ) );
-		ofn.lStructSize  = sizeof( ofn );
-		ofn.hwndOwner    = nullptr;  // If you have a window to center over, put its HANDLE here
-		ofn.lpstrFilter  = "Devon ASM Files (.das)\0*.das\0Any File\0*.*\0";
-		ofn.lpstrFile    = filename;
-		ofn.nMaxFile     = MAX_PATH;
-		ofn.lpstrTitle   = "Select a File";
-		ofn.Flags        = OFN_DONTADDTORECENT;
-  
-		if (GetSaveFileNameA( &ofn ))
-		{
-			Settings::Lock(true);
-			Settings::DASFileName = filename;
-			Settings::Lock(false);
-		}
-	}
+		ifd::FileDialog::Instance().Save("SaveDasDialog", "Save a Devon ASM Source file", "DAS file (*.das){.das},.*");
 
 	if(!Settings::DASFileName.empty())
 		Teditor.SaveText(Settings::DASFileName);
@@ -433,8 +389,7 @@ void LaunchImageTool()
 }
 
 std::atomic<bool> StartCompileThread = false;
-std::atomic<bool> StartOpenDASThread = false;
-bool IsWorkThreadBusy() { return StartCompileThread || StartOpenDASThread; }
+bool IsWorkThreadBusy() { return StartCompileThread; }
 std::atomic<bool> WorkThreadQuit = false;
 void WorkThreadFunc(LogWindow* _LogWindow)
 {
@@ -445,12 +400,6 @@ void WorkThreadFunc(LogWindow* _LogWindow)
 		{
 			AssembleAndExport(*_LogWindow);
 			StartCompileThread = false;
-		}
-
-		if (StartOpenDASThread)
-		{
-			SetDASFile();
-			StartOpenDASThread = false;
 		}
 	}
 }
@@ -500,7 +449,7 @@ int main(int argn, char**arg)
 		}
 	}
 
-	char WinTitle[] = "Devon16 (gl)";
+	char WinTitle[] = "Devon16 (F11 to switch UI)";
 	GLFWwindow* window = glfwCreateWindow(W, H, WinTitle, Monitor, nullptr);
 	if (window == nullptr)
 		return 1;
@@ -547,6 +496,30 @@ int main(int argn, char**arg)
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init(glsl_version);
+
+	// ImFileDialog requires you to set the CreateTexture and DeleteTexture
+	ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* 
+	{
+		GLuint tex;
+
+		glGenTextures(1, &tex);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, (fmt == 0) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		return (void*)tex;
+	};
+	
+	ifd::FileDialog::Instance().DeleteTexture = [](void* tex) 
+	{
+		GLuint texID = (GLuint)((uintptr_t)tex);
+		glDeleteTextures(1, &texID);
+	};
 
 	ImGui::PushStyleColor(ImGuiCol_TitleBg,				ImColor(0xFF015AE3).Value);
 	ImGui::PushStyleColor(ImGuiCol_TitleBgActive,		ImColor(0xFF015AE3 + 0x00111111).Value);
@@ -624,6 +597,13 @@ int main(int argn, char**arg)
 
 	std::thread WorkThread(WorkThreadFunc, &LogWindow);	
 
+	auto SetDASFileName = [](std::string && name) 
+	{
+		Settings::Lock(true);
+		Settings::DASFileName = name;
+		Settings::Lock(false);
+	};
+
 	bool bQuitRequest = false;
 	// Main loop
 	while(!glfwWindowShouldClose(window) && !bQuitRequest)
@@ -643,28 +623,15 @@ int main(int argn, char**arg)
 				if (ImGui::BeginMenu("File"))
 				{
 					if (ImGui::MenuItem("New .das", ""))
-					{
-						Settings::Lock(true);
-						Settings::DASFileName = "";
-						Settings::Lock(false);
-						Teditor.SetText("");
-					}
+						SetDASFileName("");
 					if (ImGui::MenuItem("Open .das...", "", false, !IsWorkThreadBusy()))
-					{
-						StartOpenDASThread = true;
-					}
+						ifd::FileDialog::Instance().Open("OpenDasDialog", "Open a Devon ASM Source file", "DAS file (*.das){.das},.*");
 					if (ImGui::MenuItem("Save .das", "Ctrl-S"))
-					{
 						SaveDASFile(Teditor);
-					}
 					if (ImGui::MenuItem("Save .das As...", ""))
-					{
 						SaveDASFile(Teditor, true);
-					}
 					if (ImGui::MenuItem("Quit", ""))
-					{
 						bQuitRequest = true;
-					}
 
 					ImGui::EndMenu();
 				}
@@ -910,6 +877,41 @@ int main(int argn, char**arg)
 
 			ImGui::End();
 
+			auto OnClosedFileDialog = [&](const char * label, const std::function<void( const std::wstring& )> & f)
+			{
+				if (ifd::FileDialog::Instance().IsDone("OpenDasDialog")) 
+				{
+					if (ifd::FileDialog::Instance().HasResult()) 
+						f(ifd::FileDialog::Instance().GetResult());
+
+					ifd::FileDialog::Instance().Close();
+				}
+			};
+
+			// Open DAS file dialog result
+			OnClosedFileDialog("OpenDasDialog", [&](const std::wstring & res)  
+			{
+				SetDASFileName({res.begin(), res.end()});
+				Show_SymbolList_Window = false;
+				AssemblyDone = false;
+
+				if(auto DASStr = Settings::ReadTxtFile(Settings::DASFileName.c_str()))
+				{
+					Teditor.SetText(DASStr.value());
+					Show_TextEditor_Window = true;
+				}
+			});
+
+
+			// Save DAS file dialog result
+			OnClosedFileDialog("SaveDasDialog", [&](const std::wstring & res)  
+			{
+				SetDASFileName({res.begin(), res.end()});
+				SaveDASFile(Teditor);
+				if(!Settings::DASFileName.empty())
+					Teditor.SaveText(Settings::DASFileName);
+			});
+
 			if (PicToolWindow.Show)
 				PicToolWindow.Draw("Image Tool");
 
@@ -927,18 +929,6 @@ int main(int argn, char**arg)
 			{
 				PlugCartridge(Cartridge, CartridgeSize, LogWindow);
 				CartridgeReadyToPlugin = false;
-			}
-
-			if (DASLoadDone)
-			{
-				Show_SymbolList_Window = false;
-
-				if(auto DASStr = Settings::ReadTxtFile(Settings::DASFileName.c_str()))
-				{
-					Teditor.SetText(DASStr.value());
-					Show_TextEditor_Window = true;
-				}
-				DASLoadDone = false;
 			}
 		}
 
