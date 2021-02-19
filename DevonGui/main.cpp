@@ -597,7 +597,7 @@ int main(int argn, char**arg)
 
 	std::thread WorkThread(WorkThreadFunc, &LogWindow);	
 
-	auto SetDASFileName = [](std::string && name) 
+	auto SetDASFileName = [](const std::string & name) 
 	{
 		Settings::Lock(true);
 		Settings::DASFileName = name;
@@ -877,21 +877,21 @@ int main(int argn, char**arg)
 
 			ImGui::End();
 
-			auto OnClosedFileDialog = [&](const char * label, const std::function<void( const std::wstring& )> & f)
+			auto OnClosedFileDialog = [&](const char * label, const std::function<void( const std::string & )> & f)
 			{
-				if (ifd::FileDialog::Instance().IsDone("OpenDasDialog")) 
+				if (ifd::FileDialog::Instance().IsDone(label)) 
 				{
 					if (ifd::FileDialog::Instance().HasResult()) 
-						f(ifd::FileDialog::Instance().GetResult());
+						f(std::move(ifd::utf8_encode(ifd::FileDialog::Instance().GetResult())));
 
 					ifd::FileDialog::Instance().Close();
 				}
 			};
 
 			// Open DAS file dialog result
-			OnClosedFileDialog("OpenDasDialog", [&](const std::wstring & res)  
+			OnClosedFileDialog("OpenDasDialog", [&](const std::string & filename)  
 			{
-				SetDASFileName({res.begin(), res.end()});
+				SetDASFileName(filename);
 				Show_SymbolList_Window = false;
 				AssemblyDone = false;
 
@@ -904,9 +904,9 @@ int main(int argn, char**arg)
 
 
 			// Save DAS file dialog result
-			OnClosedFileDialog("SaveDasDialog", [&](const std::wstring & res)  
+			OnClosedFileDialog("SaveDasDialog", [&](const std::string & filename)  
 			{
-				SetDASFileName({res.begin(), res.end()});
+				SetDASFileName(filename);
 				SaveDASFile(Teditor);
 				if(!Settings::DASFileName.empty())
 					Teditor.SaveText(Settings::DASFileName);

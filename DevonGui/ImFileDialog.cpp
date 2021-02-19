@@ -28,7 +28,17 @@
 #define DEFAULT_ICON_SIZE 32
 #define PI 3.141592f
 
-namespace ifd {
+namespace ifd 
+{
+	std::string utf8_encode(const std::wstring &wstr)
+	{
+		if( wstr.empty() ) return std::string();
+		int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+		std::string strTo( size_needed, 0 );
+		WideCharToMultiByte                  (CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+		return strTo;
+	}
+
 	/* UI CONTROLS */
 	bool FolderNode(const char* label, ImTextureID icon, bool& clicked)
 	{
@@ -128,7 +138,7 @@ namespace ifd {
 				if (path[i] == '\\' || path[i] == '/') 
 				{
 					std::wstring section(path.substr(lastSplitLoc, i - lastSplitLoc));
-					std::string sectionStr(section.begin(), section.end());
+					std::string sectionStr(ifd::utf8_encode(section));
 					
 					totalWidth += ImGui::CalcTextSize(sectionStr.c_str()).x + style.FramePadding.x * 2.0f + GUI_ELEMENT_SIZE;
 					btnList.push_back(sectionStr);
@@ -139,7 +149,7 @@ namespace ifd {
 			}
 			if (!ret && path[path.size() - 1] != '\\' && path[path.size() - 1] != '/') {
 				std::wstring section = path.substr(lastSplitLoc);
-				std::string sectionStr(section.begin(), section.end());
+				std::string sectionStr(ifd::utf8_encode(section));
 
 				totalWidth += ImGui::CalcTextSize(sectionStr.c_str()).x + style.FramePadding.x * 2.0f;
 				btnList.push_back(sectionStr);
@@ -177,7 +187,7 @@ namespace ifd {
 
 			// click state
 			if (!anyOtherHC && clicked) {
-				strcpy(pathBuffer, std::string(path.begin(), path.end()).c_str());
+				strcpy(pathBuffer, ifd::utf8_encode(path).c_str());
 				*state |= 0b001;
 				*state &= 0b011; // remove SetKeyboardFocus flag
 			}
@@ -833,7 +843,7 @@ namespace ifd {
 				std::string ext = path.extension().string();
 				if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".tga") {
 					int width, height, nrChannels;
-					unsigned char* image = stbi_load(std::string(data.Path.begin(), data.Path.end()).c_str(), &width, &height, &nrChannels, STBI_rgb_alpha);
+					unsigned char* image = stbi_load(ifd::utf8_encode(data.Path).c_str(), &width, &height, &nrChannels, STBI_rgb_alpha);
 
 					if (image == nullptr || width == 0 || height == 0)
 						continue;
@@ -908,7 +918,7 @@ namespace ifd {
 					// check if filename matches search query
 					if (m_searchBuffer[0]) {
 						std::wstring filename = infoPath.filename().wstring();
-						std::string filenameStr(filename.begin(), filename.end());
+						std::string filenameStr(ifd::utf8_encode(filename));
 
 						std::string filenameSearch = filenameStr;
 						std::string query(m_searchBuffer);
@@ -925,7 +935,7 @@ namespace ifd {
 							const auto& exts = m_filterExtensions[m_filterSelection];
 							if (exts.size() > 0) {
 								std::wstring extension = infoPath.extension().wstring();
-								std::string extensionStr(extension.begin(), extension.end());
+								std::string extensionStr(ifd::utf8_encode(extension));
 
 								// extension not found? skip
 								if (std::count(exts.begin(), exts.end(), extensionStr) == 0)
@@ -1006,7 +1016,7 @@ namespace ifd {
 		bool isClicked = false;
 		bool isDrive = node->Path.size() == 2 && node->Path[1] == ':';
 		std::wstring wpath = isDrive ? node->Path.c_str() : std::filesystem::path(node->Path).stem().wstring().c_str();
-		if (FolderNode(std::string(wpath.begin(), wpath.end()).c_str(), (ImTextureID)m_getIcon(node->Path), isClicked)) {
+		if (FolderNode(ifd::utf8_encode(wpath).c_str(), (ImTextureID)m_getIcon(node->Path), isClicked)) {
 			if (!node->Read) {
 				// cache children if it's not already cached
 				if (std::filesystem::exists(node->Path, ec))
@@ -1053,7 +1063,7 @@ namespace ifd {
 					std::wstring filename = std::filesystem::path(entry.Path).filename().wstring();
 					if (filename.size() == 0)
 						filename = entry.Path; // drive
-					std::string filenameStr(filename.begin(), filename.end());
+					std::string filenameStr(ifd::utf8_encode(filename));
 					
 					ImGui::TableNextRow();
 
@@ -1109,7 +1119,7 @@ namespace ifd {
 				std::wstring filename = std::filesystem::path(entry.Path).filename().wstring();
 				if (filename.size() == 0)
 					filename = entry.Path; // drive
-				std::string filenameStr(filename.begin(), filename.end());
+				std::string filenameStr(ifd::utf8_encode(filename));
 
 				if (FileIcon(filenameStr.c_str(), entry.HasIconPreview ? entry.IconPreview : (ImTextureID)m_getIcon(entry.Path), ImVec2(32 + 16 * m_zoom, 32 + 16 * m_zoom), entry.HasIconPreview, entry.IconPreviewWidth, entry.IconPreviewHeight)) {
 					std::error_code ec;
@@ -1157,7 +1167,7 @@ namespace ifd {
 				ImGui::CloseCurrentPopup();
 			else {
 				const FileData& data = m_content[m_selectedFileItem];
-				ImGui::TextWrapped("Are you sure you want to delete %s?", std::string(data.Path.begin(), data.Path.end()).c_str());
+				ImGui::TextWrapped("Are you sure you want to delete %s?", ifd::utf8_encode(data.Path).c_str());
 				if (ImGui::Button("Yes")) {
 					std::error_code ec;
 					std::filesystem::remove_all(std::filesystem::path(data.Path), ec);

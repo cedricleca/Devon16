@@ -10,8 +10,10 @@
 #define IFD_DIALOG_DIRECTORY	1
 #define IFD_DIALOG_SAVE			2
 
-namespace ifd {
-	class FileDialog {
+namespace ifd 
+{
+	class FileDialog 
+	{
 	public:
 		static inline FileDialog& Instance()
 		{
@@ -128,4 +130,5 @@ namespace ifd {
 
 	static const char* GetDefaultFolderIcon();
 	static const char* GetDefaultFileIcon();
+	std::string utf8_encode(const std::wstring &wstr);
 }
