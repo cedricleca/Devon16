@@ -500,10 +500,10 @@ int main(int argn, char**arg)
 	// ImFileDialog requires you to set the CreateTexture and DeleteTexture
 	ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* 
 	{
-		GLuint tex;
+		union { GLuint tex[2]; void * V; } Ret;
 
-		glGenTextures(1, &tex);
-		glBindTexture(GL_TEXTURE_2D, tex);
+		glGenTextures(1, &Ret.tex[0]);
+		glBindTexture(GL_TEXTURE_2D, Ret.tex[0]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -512,13 +512,13 @@ int main(int argn, char**arg)
 		glGenerateMipmap(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		return (void*)tex;
+		return Ret.V;
 	};
 	
 	ifd::FileDialog::Instance().DeleteTexture = [](void* tex) 
 	{
-		GLuint texID = (GLuint)((uintptr_t)tex);
-		glDeleteTextures(1, &texID);
+		union { GLuint tex[2]; void * V = tex; } In;
+		glDeleteTextures(1, &In.tex[0]);
 	};
 
 	ImGui::PushStyleColor(ImGuiCol_TitleBg,				ImColor(0xFF015AE3).Value);
