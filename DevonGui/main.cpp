@@ -575,20 +575,18 @@ int main(int argn, char**arg)
 	GLTools::ConstructQuadBuffers();
 	GLTools::ConstructRenderTargets(1280, 720);
 
-	switch(int(Settings::Current.TEditorPalette))
+	auto SetTEditorSettings = [](TextEditor & TE)
 	{
-	case 0:	Teditor.SetPalette(TextEditor::GetDarkPalette());		break;
-	case 1:	Teditor.SetPalette(TextEditor::GetLightPalette());		break;
-	case 2:	Teditor.SetPalette(TextEditor::GetRetroBluePalette());	break;
-	}
-	Teditor.SetShowWhitespaces(int(Settings::Current.TEditorPalette));
-	switch(int(Settings::Current.TEditorPalette))
-	{
-	case 0:	CRTShaderEditor.SetPalette(TextEditor::GetDarkPalette());		break;
-	case 1:	CRTShaderEditor.SetPalette(TextEditor::GetLightPalette());		break;
-	case 2:	CRTShaderEditor.SetPalette(TextEditor::GetRetroBluePalette());	break;
-	}
-	CRTShaderEditor.SetShowWhitespaces(int(Settings::Current.TEditorPalette));
+		switch(int(Settings::Current.TEditorPalette))
+		{
+		case 0:	TE.SetPalette(TextEditor::GetDarkPalette());		break;
+		case 1:	TE.SetPalette(TextEditor::GetLightPalette());		break;
+		case 2:	TE.SetPalette(TextEditor::GetRetroBluePalette());	break;
+		}
+		TE.SetShowWhitespaces(int(Settings::Current.TEditorPalette));
+	};
+	SetTEditorSettings(Teditor);
+	SetTEditorSettings(CRTShaderEditor);
 
 	PlugROM(ROM, ROMSize, LogWindow);
 	PlugCartridge(Cartridge, CartridgeSize, LogWindow);
