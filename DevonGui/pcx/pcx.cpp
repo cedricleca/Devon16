@@ -400,7 +400,7 @@ int PCX_Image::LoadDecodeData(FILE * fp)
     return 0;
 }
 
-bool PCX_Image::Load(char * filename)
+bool PCX_Image::Load(const char * filename)
 {
     FILE * in_fp;
 

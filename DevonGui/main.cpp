@@ -115,10 +115,14 @@ private:
 	std::streambuf * mOldBuffer;
 };
 
-bool LoadROM(const char * ROMFileName, unsigned char* & ROM, long & ROMSize)
+bool LoadROM(const std::string & ROMFileName, unsigned char* & ROM, long & ROMSize)
 {
+//   std::ifstream input( ROMFileName, std::ios::binary );
+//	if(input.is_open())
+//	   std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(input), {});
+
 	FILE * f;
-	fopen_s(&f, ROMFileName, "rb");
+	fopen_s(&f, ROMFileName.c_str(), "rb");
 	if(f)
 	{
 		if(ROM != nullptr)
@@ -153,7 +157,7 @@ void PlugCartridge(unsigned char * Cartridge, long CartridgeSize, LogWindow & Lo
 {
 	if(Settings::CartridgeFileName.length() > 0)
 	{
-		if(LoadROM(Settings::CartridgeFileName.c_str(), Cartridge, CartridgeSize))
+		if(LoadROM(Settings::CartridgeFileName, Cartridge, CartridgeSize))
 		{
 			Machine.MMU.PlugCartrige((uWORD*)Cartridge, CartridgeSize/sizeof(uWORD));
 			Log.AddLog("Cartridge file loaded\n");
@@ -171,7 +175,7 @@ void PlugROM(unsigned char * ROM, long ROMSize, LogWindow & Log)
 {
 	if(Settings::ROMFileName.length() > 0)
 	{
-		if(LoadROM(Settings::ROMFileName.c_str(), ROM, ROMSize))
+		if(LoadROM(Settings::ROMFileName, ROM, ROMSize))
 		{
 			Machine.MMU.SetROM((uWORD*)ROM, ROMSize/sizeof(uWORD));
 			Log.AddLog("ROM file loaded\n");
@@ -187,48 +191,12 @@ void PlugROM(unsigned char * ROM, long ROMSize, LogWindow & Log)
 
 void SetROMFile(LogWindow & LogWindow)
 {
-	char filename[ MAX_PATH ];
-	OPENFILENAMEA ofn;
-	ZeroMemory( &filename, sizeof( filename ) );
-	ZeroMemory( &ofn,      sizeof( ofn ) );
-	ofn.lStructSize  = sizeof( ofn );
-	ofn.hwndOwner    = nullptr;  // If you have a window to center over, put its HANDLE here
-	ofn.lpstrFilter  = "Devon ROM Files\0*.dro\0Any File\0*.*\0";
-	ofn.lpstrFile    = filename;
-	ofn.nMaxFile     = MAX_PATH;
-	ofn.lpstrTitle   = "Select a File";
-	ofn.Flags        = OFN_DONTADDTORECENT | OFN_FILEMUSTEXIST;
-  
-	if (GetOpenFileNameA( &ofn ))
-	{
-		Settings::Lock(true);
-		Settings::ROMFileName = filename;
-		Settings::Lock(false);
-		PlugROM(ROM, ROMSize, LogWindow);
-	}
+	ifd::FileDialog::Instance().Open("OpenDroDialog", "Open a DRO cartridge file", "DRO file (*.dro){.dro},.*");
 }
 
 void SetDCAFile(LogWindow & LogWindow)
 {
-	char filename[ MAX_PATH ];
-	OPENFILENAMEA ofn;
-	ZeroMemory( &filename, sizeof( filename ) );
-	ZeroMemory( &ofn,      sizeof( ofn ) );
-	ofn.lStructSize  = sizeof( ofn );
-	ofn.hwndOwner    = nullptr;  // If you have a window to center over, put its HANDLE here
-	ofn.lpstrFilter  = "Devon Cartridge Files\0*.dca\0Any File\0*.*\0";
-	ofn.lpstrFile    = filename;
-	ofn.nMaxFile     = MAX_PATH;
-	ofn.lpstrTitle   = "Select a File";
-	ofn.Flags        = OFN_DONTADDTORECENT | OFN_FILEMUSTEXIST;
-  
-	if (GetOpenFileNameA( &ofn ))
-	{
-		Settings::Lock(true);
-		Settings::CartridgeFileName = filename;
-		Settings::Lock(false);
-		PlugCartridge(Cartridge, CartridgeSize, LogWindow);
-	}
+	ifd::FileDialog::Instance().Open("OpenDcaDialog", "Open a DCA cartridge file", "DCA file (*.dca){.dca},.*");
 }
 
 std::atomic<bool> CartridgeReadyToPlugin = false;
@@ -256,20 +224,7 @@ void ExportCartridge(std::string Filename, LogWindow & LogWindow)
 
 void ExportCartridge(LogWindow & LogWindow)
 {
-	char filename[ MAX_PATH ];
-	OPENFILENAMEA ofn;
-	ZeroMemory( &filename, sizeof( filename ) );
-	ZeroMemory( &ofn,      sizeof( ofn ) );
-	ofn.lStructSize  = sizeof( ofn );
-	ofn.hwndOwner    = nullptr;  // If you have a window to center over, put its HANDLE here
-	ofn.lpstrFilter  = "Devon Cartridge Files (.dca)\0*.dca\0Any File\0*.*\0";
-	ofn.lpstrFile    = filename;
-	ofn.nMaxFile     = MAX_PATH;
-	ofn.lpstrTitle   = "Select a File";
-	ofn.Flags        = OFN_DONTADDTORECENT;
-  
-	if (GetSaveFileNameA( &ofn ))
-		ExportCartridge(filename, LogWindow);
+	ifd::FileDialog::Instance().Save("SaveDcaDialog", "Save a Devon Cartridge file", "DCA file (*.dca){.dca},.*");
 }
 
 void ExportROM(std::string Filename, LogWindow & LogWindow)
@@ -301,20 +256,7 @@ void ExportROM(std::string Filename, LogWindow & LogWindow)
 
 void ExportROM(LogWindow & LogWindow)
 {
-	char filename[ MAX_PATH ];
-	OPENFILENAMEA ofn;
-	ZeroMemory( &filename, sizeof( filename ) );
-	ZeroMemory( &ofn,      sizeof( ofn ) );
-	ofn.lStructSize  = sizeof( ofn );
-	ofn.hwndOwner    = nullptr;  // If you have a window to center over, put its HANDLE here
-	ofn.lpstrFilter  = "Devon ROM Files (.dro)\0*.dro\0Any File\0*.*\0";
-	ofn.lpstrFile    = filename;
-	ofn.nMaxFile     = MAX_PATH;
-	ofn.lpstrTitle   = "Select a File";
-	ofn.Flags        = OFN_DONTADDTORECENT;
-  
-	if (GetSaveFileNameA( &ofn ))
-		ExportROM(filename, LogWindow);
+	ifd::FileDialog::Instance().Save("SaveDroDialog", "Save a Devon Rom file", "DRO file (*.dro){.dro},.*");
 }
 
 void SaveDASFile(TextEditor & Teditor, bool bForceDialog=false)
@@ -367,25 +309,7 @@ void AssembleAndExport(LogWindow & LogWindow)
 
 void LaunchImageTool()
 {
-	char filename[ MAX_PATH ];
-	OPENFILENAMEA ofn;
-	ZeroMemory( &filename, sizeof( filename ) );
-	ZeroMemory( &ofn,      sizeof( ofn ) );
-	ofn.lStructSize  = sizeof( ofn );
-	ofn.hwndOwner    = nullptr;  // If you have a window to center over, put its HANDLE here
-	ofn.lpstrFilter  = "PCX Files (.dca)\0*.pcx\0Any File\0*.*\0";
-	ofn.lpstrFile    = filename;
-	ofn.nMaxFile     = MAX_PATH;
-	ofn.lpstrTitle   = "Select a File";
-	ofn.Flags        = OFN_DONTADDTORECENT;
-  
-	if (GetOpenFileNameA( &ofn ))
-	{
-		if(PicToolWindow.PcxImage.Load(filename))
-		{
-			PicToolWindow.Show = true;
-		}
-	}
+	ifd::FileDialog::Instance().Open("OpenImgDialog", "Open a PCX file", "PCX file (*.pcx){.pcx},.*");
 }
 
 std::atomic<bool> StartCompileThread = false;
@@ -455,7 +379,7 @@ int main(int argn, char**arg)
 		return 1;
 
 	glfwMakeContextCurrent(window);
-	glfwSwapInterval(1); // Enable vsync
+	glfwSwapInterval(0); // Enable vsync
 
 	// Initialize OpenGL loader
 #if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
@@ -886,7 +810,44 @@ int main(int argn, char**arg)
 				}
 			};
 
-			// Open DAS file dialog result
+			// open DRO file dialog result
+			OnClosedFileDialog("OpenDroDialog", [&](const std::string & filename)  
+			{
+				Settings::Lock(true);
+				Settings::ROMFileName = filename;
+				Settings::Lock(false);
+				PlugROM(ROM, ROMSize, LogWindow);
+			});
+
+			// open DCA file dialog result
+			OnClosedFileDialog("OpenDcaDialog", [&](const std::string & filename)  
+			{
+				Settings::Lock(true);
+				Settings::CartridgeFileName = filename;
+				Settings::Lock(false);
+				PlugCartridge(Cartridge, CartridgeSize, LogWindow);
+			});
+
+			// save DCA file dialog result
+			OnClosedFileDialog("SaveDcaDialog", [&](const std::string & filename)  
+			{
+				ExportCartridge(filename.c_str(), LogWindow);
+			});
+
+			// DRO file dialog result
+			OnClosedFileDialog("SaveDroDialog", [&](const std::string & filename)  
+			{
+				ExportROM(filename.c_str(), LogWindow);
+			});
+
+			// PCX file dialog result
+			OnClosedFileDialog("OpenImgDialog", [&](const std::string & filename)  
+			{
+				if(PicToolWindow.PcxImage.Load(filename.c_str()))
+					PicToolWindow.Show = true;
+			});
+
+			// DAS file dialog result
 			OnClosedFileDialog("OpenDasDialog", [&](const std::string & filename)  
 			{
 				SetDASFileName(filename);
@@ -901,7 +862,7 @@ int main(int argn, char**arg)
 			});
 
 
-			// Save DAS file dialog result
+			// DAS file dialog result
 			OnClosedFileDialog("SaveDasDialog", [&](const std::string & filename)  
 			{
 				SetDASFileName(filename);

@@ -102,7 +102,7 @@ struct PCX_Image
 	int LoadHeader(FILE * fp);
 	int LoadDecodeData(FILE * fp);
 	int LoadPalette(FILE * fp);
-	bool Load(char * filename);
+	bool Load(const char * filename);
 	void Dump();
 
 private:
