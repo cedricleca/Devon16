@@ -79,10 +79,10 @@ class CorticoChip
 	BPlaneControl BPlane[CorticoBPlaneNr];
 
 	uLONG CycleCount;
-	unsigned char * OutputSurface;
+	unsigned char * OutputSurface = nullptr;
 
 public:
-	CorticoChip(BaseMMU & InMMU, Devon::CPU & InCPU) : OutputSurface(nullptr), MMU(InMMU), CPU(InCPU)
+	CorticoChip(BaseMMU & InMMU, Devon::CPU & InCPU) : MMU(InMMU), CPU(InCPU)
 	{
 	}
 

@@ -48,12 +48,18 @@ Trap0_FUNC_Table:
 	long	FUNC_Memcpy_L
 	long	FUNC_ResetCorticoRegs
 	long	FUNC_ResetDefaultClut
+	long	FUNC_ResetDefaultFont
 
 DefaultClut:
 	word	0x000, 0xAAA, 0xFFF, 0xC33, 0xE79, 0x543, 0xA62, 0xF93, 0xFE6, 0x244, 0x481, 0xAC2, 0x123, 0x058, 0x3AF, 0xBDE
 	word	0x000, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF
 
 org EntryPoint
+;	mov		#RAM_VBase, r3
+;	mov		#!0, r2
+;	mov		#0x80, r4
+;	jsr		#FUNC_Memcpy_L
+
 	mov		#RAM_VBase, r0
 	mov		#!0x0, r1
 	mov		#0x80, r2
@@ -73,7 +79,7 @@ VBaseloop:
 
 	jsr		#FUNC_ResetCorticoRegs	; Reset Cortico registers
 	jsr		#FUNC_ResetDefaultClut	; Reset Clut
-	jsr		#FUNC_ResetDefaultFont
+	jsr		#FUNC_ResetDefaultFont	; Restore original font data
 
 	mov.w	$CartSize, r0	; get the Catridge size
 	ext16	r0

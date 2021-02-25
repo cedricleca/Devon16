@@ -81,10 +81,8 @@ static std::string DCAExportName;
 static std::string DROExportName;
 static PictureToolWindow PicToolWindow;
 
-static unsigned char * ROM = nullptr;
-static long ROMSize = 0;
-static unsigned char * Cartridge = nullptr;
-static long CartridgeSize = 0;
+std::vector<unsigned char> ROMBuf;
+std::vector<unsigned char> CartridgeBuf;
 static bool AssemblySuccess = false;
 static bool AssemblyDone = false;
 
@@ -115,30 +113,15 @@ private:
 	std::streambuf * mOldBuffer;
 };
 
-bool LoadROM(const std::string & ROMFileName, unsigned char* & ROM, long & ROMSize)
+bool LoadROM(const std::string & ROMFileName, std::vector<unsigned char> & OutBuf)
 {
-//   std::ifstream input( ROMFileName, std::ios::binary );
-//	if(input.is_open())
-//	   std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(input), {});
-
-	FILE * f;
-	fopen_s(&f, ROMFileName.c_str(), "rb");
-	if(f)
+   std::ifstream input( ROMFileName, std::ios::binary );
+	if(input.is_open())
 	{
-		if(ROM != nullptr)
-		{
-			ROMSize = 0;
-			delete ROM;
-		}
-		fseek(f, 0, SEEK_END);
-		ROMSize = ftell(f);
-		rewind(f);
-		ROM = new unsigned char[ROMSize];
-		fread_s(ROM, ROMSize, 1, ROMSize, f);
-		fclose(f);
-		return true;
+	   std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(input), {});
+	   OutBuf = buffer;
+	   return true;
 	}
-
 	return false;
 }
 
@@ -153,13 +136,13 @@ void WriteMMUWord(MemoryEditor::u16* data, size_t off, MemoryEditor::u16 d)
 	Machine.MMU.WriteWord(d, (uLONG)off, true);
 }
 
-void PlugCartridge(unsigned char * Cartridge, long CartridgeSize, LogWindow & Log)
+void PlugCartridge(LogWindow & Log)
 {
 	if(Settings::CartridgeFileName.length() > 0)
 	{
-		if(LoadROM(Settings::CartridgeFileName, Cartridge, CartridgeSize))
+		if(LoadROM(Settings::CartridgeFileName, CartridgeBuf))
 		{
-			Machine.MMU.PlugCartrige((uWORD*)Cartridge, CartridgeSize/sizeof(uWORD));
+			Machine.MMU.PlugCartrige((uWORD*)CartridgeBuf.data(), uLONG(CartridgeBuf.size())/sizeof(uWORD));
 			Log.AddLog("Cartridge file loaded\n");
 			Machine.HardReset();
 		}
@@ -171,15 +154,15 @@ void PlugCartridge(unsigned char * Cartridge, long CartridgeSize, LogWindow & Lo
 	}
 }
 
-void PlugROM(unsigned char * ROM, long ROMSize, LogWindow & Log)
+std::atomic<bool> ROMChangeRequest = false;
+void PlugROM(LogWindow & Log)
 {
 	if(Settings::ROMFileName.length() > 0)
 	{
-		if(LoadROM(Settings::ROMFileName, ROM, ROMSize))
+		if(LoadROM(Settings::ROMFileName, ROMBuf))
 		{
-			Machine.MMU.SetROM((uWORD*)ROM, ROMSize/sizeof(uWORD));
 			Log.AddLog("ROM file loaded\n");
-			Machine.HardReset();
+			ROMChangeRequest = true;
 		}
 		else
 		{
@@ -245,7 +228,7 @@ void ExportROM(std::string Filename, LogWindow & LogWindow)
 		Settings::Lock(true);
 		Settings::ROMFileName = DROExportName;
 		Settings::Lock(false);
-		PlugROM(ROM, ROMSize, LogWindow);
+		PlugROM(LogWindow);
 	}
 	else
 	{
@@ -512,8 +495,8 @@ int main(int argn, char**arg)
 	SetTEditorSettings(Teditor);
 	SetTEditorSettings(CRTShaderEditor);
 
-	PlugROM(ROM, ROMSize, LogWindow);
-	PlugCartridge(Cartridge, CartridgeSize, LogWindow);
+	PlugROM(LogWindow);
+	PlugCartridge(LogWindow);
 
 	ImVec4 clear_col = ImColor(61, 61, 61);
 
@@ -816,7 +799,7 @@ int main(int argn, char**arg)
 				Settings::Lock(true);
 				Settings::ROMFileName = filename;
 				Settings::Lock(false);
-				PlugROM(ROM, ROMSize, LogWindow);
+				PlugROM(LogWindow);
 			});
 
 			// open DCA file dialog result
@@ -825,7 +808,7 @@ int main(int argn, char**arg)
 				Settings::Lock(true);
 				Settings::CartridgeFileName = filename;
 				Settings::Lock(false);
-				PlugCartridge(Cartridge, CartridgeSize, LogWindow);
+				CartridgeReadyToPlugin = true;
 			});
 
 			// save DCA file dialog result
@@ -861,7 +844,6 @@ int main(int argn, char**arg)
 				}
 			});
 
-
 			// DAS file dialog result
 			OnClosedFileDialog("SaveDasDialog", [&](const std::string & filename)  
 			{
@@ -883,12 +865,6 @@ int main(int argn, char**arg)
 				TextEditor::EditorWindow(CRTShaderEditor, "CRT Shader (F5 to compile)", &Settings::Current.Show_CRTShaderEditor_Window);
 				Settings::Lock(false);
 			}
-
-			if (CartridgeReadyToPlugin)
-			{
-				PlugCartridge(Cartridge, CartridgeSize, LogWindow);
-				CartridgeReadyToPlugin = false;
-			}
 		}
 
 		if (ImGui::IsKeyPressed(GLFW_KEY_F11, false))
@@ -900,6 +876,19 @@ int main(int argn, char**arg)
 		GLTools::UpdateRenderTargets(display_w, display_h); // maybe resize
 
 		// Machine evaluation
+		if(CartridgeReadyToPlugin)
+		{
+			PlugCartridge(LogWindow);
+			CartridgeReadyToPlugin = false;
+		}
+
+		if(ROMChangeRequest)
+		{
+			Machine.MMU.SetROM((uWORD*)ROMBuf.data(), uLONG(ROMBuf.size())/sizeof(uWORD));
+			Machine.HardReset();
+			ROMChangeRequest = false;
+		}
+
 		Machine.Cortico.SetOutputSurface((unsigned char *)GLTools::PrimaryBuffer.data());
 		Machine.KeyB.PushKeyEvents();
 		Machine.TickFrame();
