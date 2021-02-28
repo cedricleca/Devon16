@@ -362,7 +362,7 @@ int main(int argn, char**arg)
 		return 1;
 
 	glfwMakeContextCurrent(window);
-	glfwSwapInterval(0); // Enable vsync
+	glfwSwapInterval(1); // Enable vsync
 
 	// Initialize OpenGL loader
 #if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)

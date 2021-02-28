@@ -146,44 +146,60 @@ struct DisassemblyWindow
 			Inst.Opcode = Devon::CPU::EOpcode(Inst.Helper.Opcode.f2 + Devon::CPU::EOpcode::Group2);
 
 		Inst.AdMode = Devon::CPU::EAdMode::EAdModeMax;
-		switch(Devon::CPU::OpType[Inst.Opcode])
+		switch(Inst.Opcode)
 		{
-		case 0: 
+		case Devon::CPU::EOpcode::ADD: 
+		case Devon::CPU::EOpcode::MUL: 
+		case Devon::CPU::EOpcode::SUB: 
+		case Devon::CPU::EOpcode::DIV: 
+		case Devon::CPU::EOpcode::MOD: 
+		case Devon::CPU::EOpcode::CMP: 
+		case Devon::CPU::EOpcode::MOV: 
+		case Devon::CPU::EOpcode::XOR: 
+		case Devon::CPU::EOpcode::OR: 
+		case Devon::CPU::EOpcode::AND: 
+		case Devon::CPU::EOpcode::MOVB: 
 			Inst.AdMode = Inst.Helper.Type0.AM;
 			Inst.Op = Inst.Helper.Type0.OP;
 			Inst.Dir = Inst.Helper.Type0.DIR;
 			Inst.Register = Inst.Helper.Type0.REG;
 			break;
-		case 1: 
+		case Devon::CPU::EOpcode::SOP: 
 			Inst.AdMode = Devon::CPU::EAdMode::Imm8;		
 			Inst.Op = Inst.Helper.Type1.RS;
 			break;
-		case 4: 
+		case Devon::CPU::EOpcode::JMP: 
+		case Devon::CPU::EOpcode::JSR: 
 			Inst.AdMode = Inst.Helper.Type4.AM;
 			Inst.Op = Inst.Helper.Type4.OP;
 			Inst.Dir = Devon::CPU::EDirection::ToAdMode;
 			break;
-		case 5: 
+		case Devon::CPU::EOpcode::SHIFT: 
+		case Devon::CPU::EOpcode::BOP: 
 			Inst.AdMode = Inst.Helper.Type5.AM;		
 			Inst.Op = Inst.Helper.Type5.REGA<<1;
 			break;
-		case 6: 
+		case Devon::CPU::EOpcode::SHIFTI: 
+		case Devon::CPU::EOpcode::BOPI: 
 			Inst.AdMode = Devon::CPU::EAdMode::Imm8;		
 			Inst.Op = Inst.Helper.Type6.OP;
 			break;
-		case 7:
+		case Devon::CPU::EOpcode::SWP: 
 			Inst.AdMode = Devon::CPU::EAdMode::Reg;
 			Inst.Op = Inst.Helper.Type7.REG<<1;
 			break;
-		case 8: 
+		case Devon::CPU::EOpcode::VBASE: 
+		case Devon::CPU::EOpcode::TRAP: 
+		case Devon::CPU::EOpcode::NOT: 
+		case Devon::CPU::EOpcode::NEG: 
 			Inst.AdMode = Inst.Helper.Type8.AM;		
 			Inst.Op = Inst.Helper.Type8.OP;
 			break;
-		case 9: 
+		case Devon::CPU::EOpcode::INTMASK: 
 			Inst.AdMode = Devon::CPU::EAdMode::Imm8;		
 			Inst.Op = Inst.Helper.Type9.OP;
 			break;
-		case 11: 
+		case Devon::CPU::EOpcode::EXT: 
 			Inst.AdMode = Devon::CPU::EAdMode::Reg;
 			Inst.Op = Inst.Helper.Type11.REG<<1;		
 			break;
@@ -361,15 +377,25 @@ struct DisassemblyWindow
 		while(out.size() < 8)
 			out += " ";
 
-		switch(Devon::CPU::OpType[Inst.Opcode])
+		switch(Inst.Opcode)
 		{
-		case 0: 
+		case Devon::CPU::EOpcode::ADD: 
+		case Devon::CPU::EOpcode::MUL: 
+		case Devon::CPU::EOpcode::SUB: 
+		case Devon::CPU::EOpcode::DIV: 
+		case Devon::CPU::EOpcode::MOD: 
+		case Devon::CPU::EOpcode::CMP: 
+		case Devon::CPU::EOpcode::MOV: 
+		case Devon::CPU::EOpcode::XOR: 
+		case Devon::CPU::EOpcode::OR: 
+		case Devon::CPU::EOpcode::AND: 
+		case Devon::CPU::EOpcode::MOVB: 
 			if(Inst.Dir == Devon::CPU::EDirection::ToAdMode)
-			{
 				out += "r" + std::to_string(Inst.Register) + ",";
-			}
 			break;
-		case 5: 
+
+		case Devon::CPU::EOpcode::SHIFT: 
+		case Devon::CPU::EOpcode::BOP: 
 			out += "r" + std::to_string(Inst.Helper.Type5.REGB) + ",";
 			break;
 		}
@@ -477,14 +503,27 @@ struct DisassemblyWindow
 			break;
 		}
 
-		if(Devon::CPU::OpType[Inst.Opcode] == 0)
+		switch(Inst.Opcode)
 		{
+		case Devon::CPU::EOpcode::ADD: 
+		case Devon::CPU::EOpcode::MUL: 
+		case Devon::CPU::EOpcode::SUB: 
+		case Devon::CPU::EOpcode::DIV: 
+		case Devon::CPU::EOpcode::MOD: 
+		case Devon::CPU::EOpcode::CMP: 
+		case Devon::CPU::EOpcode::MOV: 
+		case Devon::CPU::EOpcode::XOR: 
+		case Devon::CPU::EOpcode::OR: 
+		case Devon::CPU::EOpcode::AND: 
+		case Devon::CPU::EOpcode::MOVB: 
 			if(Inst.Dir == Devon::CPU::EDirection::ToRegister)
 				out += ",r" + std::to_string(Inst.Register);
-		}
-		if(Devon::CPU::OpType[Inst.Opcode] == 6)
-		{
+			break;
+
+		case Devon::CPU::EOpcode::SHIFTI: 
+		case Devon::CPU::EOpcode::BOPI: 
 			out += ",r" + std::to_string(Inst.Helper.Type6.REGA);
+			break;
 		}
 
 		bool bLongInst = (Inst.AdMode == Devon::CPU::EAdMode::Imm20 

@@ -2,18 +2,6 @@
 
 using namespace Devon;
 
-const unsigned char CPU::OpType[] {
-			0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0,
-			1, 
-			2, 3, 3,
-			4, 4,
-			5, 6, 5, 6,
-			7, 11, 8, 8, 8,
-			9, 8,
-			10, 10, 10, 10, 10
-		};
-
 const unsigned char CPU::ExecTime[] {
 	1, 1, 1, 1, 1, 1,
 	0, 1, 1, 1, 1,
@@ -28,8 +16,8 @@ const unsigned char CPU::ExecTime[] {
 
 /*			Group0,
 			ADD = Group0, MUL, SUB, DIV, MOD, CMP,
-			MOV, XOR, OR, AND, MOVBH, MOVBL,
-			SSAVE, SLOAD, SSWAP
+			MOV, XOR, OR, AND, MOVB,
+			SOP (SSAVE, SLOAD, SSWAP)
 			FOP, FTOI, ITOF,
 			JMP, JSR,
 			SHIFT, SHIFTI, BOP, BOPI,
@@ -833,36 +821,51 @@ bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 	else
 		FetchedInstruction.Opcode = EOpcode(FetchedInstruction.Helper.Opcode.f2 + Group2);
 
-	const unsigned char Type = OpType[FetchedInstruction.Opcode];
-	switch(Type)
+	switch(FetchedInstruction.Opcode)
 	{
-	case 0: 
+	case EOpcode::ADD: 
+	case EOpcode::MUL: 
+	case EOpcode::SUB: 
+	case EOpcode::DIV: 
+	case EOpcode::MOD: 
+	case EOpcode::CMP: 
+	case EOpcode::MOV: 
+	case EOpcode::XOR: 
+	case EOpcode::OR: 
+	case EOpcode::AND: 
+	case EOpcode::MOVB: 
 		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type0.AM;
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type0.OP;
 		FetchedInstruction.Dir = FetchedInstruction.Helper.Type0.DIR;
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type0.REG;
 		break;
-	case 4: 
+	case EOpcode::JMP: 
+	case EOpcode::JSR: 
 		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type4.AM;
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type4.OP;
 		FetchedInstruction.Dir = ToAdMode;
 		break;
-	case 5: 
+	case EOpcode::SHIFT: 
+	case EOpcode::BOP: 
 		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type5.AM;		
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type5.REGB<<1;
 		FetchedInstruction.Dir = ToRegister;
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type5.REGA;
 		break;
-	case 6: 
+	case EOpcode::SHIFTI:
+	case EOpcode::BOPI: 
 		FetchedInstruction.AdMode = Reg;		
 		FetchedInstruction.Dir = ToRegister;
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type6.REGA;
 		break;
-	case 8: 
+	case EOpcode::VBASE: 
+	case EOpcode::TRAP: 
+	case EOpcode::NOT: 
+	case EOpcode::NEG: 
 		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type8.AM;		
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type8.OP;
 		break;
-	case 11: 
+	case EOpcode::EXT: 
 		FetchedInstruction.AdMode = Reg;		
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type11.REG;
 		break;

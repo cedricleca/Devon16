@@ -117,7 +117,6 @@ namespace Devon
 			EOpcodeMax
 		};
 
-		static const unsigned char OpType[];
 		static const unsigned char ExecTime[];
 
 		enum EDirection
