@@ -15,7 +15,7 @@ namespace DevonASM
 	enum EMnemonic
 	{
 		ADD, MUL, SUB, DIV, MOD, CMP,
-		MOV, MOVL, XOR, OR, AND, MOVB,
+		MOV, MOVI, XOR, OR, AND, MOVB,
 		SSAVE, SLOAD, SSWAP,
 		FADD, FMUL, FMOD, FCMP, FPOW, FMOV, FTOI, ITOF,
 		JMP, JSR, BRA, BSR,
@@ -31,7 +31,7 @@ namespace DevonASM
 	CPU::EOpcode Mnemonic2Opcode[EMnemonic::Max] =
 	{
 		CPU::EOpcode::ADD, CPU::EOpcode::MUL, CPU::EOpcode::SUB, CPU::EOpcode::DIV, CPU::EOpcode::MOD, CPU::EOpcode::CMP,
-		CPU::EOpcode::MOV, CPU::EOpcode::MOV, CPU::EOpcode::XOR, CPU::EOpcode::OR, CPU::EOpcode::AND, CPU::EOpcode::MOVB,
+		CPU::EOpcode::MOV, CPU::EOpcode::MOVI, CPU::EOpcode::XOR, CPU::EOpcode::OR, CPU::EOpcode::AND, CPU::EOpcode::MOVB,
 		CPU::EOpcode::SOP, CPU::EOpcode::SOP, CPU::EOpcode::SOP,
 		CPU::EOpcode::FOP, CPU::EOpcode::FOP, CPU::EOpcode::FOP, CPU::EOpcode::FOP, CPU::EOpcode::FOP, CPU::EOpcode::FOP, CPU::EOpcode::FTOI, CPU::EOpcode::ITOF,
 		CPU::EOpcode::JMP, CPU::EOpcode::JSR, CPU::EOpcode::JMP, CPU::EOpcode::JSR,
@@ -55,6 +55,7 @@ namespace DevonASM
 	template<> struct opc_string<EMnemonic::MOD> : istring<'m', 'o', 'd'> {};
 	template<> struct opc_string<EMnemonic::CMP> : istring<'c', 'm', 'p'> {};
 	template<> struct opc_string<EMnemonic::MOV> : istring<'m', 'o', 'v'> {};
+	template<> struct opc_string<EMnemonic::MOVI> : istring<'m', 'o', 'v', 'i'> {};
 	template<> struct opc_string<EMnemonic::XOR> : istring<'x', 'o', 'r'> {};
 	template<> struct opc_string<EMnemonic::OR> : istring<'o', 'r'> {};
 	template<> struct opc_string<EMnemonic::AND> : istring<'a', 'n', 'd'> {};
@@ -194,6 +195,7 @@ namespace DevonASM
 		inst2<EMnemonic::MOD>,
 		inst2<EMnemonic::CMP>,
 		inst2<EMnemonic::MOV>,
+		inst2<EMnemonic::MOVI>,
 		inst2<EMnemonic::XOR>,
 		inst2<EMnemonic::OR>,
 		inst2<EMnemonic::AND>,

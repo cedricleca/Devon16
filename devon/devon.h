@@ -101,7 +101,7 @@ namespace Devon
 		{
 			Group0,
 			ADD = Group0, MUL, SUB, DIV, MOD, CMP,
-			MOV, XOR, OR, AND, MOVB,
+			MOV, MOVI, XOR, OR, AND, MOVB,
 			SOP,
 			FOP, FTOI, ITOF,
 			JMP, JSR,
@@ -145,6 +145,7 @@ namespace Devon
 				struct { uWORD OP:4, AM:3, CND:3, M:1, OPC:5; }						Type4; // JMP/BRA, JSR/BSR
 				struct { uWORD REGB:3, REGA:3, AM:2, M:3, OPC:5; }					Type5; // SHIFT, BOP
 				struct { uWORD OP:5, REGA:3, M:3, OPC:5; }							Type6; // SHIFTI, BOPI
+				struct { uWORD OP:8, REG:3, OPC:5; }								Type12; // MOVI
 		
 				struct { uWORD REG:3, UNU:2, WLS:1, WHS:1, LS:1, OPC:3, POPC:5; }	Type7; // SWP
 				struct { uWORD OP:4, AM:3, UNU:1, OPC:3, POPC:5; }					Type8; // NOT, TRAP, NEG, VBASE

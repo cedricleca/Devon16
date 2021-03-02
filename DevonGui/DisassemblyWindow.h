@@ -203,6 +203,11 @@ struct DisassemblyWindow
 			Inst.AdMode = Devon::CPU::EAdMode::Reg;
 			Inst.Op = Inst.Helper.Type11.REG<<1;		
 			break;
+		case Devon::CPU::EOpcode::MOVI:
+			Inst.AdMode = Devon::CPU::EAdMode::Imm8;
+			Inst.Register = Inst.Helper.Type12.REG;		
+			Inst.Op = Inst.Helper.Type12.OP;
+			break;
 		}
 
 		switch(Inst.Opcode)
@@ -214,6 +219,7 @@ struct DisassemblyWindow
 		case Devon::CPU::EOpcode::MOD:		out = "mod";		break;
 		case Devon::CPU::EOpcode::CMP:		out = "cmp";		break;
 		case Devon::CPU::EOpcode::MOV:		out = "mov";		break;
+		case Devon::CPU::EOpcode::MOVI:		out = "movi";		break;
 		case Devon::CPU::EOpcode::XOR:		out = "xor";		break;
 		case Devon::CPU::EOpcode::OR:		out = "or";			break;
 		case Devon::CPU::EOpcode::AND:		out = "and";		break;
@@ -498,6 +504,13 @@ struct DisassemblyWindow
 				for(int i = 7; i >= 0; i--)
 					out += ((Inst.Op>>i)&1) != 0 ? "1" : "0";
 			}
+			else if(Inst.Opcode == Devon::CPU::EOpcode::MOVI)
+			{
+				if(Inst.Op < 128)
+					out += "#" + std::to_string(Inst.Op);
+				else
+					out += "#-" + std::to_string(256-Inst.Op);
+			}
 			else
 				out += "#0x" + LongOPHexStr;
 			break;
@@ -518,6 +531,10 @@ struct DisassemblyWindow
 		case Devon::CPU::EOpcode::MOVB: 
 			if(Inst.Dir == Devon::CPU::EDirection::ToRegister)
 				out += ",r" + std::to_string(Inst.Register);
+			break;
+
+		case Devon::CPU::EOpcode::MOVI: 
+			out += ",r" + std::to_string(Inst.Register);
 			break;
 
 		case Devon::CPU::EOpcode::SHIFTI: 

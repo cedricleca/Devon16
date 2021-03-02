@@ -3169,7 +3169,7 @@ const TextEditor::LanguageDefinition & TextEditor::LanguageDefinition::DevonASM(
 	if (!inited)
 	{
 		static const char* const Keywords[] = {
-"add","mul","sub","div","mod","cmp","mov","xor","or","and","movb","ssave","sload","sswap","jmp","jsr","bra","bsr",
+"add","mul","sub","div","mod","cmp","mov","movi","xor","or","and","movb","ssave","sload","sswap","jmp","jsr","bra","bsr",
 "rol","roli","ror","rori","roxl","roxli","roxr","roxri","asl","asli","asr","asri","lsl","lsli","lsr","lsri","bclr",
 "bclri","bcpy","bcpyi","bnot","bnoti","bset","bseti","btst","btsti","swp","ext4","ext8","ext16","ext20","trap","intmask",
 "vbase","halt","reset","rts","rte","nop","chkx","chkv","not","neg"

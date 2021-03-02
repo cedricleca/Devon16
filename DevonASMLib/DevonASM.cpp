@@ -149,6 +149,7 @@ void DevonASM::Assembler::AssembleInstruction(int iM)
 	if(M == DevonASM::EMnemonic::SSAVE 
 		|| M == DevonASM::EMnemonic::SLOAD
 		|| M == DevonASM::EMnemonic::SSWAP
+		|| M == DevonASM::EMnemonic::MOVI
 		|| M == DevonASM::EMnemonic::ASLI
 		|| M == DevonASM::EMnemonic::ASRI
 		|| M == DevonASM::EMnemonic::LSLI
@@ -262,13 +263,11 @@ AssembleType0:
 		case DevonASM::EMnemonic::SLOAD:
 		case DevonASM::EMnemonic::SSWAP:
 			if (LastAdmodeOP < 0 || LastAdmodeOP > 255)
-			{
 				ErrorMessage(ErrorRange8);// error
-			}
+
 			if(LastAdmode != CPU::EAdMode::Imm8)
-			{
 				ErrorMessage(ErrorForbiddenAdMode);// bad admode
-			}
+
 			Inst.Helper.Type1.OPC = Mnemonic2Opcode[M];
 			Inst.Helper.Type1.RS = LastAdmodeOP;
 			switch (M)
@@ -318,10 +317,10 @@ AssembleType0:
 			{
 				ErrorMessage(ErrorForbiddenAdMode);// bad admode
 			}
+
 			if (LastAdmodeOP < 0 || LastAdmodeOP > 7)
-			{
 				ErrorMessage(ErrorRegIndex);
-			}
+
 			Inst.Helper.Type5.OPC = Mnemonic2Opcode[M];
 			Inst.Helper.Type5.AM = LastAdmode;
 			Inst.Helper.Type5.REGA = LastAdmodeOP;
@@ -348,13 +347,11 @@ AssembleType0:
 		case DevonASM::EMnemonic::ROXLI:
 		case DevonASM::EMnemonic::ROXRI:
 			if (LastAdmode != CPU::EAdMode::Imm8)
-			{
 				ErrorMessage(ErrorForbiddenAdMode);// bad admode
-			}
+
 			if (LastAdmodeOP < 0 || LastAdmodeOP > 31)
-			{
 				ErrorMessage(ErrorRange8);
-			}
+
 			Inst.Helper.Type6.OPC = Mnemonic2Opcode[M];
 			Inst.Helper.Type6.OP = LastAdmodeOP;
 			Inst.Helper.Type6.REGA = LastRegisterOp;
@@ -384,10 +381,10 @@ AssembleType0:
 			{
 				ErrorMessage(ErrorForbiddenAdMode);// bad admode
 			}
+
 			if (LastAdmodeOP < 0 || LastAdmodeOP > 7)
-			{
 				ErrorMessage(ErrorRegIndex);
-			}
+
 			Inst.Helper.Type5.OPC = Mnemonic2Opcode[M];
 			Inst.Helper.Type5.AM = LastAdmode;
 			Inst.Helper.Type5.REGA = LastAdmodeOP;
@@ -408,13 +405,11 @@ AssembleType0:
 		case DevonASM::EMnemonic::BTSTI:
 		case DevonASM::EMnemonic::BCPYI:
 			if (LastAdmode != CPU::EAdMode::Imm8)
-			{
 				ErrorMessage(ErrorForbiddenAdMode);// bad admode
-			}
+
 			if (LastAdmodeOP < 0 || LastAdmodeOP > 31)
-			{
 				ErrorMessage(ErrorRange8);
-			}
+
 			Inst.Helper.Type6.OPC = Mnemonic2Opcode[M];
 			Inst.Helper.Type6.OP = LastAdmodeOP;
 			Inst.Helper.Type6.REGA = LastRegisterOp;
@@ -433,13 +428,11 @@ AssembleType0:
 		case DevonASM::EMnemonic::EXT16:
 		case DevonASM::EMnemonic::EXT20:
 			if (LastAdmode != CPU::EAdMode::Reg)
-			{
 				ErrorMessage(ErrorForbiddenAdMode);// bad admode
-			}
+
 			if (LastAdmodeOP < 0 || LastAdmodeOP > 7)
-			{
 				ErrorMessage(ErrorRegIndex);
-			}
+
 			Inst.Helper.Type11.POPC = -1;
 			Inst.Helper.Type11.OPC = Mnemonic2Opcode[M] - CPU::EOpcode::Group1;
 			Inst.Helper.Type11.REG = LastAdmodeOP;
@@ -498,16 +491,26 @@ AssembleType0:
 
 		case DevonASM::EMnemonic::INTMASK:
 			if (LastAdmode != CPU::EAdMode::Imm8)
-			{
 				ErrorMessage(ErrorForbiddenAdMode);// bad admode
-			}
+
 			if (LastAdmodeOP < 0 || LastAdmodeOP > 255)
-			{
 				ErrorMessage(ErrorRange8);
-			}
+
 			Inst.Helper.Type9.POPC = -1;
 			Inst.Helper.Type9.OPC = Mnemonic2Opcode[M] - CPU::EOpcode::Group1;
 			Inst.Helper.Type9.OP = LastAdmodeOP;
+			break;
+
+		case DevonASM::EMnemonic::MOVI:
+			if (LastAdmode != CPU::EAdMode::Imm8)
+				ErrorMessage(ErrorForbiddenAdMode);// bad admode
+
+			if (LastAdmodeOP < -128 || LastAdmodeOP > 127)
+				ErrorMessage(ErrorRange8);
+
+			Inst.Helper.Type12.REG = LastRegisterOp;
+			Inst.Helper.Type12.OPC = Mnemonic2Opcode[M];
+			Inst.Helper.Type12.OP = LastAdmodeOP;
 			break;
 
 		case DevonASM::EMnemonic::HALT:

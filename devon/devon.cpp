@@ -4,7 +4,7 @@ using namespace Devon;
 
 const unsigned char CPU::ExecTime[] {
 	1, 1, 1, 1, 1, 1,
-	0, 1, 1, 1, 1,
+	0, 0, 1, 1, 1, 1,
 	1, 
 	1, 1, 1,
 	1, 1,
@@ -16,7 +16,7 @@ const unsigned char CPU::ExecTime[] {
 
 /*			Group0,
 			ADD = Group0, MUL, SUB, DIV, MOD, CMP,
-			MOV, XOR, OR, AND, MOVB,
+			MOV, MOVI, XOR, OR, AND, MOVB,
 			SOP (SSAVE, SLOAD, SSWAP)
 			FOP, FTOI, ITOF,
 			JMP, JSR,
@@ -398,6 +398,9 @@ void CPU::Tick_Exec()
 		R[ExecInstruction.DstRegister].u = R[ExecInstruction.SrcRegister].u;
 		if(ExecInstruction.AdMode == XRegInc && ExecInstruction.Dir == ToAdMode)
 			R[ExecInstruction.Op].u += ExecInstruction.LongOP ? 2 : 1;
+		break;
+	case MOVI:
+		R[ExecInstruction.DstRegister].u = R[ExecInstruction.SrcRegister].u;
 		break;
 	case XOR:	
 		R[ExecInstruction.DstRegister].u ^= R[ExecInstruction.SrcRegister].u;
@@ -838,6 +841,12 @@ bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type0.OP;
 		FetchedInstruction.Dir = FetchedInstruction.Helper.Type0.DIR;
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type0.REG;
+		break;
+	case EOpcode::MOVI:
+		FetchedInstruction.AdMode = Devon::CPU::EAdMode::Imm8;
+		FetchedInstruction.Op = FetchedInstruction.Helper.Type12.OP;
+		FetchedInstruction.Dir = ToRegister;
+		FetchedInstruction.Register = FetchedInstruction.Helper.Type12.REG;		
 		break;
 	case EOpcode::JMP: 
 	case EOpcode::JSR: 

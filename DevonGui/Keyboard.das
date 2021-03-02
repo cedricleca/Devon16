@@ -62,7 +62,7 @@ VBL_PopKeyb_CursorSwitchOff:
 	bsr		#RemoveCursor
 
 VBL_PopKeyb_CursorSwitchEnd:
-	mov		#15, r1	
+	movi	#15, r1	
 
 VBL_PopKeyb_NoCursorSwitch:
 	mov.w	r1, $RAM_Writer_CursorTimer
