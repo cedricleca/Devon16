@@ -19,7 +19,7 @@ org $0x20000
 
 	mov		#CLUTData, r2
 	mov		#Cort_Clut00, r3
-	mov		#8, r4
+	movi	#8, r4
 	mov		#!0, r0	; Memcpy
 	trap	#!0
 

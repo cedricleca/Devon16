@@ -11,7 +11,7 @@ define	Var1 0x85000
 	mov.w	r0, $Cort_BPL2_HStart
 	mov.w	r0, $Cort_BPL3_HStart
 
-	mov		#16, r0
+	movi	#16, r0
 	mov.w	r0, $Cort_BPL0_Stride
 	mov.w	r0, $Cort_BPL1_Stride
 	mov.w	r0, $Cort_BPL2_Stride
@@ -61,10 +61,10 @@ define	Var1 0x85000
 	mov		#0x0a8, r0
 	mov.w	r0, $JKev_R_A_OSC1_WAVEAMPLITUDE
 	mov.w	r0, $JKev_L_A_OSC1_WAVEAMPLITUDE
-	mov		#0x50, r0
+	movi	#0x50, r0
 	mov.w	r0, $JKev_R_A_PREMODOFFSET
 	mov.w	r0, $JKev_L_A_PREMODOFFSET
-	mov		#0x0010, r0
+	movi	#0x0010, r0
 	mov.w	r0, $JKev_R_A_FILTER
 	mov.w	r0, $JKev_L_A_FILTER
 
@@ -74,7 +74,7 @@ stop:
 FillLine:
 	mov		#!0, r5
 startline:
-	mov		#37, r1
+	movi	#37, r1
 	mov		r5, r4
 	lsri	#!4, r4
 loop2:
@@ -99,7 +99,7 @@ VBL:
 	add		#!1, r0
 	and		#0xFF, r0
 	bra.pn	#VBLNoLoop
-	mov		#-16, r1
+	movi	#-16, r1
 	add		r1, $Cort_BPL0_BaseAdd_H
 	add		r1, $Cort_BPL1_BaseAdd_H
 	add		r1, $Cort_BPL2_BaseAdd_H

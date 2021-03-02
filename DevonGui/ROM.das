@@ -74,7 +74,7 @@ VBaseloop:
 	mov		#!0x0, r0
 	mov.w	r0, $RAM_Writer_YOffset
 	mov.w	r0, $RAM_Writer_XOffset
-	mov		#40, r0
+	movi	#40, r0
 	mov.w	r0, $RAM_Writer_Width
 
 	jsr		#FUNC_ResetCorticoRegs	; Reset Cortico registers
@@ -156,48 +156,48 @@ DefaultTrap7:
 	MOV #!0x7, r0
 	RTE
 DefaultTrap8:
-	MOV #0x8, r0
+	MOVI #0x8, r0
 	RTE
 DefaultTrap9:
-	MOV #0x9, r0
+	MOVI #0x9, r0
 	RTE
 DefaultTrapA:
-	MOV #0xA, r0
+	MOVI #0xA, r0
 	RTE
 DefaultTrapB:
-	MOV #0xB, r0
+	MOVI #0xB, r0
 	RTE
 DefaultTrapC:
-	MOV #0xC, r0
+	MOVI #0xC, r0
 	RTE
 DefaultTrapD:
-	MOV #0xD, r0
+	MOVI #0xD, r0
 	RTE
 DefaultTrapE:
-	MOV #0xE, r0
+	MOVI #0xE, r0
 	RTE
 DefaultTrapF:
-	MOV #0xf, r0
+	MOVI #0xf, r0
 	RTE
 
 FUNC_ResetCorticoRegs:
 	mov		#Cort_H, r0
 	add		#!4, r0
-	mov		#0xF, r1
+	movi	#0xF, r1
 	mov.w	r1, (r0)+		; BPLEnable 
 	
 	mov		#0x40000, r1
 	mov		r1, (r0)+		; BPL0_Base
 	add		#!2, r0
-	mov		#16, r2
+	movi	#16, r2
 	mov.w	r2, (r0)+		; BPL0_Shift
 	mov		#!0, r3
 	mov.w	r3, (r0)+		; BPL0_Stride
-	mov		#20, r4
+	movi	#20, r4
 	mov.w	r4, (r0)+		; Cort_VStart
 	mov		#220, r5
 	mov.w	r5, (r0)+		; Cort_VEnd
-	mov		#23, r6
+	movi	#23, r6
 	ssave	#%01000000
 	mov		#!3, r6
 	mov.w	r6, (r0)+		; Cort_HStart
@@ -260,7 +260,7 @@ FUNC_Memcpy_L:
 FUNC_ResetDefaultClut:
 	mov		#Cort_Clut00, r3
 	mov		#DefaultClut, r2
-	mov		#16, r4
+	movi	#16, r4
 	jsr		#FUNC_Memcpy_L
 	rts
 
