@@ -172,7 +172,7 @@ namespace Devon
 		DataRegister	R[NbRegs+2];	// general registers + 1 for PC + 1 for volatile operands
 		DataRegister	S[NbRegs];		// backup registers
 		uLONG			ICache_Add[NbICacheEntries];
-		uWORD			ICache_Inst0[NbICacheEntries];
+		uLONG			ICache_Inst0[NbICacheEntries];
 		uLONG			CurOPAddress;
 		BaseMMU			&MMU;
 		EVector			PendingInterrupt;

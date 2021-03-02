@@ -458,6 +458,22 @@ void CPU::Tick_Exec()
 		}
 		break;
 	case JMP:
+		if( (ExecInstruction.Helper.Type4.CND == 0)
+			|| ((ExecInstruction.Helper.Type4.CND & ECndFlag::Z) != 0 && SR.Flags.Z)
+			|| ((ExecInstruction.Helper.Type4.CND & ECndFlag::N) != 0 && SR.Flags.N)
+			|| ((ExecInstruction.Helper.Type4.CND & ECndFlag::P) != 0 && !SR.Flags.Z && !SR.Flags.N)
+			)
+		{
+			if(ExecInstruction.Helper.Type4.M != 0)
+				R[PC].u += R[ExecInstruction.DstRegister].s;
+			else
+				R[PC].u = R[ExecInstruction.DstRegister].u & 0xFFFFF;
+
+			R[PC].u -= InstSize; // To compensate because : Jump Occured 
+			bInstructionPreFetched = false;
+			bInstructionExtensionPreFetched = false;
+		}
+		break;
 	case JSR:	
 		if( (ExecInstruction.Helper.Type4.CND == 0)
 			|| ((ExecInstruction.Helper.Type4.CND & ECndFlag::Z) != 0 && SR.Flags.Z)
@@ -465,28 +481,25 @@ void CPU::Tick_Exec()
 			|| ((ExecInstruction.Helper.Type4.CND & ECndFlag::P) != 0 && !SR.Flags.Z && !SR.Flags.N)
 			)
 		{
-			if(ExecInstruction.Opcode == JSR)
+			switch(StackingStatus)
 			{
-				switch(StackingStatus)
+			case NoStacking:
+				StackingStatus = StackingHi;
+			case StackingHi:
+				if(MWriteWord((((R[PC].u + InstSize)>>16) & 0xFFFF), R[SP].u))
 				{
-				case NoStacking:
-					StackingStatus = StackingHi;
-				case StackingHi:
-					if(MWriteWord((((R[PC].u + InstSize)>>16) & 0xFFFF), R[SP].u))
-					{
-						R[SP].u++;
-						StackingStatus = StackingLo;
-					}
-					return;
-
-				case StackingLo:
-					if(MWriteWord((R[PC].u + InstSize & 0xFFFF), R[SP].u))
-					{
-						R[SP].u++;
-						StackingStatus = StackingOK;
-					}
-					return;
+					R[SP].u++;
+					StackingStatus = StackingLo;
 				}
+				return;
+
+			case StackingLo:
+				if(MWriteWord((R[PC].u + InstSize & 0xFFFF), R[SP].u))
+				{
+					R[SP].u++;
+					StackingStatus = StackingOK;
+				}
+				return;
 			}
 
 			StackingStatus = NoStacking;
@@ -791,7 +804,8 @@ bool CPU::FetchInstructionExtension(const uLONG Offset /*= 0*/)
 
 bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 {
-	const uLONG Add = (R[PC].u + Offset) & 0xFFFFF;
+	const uLONG Add = R[PC].u + Offset;
+
 	if(ICache_Add[0] == Add)	
 		FetchedInstruction.Helper.Instruction = ICache_Inst0[0];
 	else if(ICache_Add[1] == Add)	
