@@ -117,6 +117,7 @@ public:
 						BPL.Reading = CurPack < BPL.HEnd;
 						if(CurPack > BPL.HStart)
 						{
+							OutBuffer[i] <<= 16;
 							OutBuffer[i] |= BPL.InBuffer << BPL.Shift;
 
 							if(BPL.Shift > 15 || CurPack > BPL.HStart+1)	// Mask out the 1st Pack if Shift is used
@@ -140,26 +141,17 @@ public:
 			}
 		}
 
-		unsigned char BPLBits =	OutBuffer[0]>>31;
-		BPLBits |= (OutBuffer[1]>>30) & 2;
-		BPLBits |= (OutBuffer[2]>>29) & 4;
-		BPLBits |= (OutBuffer[3]>>28) & 8;
-		BPLBits |= (OutBuffer[4]>>27) & 16;
-		BPLBits |= (OutBuffer[5]>>26) & 32;
-		BPLBits |= (OutBuffer[6]>>25) & 64;
-		BPLBits |= (OutBuffer[7]>>24) & 128;
+		int s = 31-SubCycle;
+		unsigned char BPLBits =	(OutBuffer[0] >> s) & 1;
+		BPLBits |= (OutBuffer[1] >> --s) & 2;
+		BPLBits |= (OutBuffer[2] >> --s) & 4;
+		BPLBits |= (OutBuffer[3] >> --s) & 8;
+		BPLBits |= (OutBuffer[4] >> --s) & 16;
+		BPLBits |= (OutBuffer[5] >> --s) & 32;
+		BPLBits |= (OutBuffer[6] >> --s) & 64;
+		BPLBits |= (OutBuffer[7] >> --s) & 128;
 		BPLBits &= Streaming;
-
-		OutBuffer[0] <<= 1;
-		OutBuffer[1] <<= 1;
-		OutBuffer[2] <<= 1;
-		OutBuffer[3] <<= 1;
-		OutBuffer[4] <<= 1;
-		OutBuffer[5] <<= 1;
-		OutBuffer[6] <<= 1;
-		OutBuffer[7] <<= 1;
-
-
+	
 		if(CurPack <= 26)
 		{
 			if(CurPack > 0)
