@@ -2,18 +2,6 @@
 
 using namespace Devon;
 
-const unsigned char CPU::ExecTime[] {
-	1, 1, 1, 1, 1, 1,
-	0, 0, 1, 1, 1, 1,
-	1, 
-	1, 1, 1,
-	1, 1,
-	1, 1, 1, 1,
-	3, 2, 1, 1, 1,
-	1, 1,
-	1, 1, 1, 1, 1
-};
-
 /*			Group0,
 			ADD = Group0, MUL, SUB, DIV, MOD, CMP,
 			MOV, MOVI, XOR, OR, AND, MOVB,
@@ -218,16 +206,18 @@ void CPU::Tick_Decode()
 	bInstructionPreFetched = false;
 	bInstructionExtensionPreFetched = false;
 
-	ExecCycleCount = ExecTime[ExecInstruction.Opcode];
 	switch(ExecInstruction.Opcode)
 	{
+	case SWP:		ExecCycleCount = 3;		break;
+	case EXT:		ExecCycleCount = 2;		break;
+	case MOV:
+	case MOVI:		ExecCycleCount = 0;		break;
 	case SOP:
 		if(ExecInstruction.Helper.Type1.M == SSWAP)
 		{
-			ExecCycleCount += 7;
+			ExecCycleCount = 8;
 			for(int j = 0; j < 8; j++)
 			{
-
 				if((ExecInstruction.Helper.Type1.RS & (1<<j)) != 0)
 					ExecCycleCount += 2;
 			}
@@ -235,7 +225,6 @@ void CPU::Tick_Decode()
 		break;
 	case MUL:
 		{
-			ExecCycleCount += 15;
 			int SrcBits = 0;
 			int DstBits = 0;
 			for(int i = 0; i < 16; i++)
@@ -244,7 +233,7 @@ void CPU::Tick_Decode()
 				DstBits += ((R[ExecInstruction.DstRegister].s & (1<<i)) != 0) ? 1 : 0;
 			}
 
-			ExecCycleCount += ((SrcBits > DstBits ? DstBits : SrcBits) << 1);
+			ExecCycleCount = 16 + ((SrcBits > DstBits ? DstBits : SrcBits) << 1);
 		}
 		break;
 	case DIV:
@@ -259,9 +248,11 @@ void CPU::Tick_Decode()
 				dividend = dividend << 1;
 				num_bits--;
 			}
-			ExecCycleCount += 7 + (num_bits<<3);
+			ExecCycleCount = 8 + (num_bits<<3);
 		}
 		break;
+	default:
+		ExecCycleCount = 1;
 	}
 
 	if(ExecInstruction.Dir == ToRegister)
@@ -822,7 +813,9 @@ bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 		FetchedInstruction.Helper.Instruction = ICache_Inst0[6];
 	else if(ICache_Add[7] == Add)	
 		FetchedInstruction.Helper.Instruction = ICache_Inst0[7];
-	else if(bMemWriteOperand || !MReadWord(FetchedInstruction.Helper.Instruction, Add))
+	else if(bMemWriteOperand )
+		return false;
+	else if(!MReadWord(FetchedInstruction.Helper.Instruction, Add))
 		return false;
 	else
 	{

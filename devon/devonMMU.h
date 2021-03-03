@@ -372,16 +372,7 @@ public:
 				ROMAccessOccured = true;
 			}			
 
-			{
-				if(CARTBuf == nullptr)
-					return ERR;
-				
-				const uWORD Offset = Address;
-				if(Offset >= CARTSize)
-					return ERR;
-
-				Word = CARTBuf[Offset];
-			}
+			Word = CARTBuf[Address - 0x20000];
 			break;
 
 		case 0x40000:
@@ -395,13 +386,7 @@ public:
 				GFXRAMAccessOccured = true;
 			}
 
-			{
-				const uWORD Offset = Address;
-				if(Offset >= GFXRAMSize)
-					return ERR;
-
-				Word = GFXRAMBuf[Offset];
-			}
+			Word = GFXRAMBuf[Address - 0x40000];
 			break;
 
 
@@ -416,13 +401,7 @@ public:
 				RAMAccessOccured = true;
 			}			
 
-			{
-				const uWORD Offset = Address;
-				if(Offset >= RAMSize)
-					return ERR;
-
-				Word = RAMBuf[Offset];
-			}
+			Word = RAMBuf[Address - 0x80000];
 			break;
 
 		case 0x60000: // Extra GFX RAM
