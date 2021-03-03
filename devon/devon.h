@@ -19,6 +19,7 @@ namespace Devon
 	public:
 		virtual void HardReset()=0;
 		virtual EMemAck ReadWord(uWORD & Word, uLONG Address, bool bNoFail=false)=0;
+		virtual uWORD GFXReadWord(uLONG & Address)=0; // use from cortico only
 		virtual EMemAck WriteWord(uWORD Word, uLONG Address, bool bNoFail=false)=0;
 	};
 

@@ -49,6 +49,16 @@ public:
 	void SetROM(const std::vector<char> & ROM)			{ SetROMBuf(ROM, ROMBuf); }
 	void PlugCartrige(const std::vector<char> & CART)	{ SetROMBuf(CART, CARTBuf); }
 
+	uWORD GFXReadWord(uLONG & Address) override // use from cortico only
+	{
+		uWORD ret = GFXRAMBuf[(Address - 0x40000) & 0x1ffff];
+		GFXRAMAccessOccured = true;
+		if(++Address == 0x60000)
+			Address = 0x40000;
+
+		return ret;
+	}
+
 	EMemAck ReadWord(uWORD & Word, const uLONG Address, const bool bNoFail = false) override
 	{
 		const uLONG Page = Address & 0xFFFF0000;

@@ -125,6 +125,19 @@ public:
 					}
 				}
 			}
+
+			BPlaneControl & ReadBPL = BPlane[0];
+			if(ReadBPL.Reading)
+				ReadBPL.InBuffer = MMU.GFXReadWord(ReadBPL.CurAdd.l);
+		}
+		else
+		{
+			if((SubCycle & 1) == 0)
+			{
+				BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
+				if(ReadBPL.Reading)
+					ReadBPL.InBuffer = MMU.GFXReadWord(ReadBPL.CurAdd.l);
+			}
 		}
 
 		unsigned char BPLBits =	OutBuffer[0]>>31;
@@ -146,16 +159,6 @@ public:
 		OutBuffer[6] <<= 1;
 		OutBuffer[7] <<= 1;
 
-		if((SubCycle & 1) == 0)
-		{
-			BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
-			if(ReadBPL.Reading)
-			{
-				MMU.ReadWord(ReadBPL.InBuffer, ReadBPL.CurAdd.l++);
-				if(ReadBPL.CurAdd.l == 0x80000)
-					ReadBPL.CurAdd.l = 0x40000;
-			}
-		}
 
 		if(CurPack <= 26)
 		{

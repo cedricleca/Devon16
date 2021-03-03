@@ -796,7 +796,6 @@ bool CPU::FetchInstructionExtension(const uLONG Offset /*= 0*/)
 bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 {
 	const uLONG Add = R[PC].u + Offset;
-
 	if(ICache_Add[0] == Add)	
 		FetchedInstruction.Helper.Instruction = ICache_Inst0[0];
 	else if(ICache_Add[1] == Add)	
