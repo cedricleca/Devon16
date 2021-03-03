@@ -51,7 +51,6 @@ class CorticoChip
 
 	struct BPlaneControl
 	{
-		uLONG OutBuffer;
 		MemPointer BaseAdd;
 		MemPointer CurAdd;
 		uWORD InBuffer;
@@ -65,10 +64,11 @@ class CorticoChip
 		bool Enabled;
 		bool VActive;
 		bool Reading;
-		bool Streaming;
-		bool Streaming2;
 		bool IsBKG;
 	};
+
+	uLONG OutBuffer[CorticoBPlaneNr];
+	unsigned char Streaming;
 
 	uWORD H;
 	uWORD V;
@@ -102,16 +102,14 @@ public:
 	{
 		const int CurPack = ((CycleCount + 16) & 511)>>4; // starts 32 cycles before the new raster
 		const int SubCycle = CycleCount & 0xf;
-		unsigned char BPLBits = 0;
 
 		if(SubCycle == 0)
 		{
+			Streaming = 0;
 			for(int i = 0; i < CorticoBPlaneNr; i++)
 			{
 				BPlaneControl & BPL = BPlane[i];
 				BPL.Reading = false;
-				BPL.Streaming = false;
-				BPL.Streaming2 = false;
 				if(BPL.VActive)
 				{
 					if(CurPack >= BPL.HStart && CurPack <= BPL.HEnd)
@@ -119,35 +117,34 @@ public:
 						BPL.Reading = CurPack < BPL.HEnd;
 						if(CurPack > BPL.HStart)
 						{
-							BPL.Streaming = true;
-							BPL.OutBuffer |= BPL.InBuffer << BPL.Shift;
+							OutBuffer[i] |= BPL.InBuffer << BPL.Shift;
 
-							if(BPL.Shift > 15 || CurPack > BPL.HStart+1)							// Mask out the 1st Pack if Shift is used
-							{
-								BPLBits |= (BPL.OutBuffer>>31) << i;
-								BPL.Streaming2 = true;
-							}
-
-							BPL.OutBuffer <<= 1;
+							if(BPL.Shift > 15 || CurPack > BPL.HStart+1)	// Mask out the 1st Pack if Shift is used
+								Streaming |= 1<<i;
 						}
 					}
 				}
 			}
 		}
-		else
-		{
-			for(int i = 0; i < CorticoBPlaneNr; i++)
-			{
-				BPlaneControl & BPL = BPlane[i];
-				if(BPL.Streaming)
-				{
-					if(BPL.Streaming2)
-						BPLBits |= (BPL.OutBuffer>>31) << i;
 
-					BPL.OutBuffer <<= 1;
-				}
-			}
-		}
+		unsigned char BPLBits =	OutBuffer[0]>>31;
+		BPLBits |= (OutBuffer[1]>>30) & 2;
+		BPLBits |= (OutBuffer[2]>>29) & 4;
+		BPLBits |= (OutBuffer[3]>>28) & 8;
+		BPLBits |= (OutBuffer[4]>>27) & 16;
+		BPLBits |= (OutBuffer[5]>>26) & 32;
+		BPLBits |= (OutBuffer[6]>>25) & 64;
+		BPLBits |= (OutBuffer[7]>>24) & 128;
+		BPLBits &= Streaming;
+
+		OutBuffer[0] <<= 1;
+		OutBuffer[1] <<= 1;
+		OutBuffer[2] <<= 1;
+		OutBuffer[3] <<= 1;
+		OutBuffer[4] <<= 1;
+		OutBuffer[5] <<= 1;
+		OutBuffer[6] <<= 1;
+		OutBuffer[7] <<= 1;
 
 		if((SubCycle & 1) == 0)
 		{
@@ -199,7 +196,6 @@ public:
 						{
 							BPL.CurAdd.l += BPL.Stride;
 							BPL.CurAdd.l = 0x40000 + (BPL.CurAdd.l & 0x3FFFF);
-							BPL.InBuffer = BPL.OutBuffer = 0;
 						}
 
 						if(V < BPL.VEnd)
