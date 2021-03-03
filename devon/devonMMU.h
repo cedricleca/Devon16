@@ -6,59 +6,39 @@
 #include "MTUChip.h"
 #include "JKevChip.h"
 #include "Keyb.h"
-#include <memory.h>
+#include <array>
+#include <vector>
+#include <memory>
 
 using namespace Devon;
 
 class DevonMMU : public BaseMMU
 {
-	uWORD * RAMBuf;
-	uWORD * GFXRAMBuf;
-	uWORD * ROMBuf;
-	uWORD * CARTBuf;
-	uLONG RAMSize;
-	uLONG GFXRAMSize;
-	uLONG ROMSize;
-	uLONG CARTSize;
+	std::array<uWORD, 128*1024> RAMBuf;
+	std::array<uWORD, 128*1024> GFXRAMBuf;
+	std::vector<uWORD> ROMBuf;
+	std::vector<uWORD> CARTBuf;
+
+	void SetROMBuf(const std::vector<char> & InBuf, std::vector<uWORD> & Dest)
+	{
+		Dest.resize(InBuf.size() / sizeof(uWORD));
+		memcpy_s(Dest.data(), InBuf.size(), InBuf.data(), InBuf.size());
+	}
 
 public:
-	uWORD CycleCount;
+	uWORD CycleCount = 0;
 	uWORD GFXRAMAccessOccured:1, RAMAccessOccured:1, ROMAccessOccured:1;
 
-	CorticoChip * Cortico;
-	TimerChip * Timers;
-	MTUChip * MTUs;
-	JKevChip * JKev;
-	KeyBChip * KeyB;
-
-	DevonMMU(uLONG RAMWords, uLONG GFXRAMWords) : 
-		ROMBuf(nullptr),
-		CARTBuf(nullptr),
-		ROMSize(0),
-		CARTSize(0),
-		CycleCount(0),
-		Cortico(nullptr),
-		Timers(nullptr),
-		MTUs(nullptr)
-	{
-		GFXRAMSize = GFXRAMWords;
-		GFXRAMBuf = new uWORD[GFXRAMSize];
-		RAMSize = RAMWords;
-		RAMBuf = new uWORD[RAMSize];
-	}
-
-	~DevonMMU()
-	{
-		delete RAMBuf;
-		delete GFXRAMBuf;
-	}
+	CorticoChip * Cortico = nullptr;
+	TimerChip * Timers = nullptr;
+	MTUChip * MTUs = nullptr;
+	JKevChip * JKev = nullptr;
+	KeyBChip * KeyB = nullptr;
 
 	virtual void HardReset() override
 	{
-		if(GFXRAMBuf)
-			memset( GFXRAMBuf, 0, GFXRAMSize * sizeof(uWORD) );
-		if(RAMBuf)
-			memset( RAMBuf, 0, RAMSize * sizeof(uWORD) );
+		GFXRAMBuf.fill(0);
+		RAMBuf.fill(0);
 	}	
 
 	inline void PostTick()
@@ -66,17 +46,8 @@ public:
 		CycleCount++;
 	}
 
-	void SetROM(uWORD * ROM, uLONG ROMWords)
-	{
-		ROMSize = ROMWords;
-		ROMBuf = ROM;
-	}
-
-	void PlugCartrige(uWORD * CART, uLONG CARTWords)
-	{
-		CARTSize = CARTWords;
-		CARTBuf = CART;
-	}
+	void SetROM(const std::vector<char> & ROM)			{ SetROMBuf(ROM, ROMBuf); }
+	void PlugCartrige(const std::vector<char> & CART)	{ SetROMBuf(CART, CARTBuf); }
 
 	EMemAck ReadWord(uWORD & Word, const uLONG Address, const bool bNoFail = false) override
 	{
@@ -95,7 +66,7 @@ public:
 
 			{
 				const uLONG Offset = Address;
-				if(Offset >= ROMSize || ROMBuf == nullptr)
+				if(Offset >= ROMBuf.size() || ROMBuf.empty())
 					return ERR;
 
 				Word = ROMBuf[Offset];
@@ -112,9 +83,9 @@ public:
 				// MMU
 				switch(Address & 0xFFF)
 				{
-				case 0x0:	Word = 0;			break;
-				case 0x1:	Word = ROMSize;		break;
-				case 0x2:	Word = CARTSize;	break;
+				case 0x0:	Word = 0;						break;
+				case 0x1:	Word = (uWORD)ROMBuf.size();	break;
+				case 0x2:	Word = (uWORD)CARTBuf.size();	break;
 				default:
 					return ERR;
 				}
@@ -691,4 +662,3 @@ public:
 		return OK;
 	}
 };
-

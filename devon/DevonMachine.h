@@ -21,7 +21,7 @@ public:
 	JKevChip	JKev;
 	KeyBChip	KeyB;
 
-	DevonMachine() : MMU(128*1024, 128*1024),
+	DevonMachine() :
 		CPU(MMU), 
 		Cortico(MMU, CPU), 
 		Timers(CPU), 

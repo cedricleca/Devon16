@@ -81,8 +81,8 @@ static std::string DCAExportName;
 static std::string DROExportName;
 static PictureToolWindow PicToolWindow;
 
-std::vector<unsigned char> ROMBuf;
-std::vector<unsigned char> CartridgeBuf;
+std::vector<char> ROMBuf;
+std::vector<char> CartridgeBuf;
 static bool AssemblySuccess = false;
 static bool AssemblyDone = false;
 
@@ -113,14 +113,13 @@ private:
 	std::streambuf * mOldBuffer;
 };
 
-bool LoadROM(const std::string & ROMFileName, std::vector<unsigned char> & OutBuf)
+bool LoadROM(const std::string & ROMFileName, std::vector<char> & OutBuf)
 {
-   std::ifstream input( ROMFileName, std::ios::binary );
+	std::ifstream input( ROMFileName, std::ios::binary );
 	if(input.is_open())
 	{
-	   std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(input), {});
-	   OutBuf = buffer;
-	   return true;
+		OutBuf = { std::istreambuf_iterator<char>(input), {} };
+		return true;
 	}
 	return false;
 }
@@ -142,7 +141,7 @@ void PlugCartridge(LogWindow & Log)
 	{
 		if(LoadROM(Settings::CartridgeFileName, CartridgeBuf))
 		{
-			Machine.MMU.PlugCartrige((uWORD*)CartridgeBuf.data(), uLONG(CartridgeBuf.size())/sizeof(uWORD));
+			Machine.MMU.PlugCartrige(CartridgeBuf);
 			Log.AddLog("Cartridge file loaded\n");
 			Machine.HardReset();
 		}
@@ -884,7 +883,7 @@ int main(int argn, char**arg)
 
 		if(ROMChangeRequest)
 		{
-			Machine.MMU.SetROM((uWORD*)ROMBuf.data(), uLONG(ROMBuf.size())/sizeof(uWORD));
+			Machine.MMU.SetROM(ROMBuf);
 			Machine.HardReset();
 			ROMChangeRequest = false;
 		}
