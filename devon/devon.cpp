@@ -288,7 +288,7 @@ void CPU::Tick_Decode()
 	case EAdModeMax:
 		break;
 	default:
-		if(FetchedInstruction.Opcode == EOpcode::MOV && FetchedInstruction.Dir == EDirection::ToAdMode)
+		if(FetchedInstruction.Opcode == MOV && FetchedInstruction.Dir == EDirection::ToAdMode)
 			break;
 			
 		if(ExecInstruction.AdMode == XRegDec && ExecInstruction.Dir == ToRegister)
@@ -299,11 +299,11 @@ void CPU::Tick_Decode()
 	}
 
 	bMemWriteOperand = !(ExecInstruction.Dir == EDirection::ToRegister
-						|| ExecInstruction.AdMode == EAdMode::Reg
-						|| ExecInstruction.AdMode == EAdMode::Imm20 // single op instructions
-						|| ExecInstruction.AdMode == EAdMode::Imm4
-						|| ExecInstruction.AdMode == EAdMode::Imm8
-						|| ExecInstruction.AdMode == EAdMode::EAdModeMax
+						|| ExecInstruction.AdMode == Reg
+						|| ExecInstruction.AdMode == Imm20 // single op instructions
+						|| ExecInstruction.AdMode == Imm4
+						|| ExecInstruction.AdMode == Imm8
+						|| ExecInstruction.AdMode == EAdModeMax
 						|| ExecInstruction.Opcode == JMP
 						|| ExecInstruction.Opcode == JSR
 						|| ExecInstruction.Opcode == CMP
@@ -703,7 +703,7 @@ void CPU::Tick_Exec()
 
 	if(bMemWriteOperand)
 	{
-		if(ExecInstruction.AdMode == EAdMode::XRegDec)
+		if(ExecInstruction.AdMode == XRegDec)
 			Tick = &Devon::CPU::Tick_PreDecrPut;
 		else
 			Tick = &Devon::CPU::Tick_PutRes0;
@@ -825,7 +825,7 @@ bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 	}
 
 	if(FetchedInstruction.Helper.Opcode.f0 < 31)
-		FetchedInstruction.Opcode = EOpcode(FetchedInstruction.Helper.Opcode.f0 + Group0);
+		FetchedInstruction.Opcode = EOpcode(FetchedInstruction.Helper.Opcode.f0);
 	else if(FetchedInstruction.Helper.Opcode.f1 < 7)
 		FetchedInstruction.Opcode = EOpcode(FetchedInstruction.Helper.Opcode.f1 + Group1);
 	else
@@ -833,55 +833,55 @@ bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 
 	switch(FetchedInstruction.Opcode)
 	{
-	case EOpcode::ADD: 
-	case EOpcode::MUL: 
-	case EOpcode::SUB: 
-	case EOpcode::DIV: 
-	case EOpcode::MOD: 
-	case EOpcode::CMP: 
-	case EOpcode::MOV: 
-	case EOpcode::XOR: 
-	case EOpcode::OR: 
-	case EOpcode::AND: 
-	case EOpcode::MOVB: 
+	case ADD: 
+	case MUL: 
+	case SUB: 
+	case DIV: 
+	case MOD: 
+	case CMP: 
+	case MOV: 
+	case XOR: 
+	case OR: 
+	case AND: 
+	case MOVB: 
 		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type0.AM;
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type0.OP;
 		FetchedInstruction.Dir = FetchedInstruction.Helper.Type0.DIR;
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type0.REG;
 		break;
-	case EOpcode::MOVI:
-		FetchedInstruction.AdMode = Devon::CPU::EAdMode::Imm8;
+	case MOVI:
+		FetchedInstruction.AdMode = Devon::CPU::Imm8;
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type12.OP;
 		FetchedInstruction.Dir = ToRegister;
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type12.REG;		
 		break;
-	case EOpcode::JMP: 
-	case EOpcode::JSR: 
+	case JMP: 
+	case JSR: 
 		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type4.AM;
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type4.OP;
 		FetchedInstruction.Dir = ToAdMode;
 		break;
-	case EOpcode::SHIFT: 
-	case EOpcode::BOP: 
+	case SHIFT: 
+	case BOP: 
 		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type5.AM;		
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type5.REGB<<1;
 		FetchedInstruction.Dir = ToRegister;
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type5.REGA;
 		break;
-	case EOpcode::SHIFTI:
-	case EOpcode::BOPI: 
+	case SHIFTI:
+	case BOPI: 
 		FetchedInstruction.AdMode = Reg;		
 		FetchedInstruction.Dir = ToRegister;
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type6.REGA;
 		break;
-	case EOpcode::VBASE: 
-	case EOpcode::TRAP: 
-	case EOpcode::NOT: 
-	case EOpcode::NEG: 
+	case VBASE: 
+	case TRAP: 
+	case NOT: 
+	case NEG: 
 		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type8.AM;		
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type8.OP;
 		break;
-	case EOpcode::EXT: 
+	case EXT: 
 		FetchedInstruction.AdMode = Reg;		
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type11.REG;
 		break;
@@ -889,7 +889,6 @@ bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 		FetchedInstruction.AdMode = EAdModeMax;
 	}
 
-	FetchedInstruction.LongInst = false;
 	switch(FetchedInstruction.AdMode)
 	{
 	case Reg:
@@ -898,18 +897,21 @@ bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 	case XRegDec:
 		FetchedInstruction.LongOP = FetchedInstruction.Op & 1;
 		FetchedInstruction.Op >>= 1;
+		FetchedInstruction.LongInst = false;
 		break;
-	case EAdMode::XEA20L:
+	case XEA20L:
 		FetchedInstruction.LongOP = true;
 		FetchedInstruction.LongInst = true;
 		break;
-	case EAdMode::XEA20W:
+	case XEA20W:
 		FetchedInstruction.LongOP = false;
 		FetchedInstruction.LongInst = true;
 		break;
 	case Imm20:
 		FetchedInstruction.LongInst = true;
 		break;
+	default:
+		FetchedInstruction.LongInst = false;
 	}
 
 	return true;
@@ -921,7 +923,7 @@ void CPU::TestReg(const int RegIndex)
 	SR.Flags.Z = (R[RegIndex].s == 0);
 }
 
-void CPU::Interrupt(int InterruptionLvl)
+void CPU::Interrupt(const int InterruptionLvl)
 {
 	if(bHalt)
 		return;

@@ -80,7 +80,7 @@ public:
 
 	EMemAck ReadWord(uWORD & Word, const uLONG Address, const bool bNoFail = false) override
 	{
-		const uLONG Page = Address & 0xF0000;
+		const uLONG Page = Address & 0xFFFF0000;
 		switch(Page)
 		{
 		case 0x00000: // ROM
@@ -404,12 +404,10 @@ public:
 			Word = RAMBuf[Address - 0x80000];
 			break;
 
-		case 0x60000: // Extra GFX RAM
-		case 0x70000: // Extra GFX RAM
-		case 0xA0000: // Extra RAM
-		case 0xB0000: // Extra RAM
-			return ERR;
-
+		//case 0x60000: // Extra GFX RAM
+		//case 0x70000: // Extra GFX RAM
+		//case 0xA0000: // Extra RAM
+		//case 0xB0000: // Extra RAM
 		default:
 			return ERR;
 		}
@@ -419,18 +417,9 @@ public:
 
 	EMemAck WriteWord(const uWORD Word, const uLONG Address, const bool bNoFail = false) override
 	{
-		const uLONG Page = Address & 0xF0000;
+		const uLONG Page = Address & 0xFFFF0000;
 		switch(Page)
 		{
-		case 0x00000: // ROM
-		case 0x20000: // Cartridge
-		case 0x30000: // Cartridge
-		case 0x60000: // Extra GFX RAM
-		case 0x70000: // Extra GFX RAM
-		case 0xA0000: // Extra RAM
-		case 0xB0000: // Extra RAM
-			return ERR;
-
 		case 0x10000: // coprocessors control registers
 			if(!bNoFail && (CycleCount & 1) != 0)
 				return WAIT;
@@ -673,13 +662,7 @@ public:
 				GFXRAMAccessOccured = true;
 			}
 
-			{
-				const uWORD Offset = Address;
-				if(Offset >= GFXRAMSize)
-					return ERR;
-
-				GFXRAMBuf[Offset] = Word;
-			}
+			GFXRAMBuf[Address - 0x40000] = Word;
 			break;
 		
 		case 0x80000:
@@ -691,15 +674,16 @@ public:
 				RAMAccessOccured = true;
 			}			
 
-			{
-				const uWORD Offset = Address;
-				if(Offset >= RAMSize)
-					return ERR;
-
-				RAMBuf[Offset] = Word;
-			}
+			RAMBuf[Address - 0x80000] = Word;
 			break;
 
+		//case 0x00000: // ROM
+		//case 0x20000: // Cartridge
+		//case 0x30000: // Cartridge
+		//case 0x60000: // Extra GFX RAM
+		//case 0x70000: // Extra GFX RAM
+		//case 0xA0000: // Extra RAM
+		//case 0xB0000: // Extra RAM
 		default:
 			return ERR;
 		}
