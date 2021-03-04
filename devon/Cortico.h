@@ -2,6 +2,7 @@
 
 #include "devon.h"
 #include <string>
+//#include <immintrin.h>
 
 using namespace Devon;
 
@@ -67,7 +68,7 @@ class CorticoChip
 	};
 
 	uLONG OutBuffer[CorticoBPlaneNr];
-	unsigned char Streaming;
+	unsigned char StreamingMask;
 
 	uWORD H;
 	uWORD V;
@@ -104,20 +105,15 @@ public:
 
 		if(SubCycle == 0)
 		{
-			Streaming = 0;
+			StreamingMask = 0;
 			for(int i = 0; i < CorticoBPlaneNr; i++)
 			{
 				BPlaneControl & BPL = BPlane[i];
-				if(BPL.VActive && CurPack >= BPL.HStart && CurPack <= BPL.HEnd)
+				if(BPL.VActive && CurPack > BPL.HStart && CurPack <= BPL.HEnd)
 				{
-					if(CurPack > BPL.HStart)
-					{
-						OutBuffer[i] <<= 16;
-						OutBuffer[i] |= BPL.InBuffer << BPL.Shift;
-
-						if(BPL.Shift > 15 || CurPack > BPL.HStart+1)	// Mask out the 1st Pack if Shift is used
-							Streaming |= 1<<i;
-					}
+					OutBuffer[i] = (OutBuffer[i]<<16) | (BPL.InBuffer<<BPL.Shift);
+					if(BPL.Shift > 15 || CurPack > BPL.HStart+1)	// Mask out the 1st Pack if Shift is used
+						StreamingMask |= 1<<i;
 				}
 			}
 
@@ -144,7 +140,7 @@ public:
 		BPLBits |= (OutBuffer[5] >> --s) & 32;
 		BPLBits |= (OutBuffer[6] >> --s) & 64;
 		BPLBits |= (OutBuffer[7] >> --s) & 128;
-		BPLBits &= Streaming;
+		BPLBits &= StreamingMask;
 	
 		if(CurPack <= 26)
 		{
@@ -182,7 +178,7 @@ public:
 					if(V > BPL.VStart && V <= BPL.VEnd)
 					{
 						BPL.CurAdd.l += BPL.Stride;
-						BPL.CurAdd.l = 0x40000 + (BPL.CurAdd.l & 0x3FFFF);
+						BPL.CurAdd.l = 0x40000 + (BPL.CurAdd.l & 0x1FFFF);
 					}
 				}
 			}
