@@ -1,29 +1,7 @@
 #pragma once
 
 #include "DevonASM.h"
-
-DevonASM::Assembler::Assembler() :
-	LastInt(-1),
-	NbErrors(0),
-	CurAddress(0),
-	Entry(0),
-	LastOPLong(false),
-	LastCharAvailable(false),
-	CurPass(0)
-{
-	Reset();
-}
-
-DevonASM::Assembler::~Assembler()
-{
-	// free chunks data
-	size_t sz = CodeChunks.size();
-	for (unsigned int i = 0; i < sz; i++)
-	{
-		if(CodeChunks[i].Data)
-			delete CodeChunks[i].Data;
-	}
-}
+#include <fstream>
 
 void DevonASM::Assembler::Reset()
 {
@@ -52,11 +30,10 @@ void DevonASM::Assembler::Pass1()
 	CurChunk = 0;
 
 	// reserve chunks data
-	size_t sz = CodeChunks.size();
-	for(unsigned int i = 0; i < sz; i++)
+	for(auto & chunck : CodeChunks)
 	{
-		CodeChunks[i].Data = new unsigned short[CodeChunks[i].WordSize];
-		CodeChunks[i].Cursor = CodeChunks[i].Data;
+		chunck.Data.resize(chunck.WordSize);
+		chunck.Cursor = 0;
 	}
 }
 
@@ -547,7 +524,7 @@ void DevonASM::Assembler::NextCodeChunk()
 	}
 	else if (CurPass == 1)
 	{
-		if(CurChunk > 0 || CodeChunks[0].Cursor - CodeChunks[0].Data == CodeChunks[0].WordSize)
+		if(CurChunk > 0 || CodeChunks[0].Cursor == CodeChunks[0].WordSize)
 			CurChunk++;
 	}
 }
@@ -557,8 +534,7 @@ void DevonASM::Assembler::AdvanceAddress()
 	if (CurPass == 0)
 	{
 		CurAddress += GetInstructionSize();
-		size_t sz = CodeChunks.size();
-		CodeChunks[sz - 1].WordSize += GetInstructionSize();
+		CodeChunks.back().WordSize += GetInstructionSize();
 	}
 }
 
@@ -566,15 +542,9 @@ void DevonASM::Assembler::AddWord(uWORD w)
 {
 	CurAddress += 1;
 	if (CurPass == 0)
-	{
-		size_t sz = CodeChunks.size();
-		CodeChunks[sz - 1].WordSize += 1;
-	}
+		CodeChunks.back().WordSize++;
 	else if (CurPass == 1)
-	{
-		*CodeChunks[CurChunk].Cursor = w;//((w>>8) & 0xFF) | (w<<8);   // big endian swap
-		CodeChunks[CurChunk].Cursor += 1;
-	}
+		CodeChunks[CurChunk].Data[CodeChunks[CurChunk].Cursor++] = w;//((w>>8) & 0xFF) | (w<<8);   // big endian swap
 }
 
 void DevonASM::Assembler::AddByte(char b)
@@ -644,30 +614,20 @@ void DevonASM::Assembler::AssemblyCompleteMessage()
 
 void DevonASM::Assembler::Incbin(const char * FileName)
 {
-	unsigned char * Buf = nullptr;
-	long Size = 0;
-
-	FILE * f;
-	fopen_s(&f, FileName, "rb");
-	if(f)
+	std::ifstream input( FileName, std::ios::binary );
+	if(input.is_open())
 	{
-		fseek(f, 0, SEEK_END);
-		Size = ftell(f);
-		rewind(f);
-		Buf = new unsigned char[Size];
-		fread_s(Buf, Size, 1, Size, f);
-		fclose(f);
+		std::vector<unsigned char> Buf = { std::istreambuf_iterator<char>(input), {} };
+		for(const auto & byte : Buf)
+			AddByte(byte);
+
+		if(LastCharAvailable)
+			AddByte(-1);
 	}
 	else
 	{
 		throw std::runtime_error("Can't open file " + std::string(FileName));
 	}
-
-	for(long i = 0; i < Size; i++)
-		AddByte(Buf[i]);
-
-	if(LastCharAvailable)
-		AddByte(-1);
 }
 
 bool DevonASM::Assembler::AssembleFile(const char * FileName)
@@ -755,15 +715,14 @@ bool DevonASM::Assembler::ExportROMFile(const char * FileName, int ROMBaseAddres
 	// check size
 	int highest = -1;
 	int lowest = -1;
-	for (auto it = CodeChunks.begin(); it != CodeChunks.end(); ++it)
+	for(const auto & chunk : CodeChunks)
 	{
-		if(lowest < 0 || it->BaseAddress < lowest)
-			lowest = it->BaseAddress;
+		if(lowest < 0 || chunk.BaseAddress < lowest)
+			lowest = chunk.BaseAddress;
 
-		if (highest < 0 || it->BaseAddress + it->WordSize > highest)
-			highest = it->BaseAddress + it->WordSize;
+		if (highest < 0 || chunk.BaseAddress + chunk.WordSize > highest)
+			highest = chunk.BaseAddress + chunk.WordSize;
 	}
-
 
 	if(lowest != ROMBaseAddress)
 	{
@@ -772,7 +731,7 @@ bool DevonASM::Assembler::ExportROMFile(const char * FileName, int ROMBaseAddres
 		return false;
 	}
 
-	int size = highest - lowest;
+	const int size = highest - lowest;
 	if(size > MaxSize)
 	{
 		// too large for cartridge
@@ -785,19 +744,20 @@ bool DevonASM::Assembler::ExportROMFile(const char * FileName, int ROMBaseAddres
 		csize *= 2;
 
 	// alloc cartridge memory
-	uWORD * cartridge = new uWORD[csize];
-	memset(cartridge, 0, csize*sizeof(uWORD));
+	std::vector<uWORD> cartridge;
+	cartridge.resize(csize);
+	std::fill(cartridge.begin(), cartridge.end(), 0);
 
 	// deploy chunks
-	for(auto it = CodeChunks.begin(); it != CodeChunks.end(); ++it)
-		memcpy(cartridge + it->BaseAddress - ROMBaseAddress, it->Data, it->WordSize * sizeof(uWORD));
+	for(const auto & chunk : CodeChunks)
+		memcpy(cartridge.data() + chunk.BaseAddress - ROMBaseAddress, chunk.Data.data(), chunk.WordSize * sizeof(uWORD));
 
 	// save file
 	FILE * f;
 	fopen_s(&f, FileName, "wb");
 	if(f)
 	{
-		fwrite(cartridge, sizeof(uWORD), csize, f);
+		fwrite(cartridge.data(), sizeof(uWORD), csize, f);
 		fclose(f);
 	}
 	else
@@ -806,8 +766,6 @@ bool DevonASM::Assembler::ExportROMFile(const char * FileName, int ROMBaseAddres
 		std::cout << "ExportROMFile : can't open file for saving\n";
 		return false;
 	}
-
-	delete[] cartridge;
 
 	std::cout << "ExportROMFile : passed\n";
 	return true;

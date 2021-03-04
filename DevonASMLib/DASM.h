@@ -32,14 +32,10 @@ namespace DevonASM
 
 	struct CodeChunk
 	{
-		int BaseAddress;
-		int WordSize;
-		unsigned short * Data;
-		unsigned short * Cursor;
-
-		CodeChunk() : BaseAddress(0), WordSize(0), Data(nullptr), Cursor(nullptr)
-		{
-		}
+		int BaseAddress = 0;
+		int WordSize = 0;
+		std::vector<unsigned short> Data;
+		int Cursor = 0;
 	};
 
 	class Assembler
@@ -77,8 +73,6 @@ namespace DevonASM
 		std::vector<CodeChunk> CodeChunks;
 		std::vector<EErrorCode> ErrorsThisLine;
 
-		Assembler();
-		~Assembler();
 		void Reset();
 		bool AssembleFile(const char * FileName);
 		void ExportDEXFile(const char * FileName);
