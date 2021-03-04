@@ -63,7 +63,6 @@ class CorticoChip
 
 		bool Enabled;
 		bool VActive;
-		bool Reading;
 		bool IsBKG;
 	};
 
@@ -109,26 +108,21 @@ public:
 			for(int i = 0; i < CorticoBPlaneNr; i++)
 			{
 				BPlaneControl & BPL = BPlane[i];
-				BPL.Reading = false;
-				if(BPL.VActive)
+				if(BPL.VActive && CurPack >= BPL.HStart && CurPack <= BPL.HEnd)
 				{
-					if(CurPack >= BPL.HStart && CurPack <= BPL.HEnd)
+					if(CurPack > BPL.HStart)
 					{
-						BPL.Reading = CurPack < BPL.HEnd;
-						if(CurPack > BPL.HStart)
-						{
-							OutBuffer[i] <<= 16;
-							OutBuffer[i] |= BPL.InBuffer << BPL.Shift;
+						OutBuffer[i] <<= 16;
+						OutBuffer[i] |= BPL.InBuffer << BPL.Shift;
 
-							if(BPL.Shift > 15 || CurPack > BPL.HStart+1)	// Mask out the 1st Pack if Shift is used
-								Streaming |= 1<<i;
-						}
+						if(BPL.Shift > 15 || CurPack > BPL.HStart+1)	// Mask out the 1st Pack if Shift is used
+							Streaming |= 1<<i;
 					}
 				}
 			}
 
 			BPlaneControl & ReadBPL = BPlane[0];
-			if(ReadBPL.Reading)
+			if(ReadBPL.VActive && CurPack >= ReadBPL.HStart && CurPack < ReadBPL.HEnd)
 				ReadBPL.InBuffer = MMU.GFXReadWord(ReadBPL.CurAdd.l);
 		}
 		else
@@ -136,7 +130,7 @@ public:
 			if((SubCycle & 1) == 0)
 			{
 				BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
-				if(ReadBPL.Reading)
+				if(ReadBPL.VActive && CurPack >= ReadBPL.HStart && CurPack < ReadBPL.HEnd)
 					ReadBPL.InBuffer = MMU.GFXReadWord(ReadBPL.CurAdd.l);
 			}
 		}
@@ -184,17 +178,11 @@ public:
 			{
 				if(BPL.Enabled)
 				{
-					BPL.VActive = false;
-					if(V >= BPL.VStart && V <= BPL.VEnd)
+					BPL.VActive = V >= BPL.VStart && V < BPL.VEnd;
+					if(V > BPL.VStart && V <= BPL.VEnd)
 					{
-						if(V > BPL.VStart)
-						{
-							BPL.CurAdd.l += BPL.Stride;
-							BPL.CurAdd.l = 0x40000 + (BPL.CurAdd.l & 0x3FFFF);
-						}
-
-						if(V < BPL.VEnd)
-							BPL.VActive = true;
+						BPL.CurAdd.l += BPL.Stride;
+						BPL.CurAdd.l = 0x40000 + (BPL.CurAdd.l & 0x3FFFF);
 					}
 				}
 			}
