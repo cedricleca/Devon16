@@ -18,8 +18,7 @@ struct LogWindow
 
 	void    AddLog(const char c)
 	{
-		char s[2] = {c, 0};
-		AddLog(s);
+        AddLog("%c", c);
 	}
 
 	void    AddLog(const char* fmt, ...) IM_FMTARGS(2)

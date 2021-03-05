@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Devon.h"
-#include "DevonMMU.h"
+#include "devon.h"
+#include "devonMMU.h"
 #include "Cortico.h"
 #include "Timers.h"
 #include "MTUChip.h"

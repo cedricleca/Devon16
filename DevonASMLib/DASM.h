@@ -41,10 +41,10 @@ namespace DevonASM
 	class Assembler
 	{
 	public:
-		int LastInt;
-		char LastChar;
-		bool LastCharAvailable;
-		bool LastOPLong;
+		int LastInt = -1;
+		char LastChar = false;
+		bool LastCharAvailable = false;
+		bool LastOPLong = false;
 		bool ExplicitShortOP;
 		std::string LastSymbol;
 		CPU::EAdMode LastAdmode;
@@ -61,10 +61,10 @@ namespace DevonASM
 		bool CndL;
 
 		bool ROMExport;
-		int NbErrors;
-		int Entry;
-		int CurAddress;
-		int CurPass;
+		int NbErrors = 0;
+		int Entry = 0;
+		int CurAddress = 0;
+		int CurPass = 0;
 		int CurChunk;
 		std::map<std::string, int> Symbols;
 		std::map<std::string, int>::iterator SymbolsIt;

@@ -26,7 +26,7 @@
 #include "PictureToolWindow.h"
 #include <fstream>
 #include <streambuf>
-#include "imFileDialog.h"
+#include "ImFileDialog.h"
 
 import SoundTools;
 import GLTools;

@@ -128,7 +128,7 @@ namespace ifd
 		void m_renderFileDialog();
 	};
 
-	static const char* GetDefaultFolderIcon();
-	static const char* GetDefaultFileIcon();
+//	static const char* GetDefaultFolderIcon();
+//	static const char* GetDefaultFileIcon();
 	std::string utf8_encode(const std::wstring &wstr);
 }

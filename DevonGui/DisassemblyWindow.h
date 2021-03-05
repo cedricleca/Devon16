@@ -31,7 +31,7 @@ struct DisassemblyWindow
 			ImGui::Text("PC %08x  %d", CPU.R[CPU::PC].u, CPU.R[CPU::PC].s);
 			ImGui::SameLine(230.0f);
 			ImGui::Text("VBase %08x  %d", CPU.VectorTableBase, CPU.VectorTableBase);
-			ImGui::Text("SR %08x  N=%d  Z=%d  X=%d  V=%d  Halt=%d  IntLvl=%d  IntMask=%02x", CPU.SR, CPU.SR.Flags.N?1:0, CPU.SR.Flags.Z?1:0, CPU.SR.Flags.X?1:0, CPU.SR.Flags.V?1:0, CPU.bHalt?1:0, CPU.SR.Flags.IntLvl, CPU.IntMask);
+			ImGui::Text("SR %08x  N=%d  Z=%d  X=%d  V=%d  Halt=%d  IntLvl=%d  IntMask=%02x", CPU.SR.SR, CPU.SR.Flags.N?1:0, CPU.SR.Flags.Z?1:0, CPU.SR.Flags.X?1:0, CPU.SR.Flags.V?1:0, CPU.bHalt?1:0, CPU.SR.Flags.IntLvl, CPU.IntMask);
 
 			ImGui::Separator();
 			/*
