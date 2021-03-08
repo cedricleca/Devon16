@@ -62,13 +62,14 @@ class CorticoChip
 		uWORD HEnd;
 
 		bool Enabled;
-		bool VActive;
 	};
 
 	__m256i mInBuffer;
 	__m256i mOutBuffer;
 	__m256i mStreamMask;
 	__m256i mVEnable;
+
+	unsigned char RVEnable;
 
 	uWORD H;
 	uWORD V;
@@ -101,36 +102,37 @@ public:
 	void Tick_Frame()
 	{
 		const int CurPack = ((CycleCount + 16) & 511)>>4; // starts 32 cycles before the new raster
-		const int SubCycle = CycleCount & 0xf;
-
-		if(SubCycle == 0)
-		{
-			mStreamMask = mVEnable;
-			mOutBuffer = _mm256_or_si256(_mm256_slli_epi32(mOutBuffer, 16), mInBuffer);
-
-			for(int i = 0; i < CorticoBPlaneNr; i++)
-			{
-				BPlaneControl & BPL = BPlane[i];
-				if(CurPack <= BPL.HStart
-				    || CurPack > BPL.HEnd
-				    || (BPL.Shift < 16 && CurPack <= BPL.HStart+1)
-					)
-					mStreamMask.m256i_i32[i] = 0;
-			}
-
-			BPlaneControl & ReadBPL = BPlane[0];
-			if(ReadBPL.VActive && CurPack >= ReadBPL.HStart && CurPack < ReadBPL.HEnd)
-				mInBuffer.m256i_i32[0] = MMU.GFXReadWord(ReadBPL.CurAdd.l) << ReadBPL.Shift;
-		}
-		else if((SubCycle & 1) == 0)
-		{
-			BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
-			if(ReadBPL.VActive && CurPack >= ReadBPL.HStart && CurPack < ReadBPL.HEnd)
-				mInBuffer.m256i_i32[SubCycle>>1] = MMU.GFXReadWord(ReadBPL.CurAdd.l) << ReadBPL.Shift;
-		}
-
 		if(CurPack <= 26)
 		{
+			const int SubCycle = CycleCount & 0xf;
+			if(SubCycle == 0)
+			{
+				mStreamMask = mVEnable;
+				mOutBuffer = _mm256_or_si256(_mm256_slli_epi32(mOutBuffer, 16), mInBuffer);
+
+				for(int i = 0; i < CorticoBPlaneNr; i++)
+				{
+					BPlaneControl & BPL = BPlane[i];
+					if(CurPack <= BPL.HStart
+						|| CurPack > BPL.HEnd
+						|| (BPL.Shift < 16 && CurPack <= BPL.HStart+1)
+						)
+						mStreamMask.m256i_i32[i] = 0;
+				}
+			}
+			
+			if(RVEnable & (1<<SubCycle))
+			{
+				BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
+				if(CurPack >= ReadBPL.HStart)
+				{
+					mInBuffer.m256i_i32[SubCycle>>1] = MMU.GFXReadWord(ReadBPL.CurAdd.l) << ReadBPL.Shift;
+				
+					if(CurPack == ReadBPL.HEnd-1)
+						RVEnable &= ~(1<<SubCycle);
+				}
+			}
+
 			if(CurPack > 0)
 			{
 				__m256i Shift = _mm256_sub_epi32(_mm256_setr_epi32(31, 30, 29, 28, 27, 26, 25, 24), _mm256_set1_epi32(SubCycle));
@@ -168,12 +170,15 @@ public:
 			V++;
 
 			mVEnable = _mm256_setr_epi32(1, 2, 4, 8, 16, 32, 64, 128);
+			RVEnable = 0;
 			for(int i = 0; i < CorticoBPlaneNr; i++)
 			{
 				BPlaneControl & BPL = BPlane[i];
-				BPL.VActive = BPL.Enabled && V >= BPL.VStart && V < BPL.VEnd;
-				if(!BPL.VActive)
+				if(BPL.Enabled && V >= BPL.VStart && V < BPL.VEnd)
+					RVEnable |= 1<<(i*2);
+				else
 					mVEnable.m256i_i32[i] = 0;
+
 				if(V > BPL.VStart && V <= BPL.VEnd)
 				{
 					BPL.CurAdd.l += BPL.Stride;
@@ -194,12 +199,10 @@ public:
 			Control.flags.VBL = 1;
 			H = V = CycleCount = 0;
 			CPU.Interrupt(7); // trig VBlank
+			RVEnable = 0;
 
 			for(auto & BPL : BPlane)
-			{
 				BPL.CurAdd.l = BPL.BaseAdd.l;
-				BPL.VActive = false;
-			}
 
 			Tick = &CorticoChip::Tick_PreFrame;
 		}
@@ -237,7 +240,6 @@ public:
 			BPL.VEnd = 0;
 			BPL.HStart = 0;
 			BPL.HEnd = 0;
-			BPL.VActive = 0;
 		}
 
 		SetOutputSurface(0);
