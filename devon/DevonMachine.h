@@ -36,22 +36,6 @@ public:
 		MMU.KeyB = &KeyB;
 	}
 
-	void Tick(const int ClockTicks=1)
-	{
-		for(int i = 0; i < ClockTicks; i++)
-		{
-			MMU.GFXRAMAccessOccured = false;
-			MMU.RAMAccessOccured = false;
-			MMU.ROMAccessOccured = false;
-			(Cortico.*Cortico.Tick)();
-			Timers.Tick();
-			MTUs.Tick();
-			JKev.Tick();
-			(CPU.*CPU.Tick)();
-			MMU.PostTick();
-		}
-	}
-
 	void TickFrame()
 	{
 		for(int i = (268800/4)-1; i >= 0; --i)

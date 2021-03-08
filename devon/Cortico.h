@@ -2,7 +2,7 @@
 
 #include "devon.h"
 #include <string>
-//#include <immintrin.h>
+#include <immintrin.h>
 
 using namespace Devon;
 
@@ -54,7 +54,6 @@ class CorticoChip
 	{
 		MemPointer BaseAdd;
 		MemPointer CurAdd;
-		uWORD InBuffer;
 		uWORD Stride;
 		uWORD Shift;
 		uWORD VStart;
@@ -64,11 +63,12 @@ class CorticoChip
 
 		bool Enabled;
 		bool VActive;
-		bool IsBKG;
 	};
 
-	uLONG OutBuffer[CorticoBPlaneNr];
-	unsigned char StreamingMask;
+	__m256i mInBuffer;
+	__m256i mOutBuffer;
+	__m256i mStreamMask;
+	__m256i mVEnable;
 
 	uWORD H;
 	uWORD V;
@@ -105,59 +105,56 @@ public:
 
 		if(SubCycle == 0)
 		{
-			StreamingMask = 0;
+			mStreamMask = mVEnable;
+			mOutBuffer = _mm256_or_si256(_mm256_slli_epi32(mOutBuffer, 16), mInBuffer);
+
 			for(int i = 0; i < CorticoBPlaneNr; i++)
 			{
 				BPlaneControl & BPL = BPlane[i];
-				if(BPL.VActive && CurPack > BPL.HStart && CurPack <= BPL.HEnd)
-				{
-					OutBuffer[i] = (OutBuffer[i]<<16) | (BPL.InBuffer<<BPL.Shift);
-					if(BPL.Shift > 15 || CurPack > BPL.HStart+1)	// Mask out the 1st Pack if Shift is used
-						StreamingMask |= 1<<i;
-				}
+				if(CurPack <= BPL.HStart
+				    || CurPack > BPL.HEnd
+				    || (BPL.Shift < 16 && CurPack <= BPL.HStart+1)
+					)
+					mStreamMask.m256i_i32[i] = 0;
 			}
 
 			BPlaneControl & ReadBPL = BPlane[0];
 			if(ReadBPL.VActive && CurPack >= ReadBPL.HStart && CurPack < ReadBPL.HEnd)
-				ReadBPL.InBuffer = MMU.GFXReadWord(ReadBPL.CurAdd.l);
+				mInBuffer.m256i_i32[0] = MMU.GFXReadWord(ReadBPL.CurAdd.l) << ReadBPL.Shift;
 		}
-		else
+		else if((SubCycle & 1) == 0)
 		{
-			if((SubCycle & 1) == 0)
-			{
-				BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
-				if(ReadBPL.VActive && CurPack >= ReadBPL.HStart && CurPack < ReadBPL.HEnd)
-					ReadBPL.InBuffer = MMU.GFXReadWord(ReadBPL.CurAdd.l);
-			}
+			BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
+			if(ReadBPL.VActive && CurPack >= ReadBPL.HStart && CurPack < ReadBPL.HEnd)
+				mInBuffer.m256i_i32[SubCycle>>1] = MMU.GFXReadWord(ReadBPL.CurAdd.l) << ReadBPL.Shift;
 		}
 
-		int s = 31-SubCycle;
-		unsigned char BPLBits =	(OutBuffer[0] >> s) & 1;
-		BPLBits |= (OutBuffer[1] >> --s) & 2;
-		BPLBits |= (OutBuffer[2] >> --s) & 4;
-		BPLBits |= (OutBuffer[3] >> --s) & 8;
-		BPLBits |= (OutBuffer[4] >> --s) & 16;
-		BPLBits |= (OutBuffer[5] >> --s) & 32;
-		BPLBits |= (OutBuffer[6] >> --s) & 64;
-		BPLBits |= (OutBuffer[7] >> --s) & 128;
-		BPLBits &= StreamingMask;
-	
 		if(CurPack <= 26)
 		{
 			if(CurPack > 0)
 			{
+				__m256i Shift = _mm256_sub_epi32(_mm256_setr_epi32(31, 30, 29, 28, 27, 26, 25, 24), _mm256_set1_epi32(SubCycle));
+				__m256i PreOr = _mm256_and_si256(mStreamMask, _mm256_srlv_epi32(mOutBuffer, Shift));
+				PreOr = _mm256_hadd_epi32(PreOr, PreOr);
+				PreOr = _mm256_hadd_epi32(PreOr, PreOr);
+	
 				unsigned char FinalClutIdx;
-				if(Control.flags.OverlayMode == 0)
-					FinalClutIdx = ((BPLBits>>4) == 0) ? BPLBits & 0xf : (BPLBits>>4) + 16;
+				if(PreOr.m256i_i32[4] == 0)
+					FinalClutIdx = PreOr.m256i_i32[0];
+				else if(Control.flags.OverlayMode == 0)
+					FinalClutIdx = PreOr.m256i_i32[4] + 16;
 				else
-					FinalClutIdx = ((BPLBits>>5) == 0) ? BPLBits & 0x1f : ((BPLBits>>5)<<1) + 16 + Control.flags.OverlayBPL4Fill;
+				{
+					unsigned char BPLBits = PreOr.m256i_i32[0] | PreOr.m256i_i32[4];
+					FinalClutIdx = ((BPLBits>>5) == 0) ? BPLBits : (PreOr.m256i_i32[4] & 0xfe) + 16 + Control.flags.OverlayBPL4Fill;
+				}
 
 				((unsigned int *)OutputSurface)[(V<<9) + H] = Clut[FinalClutIdx].CachedValue;
 				
 				Control.flags.HBL = 0;
 
 				if(H == INT_H && V == INT_V)
-					CPU.Interrupt(5);// // trig GFXPos
+					CPU.Interrupt(5); // trig GFXPos
 
 				H++;
 			}
@@ -170,22 +167,23 @@ public:
 			H = 0;
 			V++;
 
-			for(auto & BPL : BPlane)
+			mVEnable = _mm256_setr_epi32(1, 2, 4, 8, 16, 32, 64, 128);
+			for(int i = 0; i < CorticoBPlaneNr; i++)
 			{
-				if(BPL.Enabled)
+				BPlaneControl & BPL = BPlane[i];
+				BPL.VActive = BPL.Enabled && V >= BPL.VStart && V < BPL.VEnd;
+				if(!BPL.VActive)
+					mVEnable.m256i_i32[i] = 0;
+				if(V > BPL.VStart && V <= BPL.VEnd)
 				{
-					BPL.VActive = V >= BPL.VStart && V < BPL.VEnd;
-					if(V > BPL.VStart && V <= BPL.VEnd)
-					{
-						BPL.CurAdd.l += BPL.Stride;
-						BPL.CurAdd.l = 0x40000 + (BPL.CurAdd.l & 0x1FFFF);
-					}
+					BPL.CurAdd.l += BPL.Stride;
+					BPL.CurAdd.l = 0x40000 + (BPL.CurAdd.l & 0x1FFFF);
 				}
 			}
 		}
 
-		CycleCount += 1;
-		if(CycleCount >= 268288/2)
+		CycleCount++;
+		if(CycleCount == 268288/2)
 			Tick = &CorticoChip::Tick_PostFrame;
 	}
 
@@ -195,13 +193,11 @@ public:
 		{
 			Control.flags.VBL = 1;
 			H = V = CycleCount = 0;
-			CPU.Interrupt(7);// // trig VBlank
+			CPU.Interrupt(7); // trig VBlank
 
 			for(auto & BPL : BPlane)
 			{
-				if(BPL.Enabled)
-					BPL.CurAdd.l = BPL.BaseAdd.l;
-
+				BPL.CurAdd.l = BPL.BaseAdd.l;
 				BPL.VActive = false;
 			}
 
@@ -216,10 +212,7 @@ public:
 	{
 		Control.w = uw;
 		for(int i = 0; i < CorticoBPlaneNr; i++)
-		{
 			BPlane[i].Enabled = Control.flags.BPLEnable & (1<<i);
-			BPlane[i].IsBKG = (i < 4 || (i < 5 && Control.flags.OverlayMode != 0));
-		}
 	}
 
 	void HardReset()
