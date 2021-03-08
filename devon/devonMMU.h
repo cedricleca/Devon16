@@ -252,7 +252,7 @@ public:
 
 					default:
 						if(SubAdd >= 0x100 && SubAdd < 0x120)
-							Word = Cortico->Clut[SubAdd-0x100].ClutEntry.uw;
+							Word = Cortico->Clut[SubAdd-0x100].uw;
 						else
 							return ERR;
 					}
@@ -558,7 +558,7 @@ public:
 
 					default:
 						if(SubAdd >= 0x100 && SubAdd < 0x120)
-							Cortico->Clut[SubAdd-0x100] = Word;
+							Cortico->SetClutEntry(SubAdd-0x100, Word);
 						else
 							return ERR;
 					}

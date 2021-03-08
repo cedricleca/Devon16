@@ -26,22 +26,10 @@ class CorticoChip
 		} w;
 	};
 
-	struct ClutEntryWithCachedValue
+	union ClutEntry
 	{
-		union
-		{
-			uWORD uw = 0;
-			struct {uWORD b:4, g:4, r:4;} rgb;
-		} ClutEntry;
-
-		unsigned int CachedValue = 0;
-
-		ClutEntryWithCachedValue() {}
-		ClutEntryWithCachedValue(uWORD _In)
-		{
-			ClutEntry.uw = _In;
-			CachedValue = (ClutEntry.rgb.r<<4) | (ClutEntry.rgb.g<<12) | (ClutEntry.rgb.b<<20);
-		}
+		uWORD uw = 0;
+		struct {uWORD b:4, g:4, r:4;} rgb;
 	};
 
 	union ControlRegiser
@@ -74,11 +62,13 @@ class CorticoChip
 	uWORD INT_H;
 	uWORD INT_V;
 	ControlRegiser Control;
-	ClutEntryWithCachedValue Clut[32];
+	ClutEntry Clut[32];
+	unsigned int ClutCache[32];
 	BPlaneControl BPlane[CorticoBPlaneNr];
 
 	uLONG CycleCount;
 	unsigned char * OutputSurface = nullptr;
+	unsigned int * OutCursor = nullptr;
 
 public:
 	CorticoChip(BaseMMU & InMMU, Devon::CPU & InCPU) : MMU(InMMU), CPU(InCPU)
@@ -93,46 +83,35 @@ public:
 		if(CycleCount >= 19424/2)
 		{
 			Control.flags.VBL = 0;
+			OutCursor = (unsigned int *)OutputSurface;
 			Tick = &CorticoChip::Tick_Frame;
 		}
 	}
 
 	void Tick_Frame()
 	{
-		const int CurPack = ((CycleCount + 16) & 511)>>4; // starts 32 cycles before the new raster
+		const int CurPack = ((CycleCount>>4) & 31) + 1; // starts 1 pack before the new raster
 		if(CurPack <= 26)
 		{
 			const int SubCycle = CycleCount & 0xf;
-			if(SubCycle == 0)
-			{
-				mStreamMask = mVEnable;
-				mOutBuffer = _mm256_or_si256(_mm256_slli_epi32(mOutBuffer, 16), mInBuffer);
-
-				for(int i = 0; i < CorticoBPlaneNr; i++)
-				{
-					BPlaneControl & BPL = BPlane[i];
-					if(CurPack <= BPL.HStart
-						|| CurPack > BPL.HEnd
-						|| (BPL.Shift < 16 && CurPack <= BPL.HStart+1)
-						)
-						mStreamMask.m256i_i32[i] = 0;
-				}
-			}
-			
-			if(RVEnable & (1<<SubCycle))
-			{
-				BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
-				if(CurPack >= ReadBPL.HStart)
-				{
-					mInBuffer.m256i_i32[SubCycle>>1] = MMU.GFXReadWord(ReadBPL.CurAdd.l) << ReadBPL.Shift;
-				
-					if(CurPack == ReadBPL.HEnd-1)
-						RVEnable &= ~(1<<SubCycle);
-				}
-			}
-
 			if(CurPack > 0)
 			{
+				if(SubCycle == 0)
+				{
+					mStreamMask = mVEnable;
+					mOutBuffer = _mm256_or_si256(_mm256_slli_epi32(mOutBuffer, 16), mInBuffer);
+
+					for(int i = 0; i < CorticoBPlaneNr; i++)
+					{
+						BPlaneControl & BPL = BPlane[i];
+						if(CurPack <= BPL.HStart
+							|| CurPack > BPL.HEnd
+							|| (CurPack == BPL.HStart+1 && BPL.Shift < 16)
+							)
+							mStreamMask.m256i_i32[i] = 0;
+					}
+				}
+			
 				__m256i Shift = _mm256_sub_epi32(_mm256_setr_epi32(31, 30, 29, 28, 27, 26, 25, 24), _mm256_set1_epi32(SubCycle));
 				__m256i PreOr = _mm256_and_si256(mStreamMask, _mm256_srlv_epi32(mOutBuffer, Shift));
 				PreOr = _mm256_hadd_epi32(PreOr, PreOr);
@@ -149,7 +128,7 @@ public:
 					FinalClutIdx = ((BPLBits>>5) == 0) ? BPLBits : (PreOr.m256i_i32[4] & 0xfe) + 16 + Control.flags.OverlayBPL4Fill;
 				}
 
-				((unsigned int *)OutputSurface)[(V<<9) + H] = Clut[FinalClutIdx].CachedValue;
+				*OutCursor++ = ClutCache[FinalClutIdx];
 				
 				Control.flags.HBL = 0;
 
@@ -158,12 +137,25 @@ public:
 
 				H++;
 			}
+
+			if(RVEnable & (1<<SubCycle))
+			{
+				BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
+				if(CurPack >= ReadBPL.HStart)
+				{
+					mInBuffer.m256i_i32[SubCycle>>1] = MMU.GFXReadWord(ReadBPL.CurAdd.l) << ReadBPL.Shift;
+				
+					if(CurPack == ReadBPL.HEnd-1)
+						RVEnable &= ~(1<<SubCycle);
+				}
+			}
 		}
 		else if(H != 0)
 		{
 			CPU.Interrupt(6);// trig HBlank
 			Control.flags.HBL = 1;
 
+			OutCursor += 512-416;
 			H = 0;
 			V++;
 
@@ -214,6 +206,12 @@ public:
 		Control.w = uw;
 	}
 
+	void SetClutEntry(int Index, uWORD val)
+	{
+		Clut[Index].uw = val;
+		ClutCache[Index] = (Clut[Index].rgb.r<<4) | (Clut[Index].rgb.g<<12) | (Clut[Index].rgb.b<<20);
+	}
+
 	void HardReset()
 	{
 		H = 0;
@@ -224,6 +222,9 @@ public:
 		CycleCount = 0;
 
 		for(auto & C : Clut)
+			C.uw = 0;
+
+		for(auto & C : ClutCache)
 			C = 0;
 
 		for(auto & BPL : BPlane)
@@ -245,6 +246,7 @@ public:
 	void SetOutputSurface(unsigned char * _OutputSurface)
 	{
 		OutputSurface = _OutputSurface;
+		OutCursor = 0;
 	}
 };
 
