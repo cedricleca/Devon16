@@ -60,8 +60,6 @@ class CorticoChip
 		uWORD VEnd;
 		uWORD HStart;
 		uWORD HEnd;
-
-		bool Enabled;
 	};
 
 	__m256i mInBuffer;
@@ -174,7 +172,7 @@ public:
 			for(int i = 0; i < CorticoBPlaneNr; i++)
 			{
 				BPlaneControl & BPL = BPlane[i];
-				if(BPL.Enabled && V >= BPL.VStart && V < BPL.VEnd)
+				if((Control.flags.BPLEnable & (1<<i)) && V >= BPL.VStart && V < BPL.VEnd)
 					RVEnable |= 1<<(i*2);
 				else
 					mVEnable.m256i_i32[i] = 0;
@@ -214,8 +212,6 @@ public:
 	void SetControlRegister(uWORD uw)
 	{
 		Control.w = uw;
-		for(int i = 0; i < CorticoBPlaneNr; i++)
-			BPlane[i].Enabled = Control.flags.BPLEnable & (1<<i);
 	}
 
 	void HardReset()
