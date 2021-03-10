@@ -40,13 +40,13 @@ class CorticoChip
 
 	struct BPlaneControl
 	{
-		MemPointer BaseAdd;
 		MemPointer CurAdd;
 		uWORD Stride;
 		uWORD VStart;
 		uWORD VEnd;
 		uWORD HStart;
 		uWORD HEnd;
+		uWORD DumPad;
 	};
 
 	__m256i mInBuffer;
@@ -55,6 +55,7 @@ class CorticoChip
 	__m256i mInBufShift;
 
 	unsigned char RVEnable;
+	int CurPack;
 
 	uWORD H;
 	uWORD V;
@@ -64,6 +65,7 @@ class CorticoChip
 	ClutEntry Clut[32];
 	unsigned int ClutCache[32];
 	BPlaneControl BPlane[CorticoBPlaneNr];
+	MemPointer BaseAdd[CorticoBPlaneNr];
 
 	uLONG CycleCount;
 	unsigned char * OutputSurface = nullptr;
@@ -84,6 +86,7 @@ public:
 			Control.flags.VBL = 0;
 			OutCursor = (unsigned int *)OutputSurface;
 			Tick = &CorticoChip::Tick_Frame_P0;
+			CurPack = 0;
 		}
 	}
 
@@ -108,7 +111,7 @@ public:
 
 	void Tick_Frame_RasterC0()
 	{
-		const int CurPack = ((CycleCount>>4) & 31) + 1; // starts 1 pack before the new raster
+		CurPack++;
 		Control.flags.HBL = 0;
 		__m256i mStreamMask = mVEnable;
 		mOutBuffer = _mm256_or_si256(_mm256_slli_epi32(mOutBuffer, 16), _mm256_sllv_epi32(mInBuffer, mInBufShift));
@@ -169,7 +172,6 @@ public:
 			CPU.Interrupt(5); // trig GFXPos
 
 		const int SubCycle = CycleCount & 0xf;
-		const int CurPack = ((CycleCount>>4) & 31) + 1; // starts 1 pack before the new raster
 		if(RVEnable & (1<<SubCycle))
 		{
 			BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
@@ -225,7 +227,10 @@ public:
 	{
 		CycleCount++;
 		if(V < 243 && ((CycleCount>>4) & 31) == 31)
+		{
 			Tick = &CorticoChip::Tick_Frame_P0;
+			CurPack = 0;
+		}
 		else if(CycleCount == 268288/2)
 			Tick = &CorticoChip::Tick_PostFrame;
 	}
@@ -239,8 +244,8 @@ public:
 			CPU.Interrupt(7); // trig VBlank
 			RVEnable = 0;
 
-			for(auto & BPL : BPlane)
-				BPL.CurAdd.l = BPL.BaseAdd.l;
+			for(int i = 0; i < CorticoBPlaneNr; i++)
+				BPlane[i].CurAdd.l = BaseAdd[i].l;
 
 			Tick = &CorticoChip::Tick_PreFrame;
 		}
@@ -272,15 +277,17 @@ public:
 		Control.w = 0;
 		CycleCount = 0;
 
-		for(auto & C : Clut)
+		for(auto & C : Clut)		
 			C.uw = 0;
 
-		for(auto & C : ClutCache)
+		for(auto & C : ClutCache)	
 			C = 0;
 
+		for(auto & B : BaseAdd)		
+			B.l = 0;
+		
 		for(auto & BPL : BPlane)
 		{
-			BPL.BaseAdd.l = 0;
 			BPL.CurAdd.l = 0;
 			BPL.Stride = 0;
 			BPL.VStart = 0;
