@@ -5,8 +5,8 @@ module;
 
 export module SoundTools;
 
-#define SO_PLAYBACK_FREQ		44100
-#define SO_PRIMARY_BUFFER_SIZE	(4*SO_PLAYBACK_FREQ/18) // 1/18 sec = 3.33 frames TODO: put main emulation loop on a timer
+static const unsigned int SO_PLAYBACK_FREQ = 44100;
+static const unsigned int SO_PRIMARY_BUFFER_SIZE = (40000 * 2 * 2);
 
 IDirectSound*			g_DS = nullptr;
 LPDIRECTSOUNDBUFFER		pDSB = nullptr;
@@ -68,32 +68,40 @@ namespace DSoundTools
 	export void Render(DevonMachine & Machine, float Volume)
 	{
 		DWORD PlayCursor, WriteCursor;
-		DWORD BytesToLock;
+
+		static const DWORD NbChunks = 8;
+		static const DWORD ChunkSize = SO_PRIMARY_BUFFER_SIZE / NbChunks;
+		assert(ChunkSize*NbChunks == SO_PRIMARY_BUFFER_SIZE);
 
 		pDSB->GetCurrentPosition(&PlayCursor, &WriteCursor);
 
-		if(PlayCursor > OldPlayCursor)
-			BytesToLock = PlayCursor - OldPlayCursor;
-		else
-			BytesToLock = SO_PRIMARY_BUFFER_SIZE - (OldPlayCursor - PlayCursor);
-
-		void *P[2];
-		DWORD N[2];
-		pDSB->Lock(OldPlayCursor, BytesToLock, &P[0], &N[0], &P[1], &N[1], 0);
-		OldPlayCursor = PlayCursor;
-
-		N[0] /= 2;
-		N[1] /= 2;
-
-		for(int a = 0; a < 2; a++)
+		int CurChunk = PlayCursor / ChunkSize;
+		int OldChunk = OldPlayCursor / ChunkSize;
+		if(CurChunk != OldChunk)
 		{
-			short * Buf = (short *)P[a];
-			char Val;
-			for(DWORD i = 0; i < N[a] && Machine.JKev.Pop(Val); i++)
-				Buf[i] = short(float(Val<<8) * Volume);
+			DWORD Cursor = ((CurChunk+1) % NbChunks) * ChunkSize;
+
+			void *P[2];
+			DWORD N[2];
+			pDSB->Lock(Cursor, ChunkSize, &P[0], &N[0], &P[1], &N[1], 0);
+
+			auto Output = [&](int BufIdx) 
+			{
+				assert(N[BufIdx] % 4 == 0);
+				N[BufIdx] /= 2;
+				short * Buf = static_cast<short *>(P[BufIdx]);
+				char Val;
+				for(unsigned int i = 0; i < N[BufIdx] && Machine.JKev.Pop(Val); i++)
+					Buf[i] = short(float(Val<<8) * Volume);
+			};
+
+			Output(0);
+			Output(1);
+		
+			pDSB->Unlock(P[0], N[0], P[1], N[1]);
 		}
 
-		pDSB->Unlock(P[0], N[0], P[1], N[1]);
+		OldPlayCursor = PlayCursor;
 	}
 
 	export void Release()

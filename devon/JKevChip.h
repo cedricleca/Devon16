@@ -12,10 +12,10 @@ class JKevChip
 {
 	friend class DevonMMU;
 
-	char * OutputBuffer;
-	int OutputWriteIndex;
-	int OutputReadIndex;
-	int OutputBufferSize;
+	char * OutputBuffer = nullptr;
+	int OutputWriteIndex = 0;
+	int OutputReadIndex = 0;
+	int OutputBufferSize = 0;
 
 	union LongReg
 	{
@@ -68,32 +68,19 @@ class JKevChip
 	};
 
 	ChannelControl Channel[JKevChannelNr];
-
-	float RenderTimer;
-	uLONG UnrenderedCount;
+	float RenderTimer = 0.f;
+	uLONG UnrenderedCount = 0;
 
 public:
-	JKevChip() : OutputBuffer(nullptr),
-		OutputWriteIndex(0),
-		OutputReadIndex(0),
-		OutputBufferSize(0),
-		RenderTimer(0.0f),
-		UnrenderedCount(0)
-	{
-	}
-
 	void Tick()
 	{
-		UnrenderedCount += 2;
+		UnrenderedCount += 4;
 
-		RenderTimer	-= 2.0f;
+		RenderTimer	-= 4.0f;
 		if(RenderTimer >= 0.0f)
 			return;
 
-		for(auto & Chan : Channel)
-			for(auto & Osc : Chan.Oscillator)
-				Osc.CurOffset += Osc.OscStep.l * UnrenderedCount;
-
+		const auto UnrenderedCountSave = UnrenderedCount;
 		UnrenderedCount = 0;
 		RenderTimer += JKevRenderPeriod;
 
@@ -116,16 +103,18 @@ public:
 				}
 			};
 
+			Chan.Oscillator[0].CurOffset += Chan.Oscillator[0].OscStep.l * UnrenderedCountSave;
+			Chan.Oscillator[1].CurOffset += Chan.Oscillator[1].OscStep.l * UnrenderedCountSave;
 			const float W0 = WaveForm(Chan.Oscillator[0]);
 			const float W1 = WaveForm(Chan.Oscillator[1]);
 			const float out = std::clamp(Chan.PreModOffset + W1, -128.f, 127.f) * W0 / 256.f; // 8b range
-			Chan.Out = sWORD(128.f * ResoFilter(Chan, out / 128.f, float(Chan.Filter.flags.Freq) / 256.f, float(Chan.Filter.flags.Reso) / 255.f));
+			Chan.Out = sWORD(out);//sWORD(128.f * ResoFilter(Chan, out / 128.f, float(Chan.Filter.flags.Freq) / 256.f, float(Chan.Filter.flags.Reso) / 255.f));
 		}
 
 		if(OutputBuffer)
 		{
-			Push(std::clamp(Channel[0].Out + Channel[1].Out, -128, 127)); // R
-			Push(std::clamp(Channel[2].Out + Channel[3].Out, -128, 127)); // L
+			Push(Channel[0].Out + Channel[1].Out); // R
+			Push(Channel[2].Out + Channel[3].Out); // L
 		}
 	}
 
@@ -151,7 +140,8 @@ public:
 		// cascade of 4 1st order sections
 		auto F = [k2vg, v2](float & ay, float & az, float t)
 		{
-			ay  = az + k2vg * (tanhf(t/v2) - tanhf(az/v2));
+			auto Tanhf = [](float x) -> float { return 1.f - (2.f / (1.f + expf(x * 2.f))); };
+			ay  = az + k2vg * (Tanhf(t/v2) - Tanhf(az/v2));
 			az  = ay;
 		};
 
@@ -204,18 +194,18 @@ public:
 		RenderTimer = JKevRenderPeriod;
 		UnrenderedCount = 0;
 
-		for(int i = 0; i < JKevChannelNr; i++)
+		for(auto & chan : Channel)
 		{
-			Channel[i].Out = 0;
-			Channel[i].PreModOffset = 0;
-			Channel[i].Filter.flags.Freq = 255;
-			Channel[i].Filter.flags.Reso = 0;
+			chan.Out = 0;
+			chan.PreModOffset = 0;
+			chan.Filter.flags.Freq = 255;
+			chan.Filter.flags.Reso = 0;
 
-			for(int j = 0; j < 2; j++)
+			for(auto & osc : chan.Oscillator)
 			{
-				Channel[i].Oscillator[j].WaveAmplitude.uw = 0;
-				Channel[i].Oscillator[j].OscStep.l = 0;
-				Channel[i].Oscillator[j].CurOffset = 0;
+				osc.WaveAmplitude.uw = 0;
+				osc.OscStep.l = 0;
+				osc.CurOffset = 0;
 			}
 		}
 	}

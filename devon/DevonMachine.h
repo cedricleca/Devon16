@@ -64,7 +64,6 @@ public:
 			(Cortico.*Cortico.Tick)();
 			Timers.Tick();
 			MTUs.Tick();
-			JKev.Tick();
 			(CPU.*CPU.Tick)();
 			MMU.PostTick();
 
