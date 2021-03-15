@@ -22,10 +22,11 @@ org $0x20000
 
 	mov		#!0, r1
 CharLoop:
-	mov		r1, r0
-	add		#'!', r0
+	mov		r1, r2
+	add		#'!', r2
 	ssave	#%11111111
-	jsr		#DrawChar
+	mov		#!5, r0 ; call DrawChar
+	trap	#!0
 	sload	#%11111111
 	add		#!1, r1
 	cmp		#94, r1
@@ -199,100 +200,13 @@ VBL_PopKeyb_PressReturn:
 
 VBL_PopKeyb_SendToWriter:
 
-	bsr		#DrawChar
+	mov		#!5, r0 ; call DrawChar
+	trap	#!0
 	bsr		#StoreCursorBack
 	bra		#VBL_PopKeyb
 	
 VBL_PopKeyb_End:
 	rte
-
-DrawChar:
-	mov.w	$Cort_BPL0_HEnd, r5
-	mov.w	$Cort_BPL0_HStart, r6
-	sub		r6, r5
-	mov.w	$Cort_BPL0_Stride, r6
-	ext16	r6
-	add		r6, r5
-	add		r5, r5
-
-	mov		#RAM_Font, r6
-	
-	mov		#0x40000, r2
-	add		r2, r2
-	mov.w	$RAM_Writer_YOffset, r3
-	add		r3, r2
-	mov.w	$RAM_Writer_XOffset, r3
-	add		r3, r2
-	
-	sub		#'!', r0
-	mov		r0, r1
-	lsri	#1, r1
-	mul		#9, r1
-	add		r6, r1
-	add		r1, r1
-	and		#!1, r0
-	add		r0, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-
-	mov.w	$RAM_Writer_XOffset, r2
-	add		#!1, r2
-	mov.w	$RAM_Writer_Width, r3
-	cmp		r3, r2
-	bra.n	#DrawChar_NoWrap
-	
-	mov		r5, r3
-	mul		#9, r3
-	mov.w	$RAM_Writer_YOffset, r4
-	add		r3, r4
-	mov.w	r4, $RAM_Writer_YOffset
-	mov		#!0, r2
-
-DrawChar_NoWrap:
-	mov.w	r2, $RAM_Writer_XOffset
-	
-	rts
 
 StoreCursorBack:
 	mov.w	$RAM_Writer_LineWidth, r5

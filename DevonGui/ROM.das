@@ -49,6 +49,7 @@ Trap0_FUNC_Table:
 	long	FUNC_ResetCorticoRegs
 	long	FUNC_ResetDefaultClut
 	long	FUNC_ResetDefaultFont
+	long	FUNC_DrawChar
 
 DefaultClut:
 	word	0x000, 0xAAA, 0xFFF, 0xC33, 0xE79, 0x543, 0xA62, 0xF93, 0xFE6, 0x244, 0x481, 0xAC2, 0x123, 0x058, 0x3AF, 0xBDE
@@ -270,6 +271,96 @@ FUNC_ResetDefaultFont:
 	mov		#423, r4
 	jsr		#FUNC_Memcpy
 	rts
+
+FUNC_DrawChar:
+	mov		r2, r0
+	mov.w	$Cort_BPL0_HEnd, r5
+	mov.w	$Cort_BPL0_HStart, r6
+	sub		r6, r5
+	mov.w	$Cort_BPL0_Stride, r6
+	ext16	r6
+	add		r6, r5
+	add		r5, r5
+
+	mov		#RAM_Font, r6
+	
+	mov		$Cort_BPL0_BaseAdd_H, r2
+	add		r2, r2
+	mov.w	$RAM_Writer_YOffset, r3
+	add		r3, r2
+	mov.w	$RAM_Writer_XOffset, r3
+	add		r3, r2
+	
+	sub		#'!', r0
+	mov		r0, r1
+	lsri	#1, r1
+	mul		#9, r1
+	add		r6, r1
+	add		r1, r1
+	and		#!1, r0
+	add		r0, r1
+
+	movb	(r1), r4
+	movb	r4, (r2)
+	add		r5, r2
+	add		#!2, r1
+
+	movb	(r1), r4
+	movb	r4, (r2)
+	add		r5, r2
+	add		#!2, r1
+
+	movb	(r1), r4
+	movb	r4, (r2)
+	add		r5, r2
+	add		#!2, r1
+
+	movb	(r1), r4
+	movb	r4, (r2)
+	add		r5, r2
+	add		#!2, r1
+
+	movb	(r1), r4
+	movb	r4, (r2)
+	add		r5, r2
+	add		#!2, r1
+
+	movb	(r1), r4
+	movb	r4, (r2)
+	add		r5, r2
+	add		#!2, r1
+
+	movb	(r1), r4
+	movb	r4, (r2)
+	add		r5, r2
+	add		#!2, r1
+
+	movb	(r1), r4
+	movb	r4, (r2)
+	add		r5, r2
+	add		#!2, r1
+
+	movb	(r1), r4
+	movb	r4, (r2)
+
+	mov.w	$RAM_Writer_XOffset, r2
+	add		#!1, r2
+	mov.w	$RAM_Writer_Width, r3
+	cmp		r3, r2
+	bra.n	#DrawChar_NoWrap
+	
+	mov		r5, r3
+	mul		#9, r3
+	mov.w	$RAM_Writer_YOffset, r4
+	add		r3, r4
+	mov.w	r4, $RAM_Writer_YOffset
+	mov		#!0, r2
+
+DrawChar_NoWrap:
+	mov.w	r2, $RAM_Writer_XOffset
+	
+	rts
+
 
 DefaultFontData:
 	incbin	"Font.bin"
