@@ -48,77 +48,79 @@ namespace DevonASM
 	struct blk_ : plus<blank> {};
 
 	template <EMnemonic M> struct opc_string {};
-	template<> struct opc_string<EMnemonic::ADD> : istring<'a', 'd', 'd'> {};
-	template<> struct opc_string<EMnemonic::MUL> : istring<'m', 'u', 'l'> {};
-	template<> struct opc_string<EMnemonic::SUB> : istring<'s', 'u', 'b'> {};
-	template<> struct opc_string<EMnemonic::DIV> : istring<'d', 'i', 'v'> {};
-	template<> struct opc_string<EMnemonic::MOD> : istring<'m', 'o', 'd'> {};
-	template<> struct opc_string<EMnemonic::CMP> : istring<'c', 'm', 'p'> {};
-	template<> struct opc_string<EMnemonic::MOV> : istring<'m', 'o', 'v'> {};
-	template<> struct opc_string<EMnemonic::MOVI> : istring<'m', 'o', 'v', 'i'> {};
-	template<> struct opc_string<EMnemonic::XOR> : istring<'x', 'o', 'r'> {};
-	template<> struct opc_string<EMnemonic::OR> : istring<'o', 'r'> {};
-	template<> struct opc_string<EMnemonic::AND> : istring<'a', 'n', 'd'> {};
-	template<> struct opc_string<EMnemonic::MOVB> : istring<'m', 'o', 'v', 'b'> {};
-	template<> struct opc_string<EMnemonic::SSAVE> : istring<'s', 's', 'a', 'v', 'e'> {};
-	template<> struct opc_string<EMnemonic::SLOAD> : istring<'s', 'l', 'o', 'a', 'd'> {};
-	template<> struct opc_string<EMnemonic::SSWAP> : istring<'s', 's', 'w', 'a', 'p'> {};
-	template<> struct opc_string<EMnemonic::JMP> : istring<'j', 'm', 'p'> {};
-	template<> struct opc_string<EMnemonic::JSR> : istring<'j', 's', 'r'> {};
-	template<> struct opc_string<EMnemonic::BRA> : istring<'b', 'r', 'a'> {};
-	template<> struct opc_string<EMnemonic::BSR> : istring<'b', 's', 'r'> {};
-	template<> struct opc_string<EMnemonic::ROL> : istring<'r', 'o', 'l'> {};
-	template<> struct opc_string<EMnemonic::ROLI> : istring<'r', 'o', 'l', 'i'> {};
-	template<> struct opc_string<EMnemonic::ROR> : istring<'r', 'o', 'r'> {};
-	template<> struct opc_string<EMnemonic::RORI> : istring<'r', 'o', 'r', 'i'> {};
-	template<> struct opc_string<EMnemonic::ROXL> : istring<'r', 'o', 'x', 'l'> {};
-	template<> struct opc_string<EMnemonic::ROXLI> : istring<'r', 'o', 'x', 'l', 'i'> {};
-	template<> struct opc_string<EMnemonic::ROXR> : istring<'r', 'o', 'x', 'r'> {};
-	template<> struct opc_string<EMnemonic::ROXRI> : istring<'r', 'o', 'x', 'r', 'i'> {};
-	template<> struct opc_string<EMnemonic::ASL> : istring<'a', 's', 'l'> {};
-	template<> struct opc_string<EMnemonic::ASLI> : istring<'a', 's', 'l', 'i'> {};
-	template<> struct opc_string<EMnemonic::ASR> : istring<'a', 's', 'r'> {};
-	template<> struct opc_string<EMnemonic::ASRI> : istring<'a', 's', 'r', 'i'> {};
-	template<> struct opc_string<EMnemonic::LSL> : istring<'l', 's', 'l'> {};
-	template<> struct opc_string<EMnemonic::LSLI> : istring<'l', 's', 'l', 'i'> {};
-	template<> struct opc_string<EMnemonic::LSR> : istring<'l', 's', 'r'> {};
-	template<> struct opc_string<EMnemonic::LSRI> : istring<'l', 's', 'r', 'i'> {};
-	template<> struct opc_string<EMnemonic::BCLR> : istring<'b', 'c', 'l', 'r'> {};
-	template<> struct opc_string<EMnemonic::BCLRI> : istring<'b', 'c', 'l', 'r', 'i'> {};
-	template<> struct opc_string<EMnemonic::BCPY> : istring<'b', 'c', 'p', 'y'> {};
-	template<> struct opc_string<EMnemonic::BCPYI> : istring<'b', 'c', 'p', 'y', 'i'> {};
-	template<> struct opc_string<EMnemonic::BNOT> : istring<'b', 'n', 'o', 't'> {};
-	template<> struct opc_string<EMnemonic::BNOTI> : istring<'b', 'n', 'o', 't', 'i'> {};
-	template<> struct opc_string<EMnemonic::BSET> : istring<'b', 's', 'e', 't'> {};
-	template<> struct opc_string<EMnemonic::BSETI> : istring<'b', 's', 'e', 't', 'i'> {};
-	template<> struct opc_string<EMnemonic::BTST> : istring<'b', 't', 's', 't'> {};
-	template<> struct opc_string<EMnemonic::BTSTI> : istring<'b', 't', 's', 't', 'i'> {};
-	template<> struct opc_string<EMnemonic::SWP> : istring<'s', 'w', 'p'> {};
-	template<> struct opc_string<EMnemonic::EXT4> : istring<'e', 'x', 't', '4'> {};
-	template<> struct opc_string<EMnemonic::EXT8> : istring<'e', 'x', 't', '8'> {};
-	template<> struct opc_string<EMnemonic::EXT16> : istring<'e', 'x', 't', '1', '6'> {};
-	template<> struct opc_string<EMnemonic::EXT20> : istring<'e', 'x', 't', '2', '0'> {};
-	template<> struct opc_string<EMnemonic::TRAP> : istring<'t', 'r', 'a', 'p'> {};
-	template<> struct opc_string<EMnemonic::INTMASK> : istring<'i', 'n', 't', 'm', 'a', 's', 'k'> {};
-	template<> struct opc_string<EMnemonic::VBASE> : istring<'v', 'b', 'a', 's', 'e'> {};
-	template<> struct opc_string<EMnemonic::HALT> : istring<'h', 'a', 'l', 't'> {};
-	template<> struct opc_string<EMnemonic::RESET> : istring<'r', 'e', 's', 'e', 't'> {};
-	template<> struct opc_string<EMnemonic::RTS> : istring<'r', 't', 's'> {};
-	template<> struct opc_string<EMnemonic::RTE> : istring<'r', 't', 'e'> {};
-	template<> struct opc_string<EMnemonic::NOP> : istring<'n', 'o', 'p'> {};
-	template<> struct opc_string<EMnemonic::CHKX> : istring<'c', 'h', 'k', 'x'> {};
-	template<> struct opc_string<EMnemonic::CHKV> : istring<'c', 'h', 'k', 'v'> {};
-	template<> struct opc_string<EMnemonic::NOT> : istring<'n', 'o', 't'> {};
-	template<> struct opc_string<EMnemonic::NEG> : istring<'n', 'e', 'g'> {};
+	template<> struct opc_string<EMnemonic::ADD>		: TAO_PEGTL_ISTRING("add")		{};
+	template<> struct opc_string<EMnemonic::MUL>		: TAO_PEGTL_ISTRING("mul")		{};
+	template<> struct opc_string<EMnemonic::SUB>		: TAO_PEGTL_ISTRING("sub")		{};
+	template<> struct opc_string<EMnemonic::DIV>		: TAO_PEGTL_ISTRING("div")		{};
+	template<> struct opc_string<EMnemonic::MOD>		: TAO_PEGTL_ISTRING("mod")		{};
+	template<> struct opc_string<EMnemonic::CMP>		: TAO_PEGTL_ISTRING("cmp")		{};
+	template<> struct opc_string<EMnemonic::MOV>		: TAO_PEGTL_ISTRING("mov")		{};
+	template<> struct opc_string<EMnemonic::MOVI>		: TAO_PEGTL_ISTRING("movi")		{};
+	template<> struct opc_string<EMnemonic::XOR>		: TAO_PEGTL_ISTRING("xor")		{};
+	template<> struct opc_string<EMnemonic::OR>			: TAO_PEGTL_ISTRING("or")		{};
+	template<> struct opc_string<EMnemonic::AND>		: TAO_PEGTL_ISTRING("and")		{};
+	template<> struct opc_string<EMnemonic::MOVB>		: TAO_PEGTL_ISTRING("movb")		{};
+	template<> struct opc_string<EMnemonic::SSAVE>		: TAO_PEGTL_ISTRING("ssave")	{};
+	template<> struct opc_string<EMnemonic::SLOAD>		: TAO_PEGTL_ISTRING("sload")	{};
+	template<> struct opc_string<EMnemonic::SSWAP>		: TAO_PEGTL_ISTRING("sswap")	{};
+	template<> struct opc_string<EMnemonic::JMP>		: TAO_PEGTL_ISTRING("jmp")		{};
+	template<> struct opc_string<EMnemonic::JSR>		: TAO_PEGTL_ISTRING("jsr")		{};
+	template<> struct opc_string<EMnemonic::BRA>		: TAO_PEGTL_ISTRING("bra")		{};
+	template<> struct opc_string<EMnemonic::BSR>		: TAO_PEGTL_ISTRING("bsr")		{};
+	template<> struct opc_string<EMnemonic::ROL>		: TAO_PEGTL_ISTRING("rol")		{};
+	template<> struct opc_string<EMnemonic::ROLI>		: TAO_PEGTL_ISTRING("roli")		{};
+	template<> struct opc_string<EMnemonic::ROR>		: TAO_PEGTL_ISTRING("ror")		{};
+	template<> struct opc_string<EMnemonic::RORI>		: TAO_PEGTL_ISTRING("rori")		{};
+	template<> struct opc_string<EMnemonic::ROXL>		: TAO_PEGTL_ISTRING("roxl")		{};
+	template<> struct opc_string<EMnemonic::ROXLI>		: TAO_PEGTL_ISTRING("roxli")	{};
+	template<> struct opc_string<EMnemonic::ROXR>		: TAO_PEGTL_ISTRING("roxr")		{};
+	template<> struct opc_string<EMnemonic::ROXRI>		: TAO_PEGTL_ISTRING("roxri")	{};
+	template<> struct opc_string<EMnemonic::ASL>		: TAO_PEGTL_ISTRING("asl")		{};
+	template<> struct opc_string<EMnemonic::ASLI>		: TAO_PEGTL_ISTRING("asli")		{};
+	template<> struct opc_string<EMnemonic::ASR>		: TAO_PEGTL_ISTRING("asr")		{};
+	template<> struct opc_string<EMnemonic::ASRI>		: TAO_PEGTL_ISTRING("asri")		{};
+	template<> struct opc_string<EMnemonic::LSL>		: TAO_PEGTL_ISTRING("lsl")		{};
+	template<> struct opc_string<EMnemonic::LSLI>		: TAO_PEGTL_ISTRING("lsli")		{};
+	template<> struct opc_string<EMnemonic::LSR>		: TAO_PEGTL_ISTRING("lsr")		{};
+	template<> struct opc_string<EMnemonic::LSRI>		: TAO_PEGTL_ISTRING("lsri")		{};
+	template<> struct opc_string<EMnemonic::BCLR>		: TAO_PEGTL_ISTRING("bclr")		{};
+	template<> struct opc_string<EMnemonic::BCLRI>		: TAO_PEGTL_ISTRING("bclri")	{};
+	template<> struct opc_string<EMnemonic::BCPY>		: TAO_PEGTL_ISTRING("bcpy")		{};
+	template<> struct opc_string<EMnemonic::BCPYI>		: TAO_PEGTL_ISTRING("bcpyi")	{};
+	template<> struct opc_string<EMnemonic::BNOT>		: TAO_PEGTL_ISTRING("bnot")		{};
+	template<> struct opc_string<EMnemonic::BNOTI>		: TAO_PEGTL_ISTRING("bnoti")	{};
+	template<> struct opc_string<EMnemonic::BSET>		: TAO_PEGTL_ISTRING("bset")		{};
+	template<> struct opc_string<EMnemonic::BSETI>		: TAO_PEGTL_ISTRING("bseti")	{};
+	template<> struct opc_string<EMnemonic::BTST>		: TAO_PEGTL_ISTRING("btst")		{};
+	template<> struct opc_string<EMnemonic::BTSTI>		: TAO_PEGTL_ISTRING("btsti")	{};
+	template<> struct opc_string<EMnemonic::SWP>		: TAO_PEGTL_ISTRING("swp")		{};
+	template<> struct opc_string<EMnemonic::EXT4>		: TAO_PEGTL_ISTRING("ext4")		{};
+	template<> struct opc_string<EMnemonic::EXT8>		: TAO_PEGTL_ISTRING("ext8")		{};
+	template<> struct opc_string<EMnemonic::EXT16>		: TAO_PEGTL_ISTRING("ext16")	{};
+	template<> struct opc_string<EMnemonic::EXT20>		: TAO_PEGTL_ISTRING("ext20")	{};
+	template<> struct opc_string<EMnemonic::TRAP>		: TAO_PEGTL_ISTRING("trap")		{};
+	template<> struct opc_string<EMnemonic::INTMASK>	: TAO_PEGTL_ISTRING("intmask")	{};
+	template<> struct opc_string<EMnemonic::VBASE>		: TAO_PEGTL_ISTRING("vbase")	{};
+	template<> struct opc_string<EMnemonic::HALT>		: TAO_PEGTL_ISTRING("halt")		{};
+	template<> struct opc_string<EMnemonic::RESET>		: TAO_PEGTL_ISTRING("reset")	{};
+	template<> struct opc_string<EMnemonic::RTS>		: TAO_PEGTL_ISTRING("rts")		{};
+	template<> struct opc_string<EMnemonic::RTE>		: TAO_PEGTL_ISTRING("rte")		{};
+	template<> struct opc_string<EMnemonic::NOP>		: TAO_PEGTL_ISTRING("nop")		{};
+	template<> struct opc_string<EMnemonic::CHKX>		: TAO_PEGTL_ISTRING("chkx")		{};
+	template<> struct opc_string<EMnemonic::CHKV>		: TAO_PEGTL_ISTRING("chkv")		{};
+	template<> struct opc_string<EMnemonic::NOT>		: TAO_PEGTL_ISTRING("not")		{};
+	template<> struct opc_string<EMnemonic::NEG>		: TAO_PEGTL_ISTRING("neg")		{};
 
-	template<> struct opc_string<EMnemonic::FADD> : istring<'f', 'a', 'd', 'd'> {};
-	template<> struct opc_string<EMnemonic::FCMP> : istring<'f', 'c', 'm', 'p'> {};
-	template<> struct opc_string<EMnemonic::FMOD> : istring<'f', 'm', 'o', 'd'> {};
-	template<> struct opc_string<EMnemonic::FMOV> : istring<'f', 'm', 'o', 'v'> {};
-	template<> struct opc_string<EMnemonic::FMUL> : istring<'f', 'm', 'u', 'l'> {};
-	template<> struct opc_string<EMnemonic::FPOW> : istring<'f', 'p', 'o', 'w'> {};
-	template<> struct opc_string<EMnemonic::FTOI> : istring<'f', 't', 'o', 'i'> {};
-	template<> struct opc_string<EMnemonic::ITOF> : istring<'i', 't', 'o', 'f'> {};
+	/*
+	template<> struct opc_string<EMnemonic::FADD>		: TAO_PEGTL_ISTRING("fadd") {};
+	template<> struct opc_string<EMnemonic::FCMP>		: TAO_PEGTL_ISTRING("fcmp") {};
+	template<> struct opc_string<EMnemonic::FMOD>		: TAO_PEGTL_ISTRING("fmod") {};
+	template<> struct opc_string<EMnemonic::FMOV>		: TAO_PEGTL_ISTRING("fmov") {};
+	template<> struct opc_string<EMnemonic::FMUL>		: TAO_PEGTL_ISTRING("fmul") {};
+	template<> struct opc_string<EMnemonic::FPOW>		: TAO_PEGTL_ISTRING("fpow") {};
+	template<> struct opc_string<EMnemonic::FTOI>		: TAO_PEGTL_ISTRING("ftoi") {};
+	template<> struct opc_string<EMnemonic::ITOF>		: TAO_PEGTL_ISTRING("itof") {};
+	*/
 
 	struct symbolreference;
 	struct regindex : digit {};
@@ -251,6 +253,7 @@ namespace DevonASM
 		inst1<EMnemonic::NOT>,
 		inst1<EMnemonic::NEG>,
 
+		/*
 		inst2<EMnemonic::FADD>,
 		inst2<EMnemonic::FCMP>,
 		inst2<EMnemonic::FMOD>,
@@ -259,27 +262,28 @@ namespace DevonASM
 		inst2<EMnemonic::FPOW>,
 		inst2<EMnemonic::FTOI>,
 		inst2<EMnemonic::ITOF>,
+		*/
 
 		instErr
 	> {};
 
-	struct directive_origin : seq<istring<'o', 'r', 'g'>, blk_, opt<one<'$'>>, integer> {};
-	struct directive_entry : seq<istring<'e', 'n', 't', 'r', 'y'>, blk_, opt<one<'$'>>, integer> {};
+	struct directive_origin : seq<TAO_PEGTL_ISTRING("org"), blk_, opt<one<'$'>>, integer> {};
+	struct directive_entry : seq<TAO_PEGTL_ISTRING("entry"), blk_, opt<one<'$'>>, integer> {};
 	struct quotedstringCharValue : if_then_else<at<one<'"'>>, failure, seven> {};
 	struct quotedstring : seq<one<'"'>, star<quotedstringCharValue>, one<'"'>> {};
 	struct filename : star<if_then_else<at<one<'"'>>, failure, seven>> {};
 	struct directive_bytedata : seq<blk, opt<one<','>>, blk, sor<integer, quotedstring>> {};
 	struct directive_worddata : seq<blk, opt<one<','>>, blk, integer> {};
 	struct directive_longdata : seq<blk, opt<one<','>>, blk, integer> {};
-	struct directive_byte : seq<istring<'b', 'y', 't', 'e'>, blk_, star<directive_bytedata>> {};
-	struct directive_word : seq<istring<'w', 'o', 'r', 'd'>, blk_, star<directive_worddata>> {};
-	struct directive_long : seq<istring<'l', 'o', 'n', 'g'>, blk_, star<directive_longdata>> {};
+	struct directive_byte : seq<TAO_PEGTL_ISTRING("byte"), blk_, star<directive_bytedata>> {};
+	struct directive_word : seq<TAO_PEGTL_ISTRING("word"), blk_, star<directive_worddata>> {};
+	struct directive_long : seq<TAO_PEGTL_ISTRING("long"), blk_, star<directive_longdata>> {};
 	struct symbolreference : identifier {};
 	struct symbolvalue : identifier {};
-	struct directive_define : seq<istring<'d', 'e', 'f', 'i', 'n', 'e'>, blk_, symbolvalue, sor<seq<blk, one<'='>, blk>, blk_>, integer> {};
-	struct directive_include : seq<istring<'i', 'n', 'c', 'l', 'u', 'd', 'e'>, blk_, one<'"'>, filename, one<'"'>> {};
-	struct directive_incbin : seq<istring<'i', 'n', 'c', 'b', 'i', 'n'>, blk_, one<'"'>, filename, one<'"'>> {};
-	struct directive_romexport : seq<istring<'r', 'o', 'm', 'e', 'x', 'p', 'o', 'r', 't'>> {};
+	struct directive_define : seq<TAO_PEGTL_ISTRING("define"), blk_, symbolvalue, sor<seq<blk, one<'='>, blk>, blk_>, integer> {};
+	struct directive_include : seq<TAO_PEGTL_ISTRING("include"), blk_, one<'"'>, filename, one<'"'>> {};
+	struct directive_incbin : seq<TAO_PEGTL_ISTRING("incbin"), blk_, one<'"'>, filename, one<'"'>> {};
+	struct directive_romexport : TAO_PEGTL_ISTRING("romexport") {};
 	struct directive : sor<directive_origin,
 		directive_define,
 		directive_include,

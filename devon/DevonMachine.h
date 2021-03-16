@@ -51,7 +51,7 @@ public:
 			JKev.Tick();
 			(CPU.*CPU.Tick)();
 			MMU.PostTick();
-
+			
 			// Odd Cycle
 			Timers.Tick();
 			(CPU.*CPU.Tick)();
