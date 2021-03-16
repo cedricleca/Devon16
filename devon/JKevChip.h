@@ -2,6 +2,7 @@
 
 #include "devon.h"
 #include <algorithm>
+#include <array>
 
 using namespace Devon;
 
@@ -55,6 +56,7 @@ class JKevChip
 		OscillatorControl Oscillator[2];
 
 		// filter stuff
+		/*
 		float az1 = 0.f;
 		float az2 = 0.f;
 		float az3 = 0.f;
@@ -65,6 +67,7 @@ class JKevChip
 		float ay3 = 0.f;
 		float ay4 = 0.f;
 		float amf = 0.f;
+		*/
 	};
 
 	ChannelControl Channel[JKevChannelNr];
@@ -72,6 +75,14 @@ class JKevChip
 	uLONG UnrenderedCount = 0;
 
 public:
+
+	struct 
+	{
+		std::array<float, 100> Data;
+		int OscilloWriteCursor = 0;
+		void Push(float In) { Data[OscilloWriteCursor] = In;  OscilloWriteCursor = (OscilloWriteCursor+1) % Data.size(); }
+	} OscilloTab[4];
+
 	void Tick()
 	{
 		UnrenderedCount += 4;
@@ -111,6 +122,11 @@ public:
 			Chan.Out = sWORD(out);//sWORD(128.f * ResoFilter(Chan, out / 128.f, float(Chan.Filter.flags.Freq) / 256.f, float(Chan.Filter.flags.Reso) / 255.f));
 		}
 
+		OscilloTab[0].Push(Channel[0].Out);
+		OscilloTab[1].Push(Channel[1].Out);
+		OscilloTab[2].Push(Channel[2].Out);
+		OscilloTab[3].Push(Channel[3].Out);
+
 		if(OutputBuffer)
 		{
 			Push(Channel[0].Out + Channel[1].Out); // R
@@ -118,6 +134,7 @@ public:
 		}
 	}
 
+	/*
 	float ResoFilter(ChannelControl & Chan, float Input, float Cutoff, float Resonance) 
 	{
 		// filter based on the text "Non linear digital implementation of the moog ladder filter" by Antti Houvilainen
@@ -160,6 +177,7 @@ public:
 
 		return Chan.amf;
 	}
+	*/
 
 	void SetOutputSurface(char * _OutputBuffer, int Size)
 	{

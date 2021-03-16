@@ -761,6 +761,15 @@ int main(int argn, char**arg)
 
 			Settings::Lock(true);
 			ImGui::SliderFloat("Sound Volume",		&Settings::Current.Volume, 0.0f, 1.0f, "%.2f");
+			ImGui::Text("");
+			for(auto & Oscillo : Machine.JKev.OscilloTab)
+			{
+				std::array<float, 80> X;
+				for(int i = 0; i < 80; i++)
+					X[i] = Oscillo.Data[(Oscillo.OscilloWriteCursor + i) % Oscillo.Data.size()];
+				ImGui::SameLine(0, 15.f); ImGui::PlotLines("", X.data(), (int)X.size(), 0, nullptr, -128.0f, 128.0f, ImVec2(80.f, 80.0f));
+			}
+
 			ImGui::Text("CRT effect:");
 			ImGui::SliderFloat("Scanline",			&Settings::Current.Scanline, 0.f, 1.f);
 			ImGui::SliderFloat("Roundness",			&Settings::Current.Roundness, 0.f, 1.f);
