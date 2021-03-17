@@ -49,22 +49,22 @@ define	Var1 0x85000
 	intmask	#%10000000
 
 	; sound test
-;	mov		#117293, r0
+;	mov		#40000, r0
 ;	mov		r0, $JKev_R_A_OSC0_OSCSTEP_HI
 ;	mov		r0, $JKev_L_A_OSC0_OSCSTEP_HI
-;	mov		#117250, r0
+;	mov		#40080, r0
 ;	mov		r0, $JKev_R_A_OSC1_OSCSTEP_HI
 ;	mov		r0, $JKev_L_A_OSC1_OSCSTEP_HI
-;	mov		#0x0ff, r0
+;	mov		#0x1ff, r0
 ;	mov.w	r0, $JKev_R_A_OSC0_WAVEAMPLITUDE
 ;	mov.w	r0, $JKev_L_A_OSC0_WAVEAMPLITUDE
-;	mov		#0x0a8, r0
+;	mov		#0x1f0, r0
 ;	mov.w	r0, $JKev_R_A_OSC1_WAVEAMPLITUDE
 ;	mov.w	r0, $JKev_L_A_OSC1_WAVEAMPLITUDE
 ;	movi	#0x50, r0
 ;	mov.w	r0, $JKev_R_A_PREMODOFFSET
 ;	mov.w	r0, $JKev_L_A_PREMODOFFSET
-;	movi	#0x0010, r0
+;	mov		#0x00f8, r0 ; InvM8 Damp4 Drive4
 ;	mov.w	r0, $JKev_R_A_FILTER
 ;	mov.w	r0, $JKev_L_A_FILTER
 

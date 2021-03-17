@@ -3,6 +3,7 @@
 #include "devon.h"
 #include <algorithm>
 #include <array>
+#include <cmath>
 
 using namespace Devon;
 
@@ -45,7 +46,7 @@ class JKevChip
 	union FilterReg
 	{
 		uWORD uw;
-		struct {uWORD Freq:8, Reso:8;} flags;
+		struct {uWORD Drive:4, Damp:4, InvM:8;} flags;
 	};
 
 	struct ChannelControl
@@ -55,19 +56,10 @@ class JKevChip
 		sWORD PreModOffset;
 		OscillatorControl Oscillator[2];
 
-		// filter stuff
-		/*
-		float az1 = 0.f;
-		float az2 = 0.f;
-		float az3 = 0.f;
-		float az4 = 0.f;
-		float az5 = 0.f;
-		float ay1 = 0.f;
-		float ay2 = 0.f;
-		float ay3 = 0.f;
-		float ay4 = 0.f;
-		float amf = 0.f;
-		*/
+		float v = 0.f;
+		float InvM;
+		float Fric;
+		float T;
 	};
 
 	ChannelControl Channel[JKevChannelNr];
@@ -75,7 +67,6 @@ class JKevChip
 	uLONG UnrenderedCount = 0;
 
 public:
-
 	struct 
 	{
 		std::array<float, 100> Data;
@@ -99,7 +90,7 @@ public:
 		{
 			auto WaveForm = [](const OscillatorControl & OscControl) -> float
 			{
-				float Amp = (float(OscControl.WaveAmplitude.flags.Amplitude) - 128.f) / 128.f;
+				float Amp = float(OscControl.WaveAmplitude.flags.Amplitude) / 256.f;
 
 				switch(OscControl.WaveAmplitude.flags.Waveform)
 				{
@@ -119,7 +110,9 @@ public:
 			const float W0 = WaveForm(Chan.Oscillator[0]);
 			const float W1 = WaveForm(Chan.Oscillator[1]);
 			const float out = std::clamp(Chan.PreModOffset + W1, -128.f, 127.f) * W0 / 256.f; // 8b range
-			Chan.Out = sWORD(out);//sWORD(128.f * ResoFilter(Chan, out / 128.f, float(Chan.Filter.flags.Freq) / 256.f, float(Chan.Filter.flags.Reso) / 255.f));
+
+			Chan.v += (Chan.T * (out - float(Chan.Out)) - Chan.v / Chan.Fric) * Chan.InvM;
+			Chan.Out = sWORD(std::clamp(float(Chan.Out) + Chan.v, -128.f, 127.f));
 		}
 
 		OscilloTab[0].Push(Channel[0].Out);
@@ -134,50 +127,16 @@ public:
 		}
 	}
 
-	/*
-	float ResoFilter(ChannelControl & Chan, float Input, float Cutoff, float Resonance) 
+	void SetFilterReg(int ChanIdx, uWORD val)
 	{
-		// filter based on the text "Non linear digital implementation of the moog ladder filter" by Antti Houvilainen
-		// adopted from Csound code at http://www.kunstmusik.com/udo/cache/moogladder.udo
-
-		// resonance [0..1]
-		// cutoff from 0 (0Hz) to 1 (nyquist)
-
-		const float v2 = 40000.f;   // twice the 'thermal voltage of a transistor'
-		static const float sr = 22050.f;
-		const float cutoff_hz = Cutoff * sr;
-		const float kfc = cutoff_hz / sr; // sr is half the actual filter sampling rate
-		const float kf = .5f * kfc;
-		
-		// frequency & amplitude correction
-		const float kfcr = 1.8730f*kfc*kfc*kfc + 0.4955f*kfc*kfc - 0.6490f*kfc + 0.9988f;
-		const float kacr = -3.9364f*kfc*kfc    + 1.8409f*kfc       + 0.9968f;
-		const float k2vg = v2*(1.f-expf(-2.0f * 3.1415926535f * kfcr * kf)); // filter tuning
-
-		// cascade of 4 1st order sections
-		auto F = [k2vg, v2](float & ay, float & az, float t)
-		{
-			auto Tanhf = [](float x) -> float { return 1.f - (2.f / (1.f + expf(x * 2.f))); };
-			ay  = az + k2vg * (Tanhf(t/v2) - Tanhf(az/v2));
-			az  = ay;
-		};
-
-		auto Pass = [&]()
-		{
-			F(Chan.ay1, Chan.az1, Input - 4.f*Resonance*Chan.amf*kacr);
-			F(Chan.ay2, Chan.az2, Chan.ay1);
-			F(Chan.ay3, Chan.az3, Chan.ay2);
-			F(Chan.ay4, Chan.az4, Chan.ay3);
-			Chan.amf  = (Chan.ay4 + Chan.az5)*0.5f; // 1/2-sample delay for phase compensation
-			Chan.az5  = Chan.ay4;
-		};
-
-		Pass();
-		Pass();
-
-		return Chan.amf;
+		Channel[ChanIdx].Filter.uw = val;
+		const float F = float(Channel[ChanIdx].Filter.flags.InvM) / 255.f;
+		const float C = float(Channel[ChanIdx].Filter.flags.Damp) / 15.f;
+		const float T = float(Channel[ChanIdx].Filter.flags.Drive) / 15.f;
+		Channel[ChanIdx].InvM = 1.f/(10000.f * F*F*F + 4.f); // F : 0
+		Channel[ChanIdx].Fric = .2f + 4.f * (1.f-C); // C : 0
+		Channel[ChanIdx].T = 12.f * T*T; // D : 0.5
 	}
-	*/
 
 	void SetOutputSurface(char * _OutputBuffer, int Size)
 	{
@@ -216,8 +175,10 @@ public:
 		{
 			chan.Out = 0;
 			chan.PreModOffset = 0;
-			chan.Filter.flags.Freq = 255;
-			chan.Filter.flags.Reso = 0;
+			chan.Filter.flags.InvM = 0;
+			chan.Filter.flags.Damp = 15;
+			chan.Filter.flags.Drive = 8;
+			chan.v = 0.f;
 
 			for(auto & osc : chan.Oscillator)
 			{
@@ -226,5 +187,10 @@ public:
 				osc.CurOffset = 0;
 			}
 		}
+
+		SetFilterReg(0, Channel[0].Filter.uw);
+		SetFilterReg(1, Channel[1].Filter.uw);
+		SetFilterReg(2, Channel[2].Filter.uw);
+		SetFilterReg(3, Channel[3].Filter.uw);
 	}
 };

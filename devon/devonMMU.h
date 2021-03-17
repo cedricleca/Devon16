@@ -132,7 +132,7 @@ public:
 					case 0x17:	Word =	JKev->Channel[2].Oscillator[1].WaveAmplitude.uw;	break;
 					case 0x18:	Word =	JKev->Channel[2].PreModOffset;						break;
 					case 0x19:	Word =	JKev->Channel[2].Out;								break;
-					case 0x1A:	Word =	JKev->Channel[1].Filter.uw;							break;
+					case 0x1A:	Word =	JKev->Channel[2].Filter.uw;							break;
 					case 0x1B:	Word =	JKev->Channel[3].Oscillator[0].OscStep.w.msw;		break;
 					case 0x1C:	Word =	JKev->Channel[3].Oscillator[0].OscStep.w.lsw;		break;
 					case 0x1D:	Word =	JKev->Channel[3].Oscillator[0].WaveAmplitude.uw;	break;
@@ -141,7 +141,7 @@ public:
 					case 0x20:	Word =	JKev->Channel[3].Oscillator[1].WaveAmplitude.uw;	break;
 					case 0x21:	Word =	JKev->Channel[3].PreModOffset;						break;
 					case 0x22:	Word =	JKev->Channel[3].Out;								break;
-					case 0x23:	Word =	JKev->Channel[1].Filter.uw;							break;
+					case 0x23:	Word =	JKev->Channel[3].Filter.uw;							break;
 					default:
 						return ERR;
 					}
@@ -423,7 +423,7 @@ public:
 					case 0x04:	JKev->Channel[0].Oscillator[1].OscStep.w.lsw		= Word;		break;
 					case 0x05:	JKev->Channel[0].Oscillator[1].WaveAmplitude.uw		= Word;		break;
 					case 0x06:	JKev->Channel[0].PreModOffset						= Word;		break;
-					case 0x08:	JKev->Channel[0].Filter.uw							= Word;		break;
+					case 0x08:	JKev->SetFilterReg(0, Word);									break;
 					case 0x09:	JKev->Channel[1].Oscillator[0].OscStep.w.msw		= Word;		break;
 					case 0x0A:	JKev->Channel[1].Oscillator[0].OscStep.w.lsw		= Word;		break;
 					case 0x0B:	JKev->Channel[1].Oscillator[0].WaveAmplitude.uw		= Word;		break;
@@ -431,7 +431,7 @@ public:
 					case 0x0D:	JKev->Channel[1].Oscillator[1].OscStep.w.lsw		= Word;		break;
 					case 0x0E:	JKev->Channel[1].Oscillator[1].WaveAmplitude.uw		= Word;		break;
 					case 0x0F:	JKev->Channel[1].PreModOffset						= Word;		break;
-					case 0x11:	JKev->Channel[1].Filter.uw							= Word;		break;
+					case 0x11:	JKev->SetFilterReg(1, Word);									break;
 					case 0x12:	JKev->Channel[2].Oscillator[0].OscStep.w.msw		= Word;		break;
 					case 0x13:	JKev->Channel[2].Oscillator[0].OscStep.w.lsw		= Word;		break;
 					case 0x14:	JKev->Channel[2].Oscillator[0].WaveAmplitude.uw		= Word;		break;
@@ -439,7 +439,7 @@ public:
 					case 0x16:	JKev->Channel[2].Oscillator[1].OscStep.w.lsw		= Word;		break;
 					case 0x17:	JKev->Channel[2].Oscillator[1].WaveAmplitude.uw		= Word;		break;
 					case 0x18:	JKev->Channel[2].PreModOffset						= Word;		break;
-					case 0x1A:	JKev->Channel[2].Filter.uw							= Word;		break;
+					case 0x1A:	JKev->SetFilterReg(2, Word);									break;
 					case 0x1B:	JKev->Channel[3].Oscillator[0].OscStep.w.msw		= Word;		break;
 					case 0x1C:	JKev->Channel[3].Oscillator[0].OscStep.w.lsw		= Word;		break;
 					case 0x1D:	JKev->Channel[3].Oscillator[0].WaveAmplitude.uw		= Word;		break;
@@ -447,7 +447,7 @@ public:
 					case 0x1F:	JKev->Channel[3].Oscillator[1].OscStep.w.lsw		= Word;		break;
 					case 0x20:	JKev->Channel[3].Oscillator[1].WaveAmplitude.uw		= Word;		break;
 					case 0x21:	JKev->Channel[3].PreModOffset						= Word;		break;
-					case 0x23:	JKev->Channel[3].Filter.uw							= Word;		break;
+					case 0x23:	JKev->SetFilterReg(3, Word);									break;
 					default:
 						return ERR;
 					}
