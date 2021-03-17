@@ -181,6 +181,7 @@ void SetDCAFile(LogWindow & LogWindow)
 	ifd::FileDialog::Instance().Open("OpenDcaDialog", "Open a DCA cartridge file", "DCA file (*.dca){.dca},.*");
 }
 
+bool UnplugCartridgeRequest = false;
 std::atomic<bool> CartridgeReadyToPlugin = false;
 void ExportCartridge(std::string Filename, LogWindow & LogWindow)
 {
@@ -694,6 +695,9 @@ int main(int argn, char**arg)
 			{
 				ImGui::SameLine();
 				ImGui::Text(Settings::CartridgeFileName.c_str());
+
+				if(ImGui::Button("Unplug Cartridge"))
+					UnplugCartridgeRequest = true;
 			}
 
 			ImGui::Separator();
@@ -888,6 +892,17 @@ int main(int argn, char**arg)
 		{
 			PlugCartridge(LogWindow);
 			CartridgeReadyToPlugin = false;
+		}
+
+		if(UnplugCartridgeRequest)
+		{
+			Settings::Lock(true);
+			Settings::CartridgeFileName = "";
+			Settings::Lock(false);
+
+			Machine.MMU.UnplugCartridge();
+			Machine.HardReset();
+			UnplugCartridgeRequest = false;
 		}
 
 		if(ROMChangeRequest)
