@@ -111,7 +111,7 @@ public:
 			const float W1 = WaveForm(Chan.Oscillator[1]);
 			const float out = std::clamp(Chan.PreModOffset + W1, -128.f, 127.f) * W0 / 256.f; // 8b range
 
-			Chan.v += (Chan.T * (out - float(Chan.Out)) - Chan.v / Chan.Fric) * Chan.InvM;
+			Chan.v += (Chan.T * (out - float(Chan.Out)) - Chan.v * Chan.Fric) * Chan.InvM;
 			Chan.Out = sWORD(std::clamp(float(Chan.Out) + Chan.v, -128.f, 127.f));
 		}
 
@@ -133,8 +133,8 @@ public:
 		const float F = float(Channel[ChanIdx].Filter.flags.InvM) / 255.f;
 		const float C = float(Channel[ChanIdx].Filter.flags.Damp) / 15.f;
 		const float T = float(Channel[ChanIdx].Filter.flags.Drive) / 15.f;
-		Channel[ChanIdx].InvM = 1.f/(10000.f * F*F*F + 4.f); // F : 0
-		Channel[ChanIdx].Fric = .2f + 4.f * (1.f-C); // C : 0
+		Channel[ChanIdx].InvM = 1.f / (10000.f * F*F*F + 8.f); // F : 0
+		Channel[ChanIdx].Fric = 1.f / (.15f + 8.f * (1.f-C) * (1.f-C)); // C : 0
 		Channel[ChanIdx].T = 12.f * T*T; // D : 0.5
 	}
 
