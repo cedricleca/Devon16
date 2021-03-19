@@ -86,6 +86,10 @@ VBaseloop:
 	ext16	r0
 	add		#!0, r0			; test it
 	jmp.np	#CartBase		; if present -> jmp
+
+
+	mov		#NoCartMsg, r2
+	jsr		#FUNC_Print
 	halt
 
 DefaultBusError:
@@ -360,6 +364,23 @@ DrawChar_NoWrap:
 	mov.w	r2, $RAM_Writer_XOffset
 	
 	rts
+	
+FUNC_Print:
+	mov		r2, r0
+	add		r0, r0
+FUNC_Print_Loop:
+	movb	(r0)+, r2
+	add		#!0, r2
+	bra.z	#FUNC_Print_Ret
+	ssave	#%00000001
+	jsr		#FUNC_DrawChar
+	sload	#%00000001
+	bra		#FUNC_Print_Loop
+FUNC_Print_Ret:
+	rts
+	
+NoCartMsg:
+	byte "No Cartridge detected.", 0
 	
 DefaultFontData:
 	incbin	"Font.bin"
