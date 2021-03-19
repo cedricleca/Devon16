@@ -360,7 +360,6 @@ DrawChar_NoWrap:
 	mov.w	r2, $RAM_Writer_XOffset
 	
 	rts
-
-
+	
 DefaultFontData:
 	incbin	"Font.bin"

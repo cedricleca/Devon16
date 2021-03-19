@@ -271,8 +271,9 @@ namespace DevonASM
 	struct directive_entry : seq<TAO_PEGTL_ISTRING("entry"), blk_, opt<one<'$'>>, integer> {};
 	struct quotedstringCharValue : if_then_else<at<one<'"'>>, failure, seven> {};
 	struct quotedstring : seq<one<'"'>, star<quotedstringCharValue>, one<'"'>> {};
+	struct byteintValue : integer {};
 	struct filename : star<if_then_else<at<one<'"'>>, failure, seven>> {};
-	struct directive_bytedata : seq<blk, opt<one<','>>, blk, sor<integer, quotedstring>> {};
+	struct directive_bytedata : seq<blk, opt<one<','>>, blk, sor<byteintValue, quotedstring>> {};
 	struct directive_worddata : seq<blk, opt<one<','>>, blk, integer> {};
 	struct directive_longdata : seq<blk, opt<one<','>>, blk, integer> {};
 	struct directive_byte : seq<TAO_PEGTL_ISTRING("byte"), blk_, star<directive_bytedata>> {};
@@ -538,10 +539,10 @@ namespace DevonASM
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
 			if(ASM.LastCharAvailable)
-				ASM.AddByte(-1);
+				ASM.AddByte(0);
 		}
 	};
-	template<> struct action< directive_bytedata >
+	template<> struct action< byteintValue >
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
