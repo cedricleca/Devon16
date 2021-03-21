@@ -44,5 +44,11 @@
     <ClCompile Include="devon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Cortico.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MTUChip.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

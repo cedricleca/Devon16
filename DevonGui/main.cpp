@@ -127,7 +127,7 @@ bool LoadROM(const std::string & ROMFileName, std::vector<char> & OutBuf)
 MemoryEditor::u16 ReadMMUWord(MemoryEditor::u16* data, size_t off)
 {
 	Devon::uWORD Val=-1;
-	Machine.MMU.ReadWord(Val, (uLONG)off, true);
+	Machine.MMU.ReadWord<DevonMMU::NoFail>(Val, (uLONG)off);
 	return Val;
 }
 void WriteMMUWord(MemoryEditor::u16* data, size_t off, MemoryEditor::u16 d)
@@ -667,8 +667,8 @@ int main(int argn, char**arg)
 				ImGui::EndMainMenuBar();
 			}
 
-//					bool bShowTestWindow = true;
-//					ImGui::ShowTestWindow(&bShowTestWindow);
+					//bool bShowTestWindow = true;
+					//ImGui::ShowDemoWindow(&bShowTestWindow);
 
 					//        ImGui::SetNextWindowSize(ImVec2(600,400));
 			ImGui::Begin("Devon");

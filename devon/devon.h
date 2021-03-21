@@ -1,5 +1,9 @@
 #pragma once
 
+//#include "devonMMU.h"
+
+class DevonMMU;
+
 namespace Devon
 {
 	typedef unsigned short uWORD;
@@ -12,15 +16,6 @@ namespace Devon
 		OK,
 		WAIT,
 		ERR,
-	};
-
-	class BaseMMU
-	{
-	public:
-		virtual void HardReset()=0;
-		virtual EMemAck ReadWord(uWORD & Word, uLONG Address, bool bNoFail=false)=0;
-		virtual uWORD GFXReadWord(uLONG & Address)=0; // use from cortico only
-		virtual EMemAck WriteWord(uWORD Word, uLONG Address, bool bNoFail=false)=0;
 	};
 
 	class CPU
@@ -175,7 +170,7 @@ namespace Devon
 		uLONG			ICache_Add[NbICacheEntries];
 		uLONG			ICache_Inst0[NbICacheEntries];
 		uLONG			CurOPAddress;
-		BaseMMU			&MMU;
+		DevonMMU*		MMU;
 		EVector			PendingInterrupt;
 		EVector			CurException;
 		uLONG			CurExceptionVectorAddress;
@@ -202,7 +197,7 @@ namespace Devon
 		inline void TestReg(const int RegIndex);
 
 	public:
-		CPU(BaseMMU & InMMU);
+		CPU(DevonMMU * InMMU);
 
 		void Reset();
 		void HardReset();

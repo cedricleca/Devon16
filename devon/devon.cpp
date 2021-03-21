@@ -1,4 +1,6 @@
 #include "devon.h"
+#include "devonMMU.h"
+#include <cassert>
 
 using namespace Devon;
 
@@ -18,8 +20,9 @@ using namespace Devon;
 			HALT = Group2, RESET, RTS, RTE, NOP, CHKX, CHKV
 */
 
-CPU::CPU(BaseMMU & InMMU) : MMU(InMMU)
+CPU::CPU(DevonMMU * InMMU) : MMU(InMMU)
 {
+	assert(MMU);
 	HardReset();
 }
 
@@ -58,12 +61,12 @@ void CPU::Reset()
 	R[Dummy].u = 0;
 
 	// load stack pointer
-	MMU.ReadWord(R[SP].uw.msw, VectorTableBase + (ResetStack<<1), true);
-	MMU.ReadWord(R[SP].uw.lsw, VectorTableBase + (ResetStack<<1)+1, true);
+	MMU->ReadWord<DevonMMU::NoFail>(R[SP].uw.msw, VectorTableBase + (ResetStack<<1));
+	MMU->ReadWord<DevonMMU::NoFail>(R[SP].uw.lsw, VectorTableBase + (ResetStack<<1)+1);
 
 	// load program counter
-	MMU.ReadWord(R[PC].uw.msw, VectorTableBase + (ResetPC<<1), true);
-	MMU.ReadWord(R[PC].uw.lsw, VectorTableBase + (ResetPC<<1)+1, true);
+	MMU->ReadWord<DevonMMU::NoFail>(R[PC].uw.msw, VectorTableBase + (ResetPC<<1));
+	MMU->ReadWord<DevonMMU::NoFail>(R[PC].uw.lsw, VectorTableBase + (ResetPC<<1)+1);
 }
 
 void CPU::Halt(bool NewHalt)
@@ -949,7 +952,7 @@ void CPU::Exception(const EVector ExceptionVector)
 
 bool CPU::MReadWord(uWORD & Word, const uLONG Address)
 {
-	switch(MMU.ReadWord(Word, Address))
+	switch(MMU->ReadWord(Word, Address))
 	{
 	case OK:	return true;
 	case WAIT:	return false;
@@ -961,7 +964,7 @@ bool CPU::MReadWord(uWORD & Word, const uLONG Address)
 
 bool CPU::MWriteWord(const uWORD Word, const uLONG Address)
 {
-	switch(MMU.WriteWord(Word, Address))
+	switch(MMU->WriteWord(Word, Address))
 	{
 	case OK:	return true;
 	case WAIT:	return false;

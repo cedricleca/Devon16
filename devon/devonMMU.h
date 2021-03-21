@@ -10,9 +10,9 @@
 #include <vector>
 #include <memory>
 
-using namespace Devon;
+//using namespace Devon;
 
-class DevonMMU : public BaseMMU
+class DevonMMU
 {
 	std::array<uWORD, 128*1024> RAMBuf;
 	std::array<uWORD, 128*1024> GFXRAMBuf;
@@ -35,7 +35,7 @@ public:
 	JKevChip * JKev = nullptr;
 	KeyBChip * KeyB = nullptr;
 
-	virtual void HardReset() override
+	virtual void HardReset()
 	{
 		GFXRAMBuf.fill(0);
 		RAMBuf.fill(0);
@@ -50,7 +50,7 @@ public:
 	void PlugCartrige(const std::vector<char> & CART)	{ SetROMBuf(CART, CARTBuf); }
 	void UnplugCartridge() { CARTBuf.resize(0); }
 
-	uWORD GFXReadWord(uLONG & Address) override // use from cortico only
+	uWORD GFXReadWord(uLONG & Address) // use from cortico only
 	{
 		uWORD ret = GFXRAMBuf[(Address - 0x40000) & 0x1ffff];
 		GFXRAMAccessOccured = true;
@@ -60,13 +60,15 @@ public:
 		return ret;
 	}
 
-	EMemAck ReadWord(uWORD & Word, const uLONG Address, const bool bNoFail = false) override
+	enum MemAccessFail { AcceptFail, NoFail };
+	template<MemAccessFail Fail = AcceptFail>
+	EMemAck ReadWord(uWORD & Word, const uLONG Address)
 	{
 		const uLONG Page = Address & 0xFFFF0000;
 		switch(Page)
 		{
 		case 0x00000: // ROM
-			if(!bNoFail)
+			if constexpr (Fail == AcceptFail)
 			{
 				if(ROMAccessOccured)
 					return WAIT;
@@ -85,8 +87,11 @@ public:
 			break;
 
 		case 0x10000: // coprocessors control registers
-			if(!bNoFail && (CycleCount & 1) != 0)
-				return WAIT;
+			if constexpr (Fail == AcceptFail)
+			{
+				if((CycleCount & 1) != 0)
+					return WAIT;
+			}
 
 			switch(Address & 0xF000)
 			{
@@ -154,7 +159,7 @@ public:
 				break;
 			case 0x2000:
 				// Cortico
-				if(!bNoFail)
+				if constexpr (Fail == AcceptFail)
 				{
 					if(GFXRAMAccessOccured)
 						return WAIT;
@@ -345,7 +350,7 @@ public:
 
 		case 0x20000:
 		case 0x30000: // Cartridge
-			if(!bNoFail)
+			if constexpr (Fail == AcceptFail)
 			{
 				if(ROMAccessOccured)
 					return WAIT;
@@ -354,12 +359,17 @@ public:
 				ROMAccessOccured = true;
 			}			
 
-			Word = CARTBuf[Address - 0x20000];
+			{
+				const uLONG Offset = Address - 0x20000;
+				if(Offset >= CARTBuf.size())
+					return ERR;
+				Word = CARTBuf[Offset];
+			}
 			break;
 
 		case 0x40000:
 		case 0x50000: // GFX RAM
-			if(!bNoFail)
+			if constexpr (Fail == AcceptFail)
 			{
 				if(GFXRAMAccessOccured)
 					return WAIT;
@@ -368,13 +378,18 @@ public:
 				GFXRAMAccessOccured = true;
 			}
 
-			Word = GFXRAMBuf[Address - 0x40000];
+			{
+				const uLONG Offset = Address - 0x40000;
+				if(Offset >= GFXRAMBuf.size())
+					return ERR;
+				Word = GFXRAMBuf[Offset];
+			}
 			break;
 
 
 		case 0x80000:
 		case 0x90000: // RAM
-			if(!bNoFail)
+			if constexpr (Fail == AcceptFail)
 			{
 				if(RAMAccessOccured)
 					return WAIT;
@@ -383,7 +398,12 @@ public:
 				RAMAccessOccured = true;
 			}			
 
-			Word = RAMBuf[Address - 0x80000];
+			{
+				const uLONG Offset = Address - 0x80000;
+				if(Offset >= RAMBuf.size())
+					return ERR;
+				Word = RAMBuf[Offset];
+			}
 			break;
 
 		//case 0x60000: // Extra GFX RAM
@@ -397,7 +417,7 @@ public:
 		return OK;
 	}
 
-	EMemAck WriteWord(const uWORD Word, const uLONG Address, const bool bNoFail = false) override
+	EMemAck WriteWord(const uWORD Word, const uLONG Address, const bool bNoFail = false)
 	{
 		const uLONG Page = Address & 0xFFFF0000;
 		switch(Page)
@@ -476,8 +496,8 @@ public:
 					case 0x02:		Cortico->INT_H						= Word;		break;
 					case 0x03:		Cortico->INT_V						= Word;		break;
 					case 0x04:		Cortico->SetControlRegister(Word);				break;
-					case 0x05:		Cortico->BaseAdd[0].w.msw	= Word;		break;
-					case 0x06:		Cortico->BaseAdd[0].w.lsw	= Word;		break;
+					case 0x05:		Cortico->BaseAdd[0].w.msw			= Word;		break;
+					case 0x06:		Cortico->BaseAdd[0].w.lsw			= Word;		break;
 					case 0x07:		Cortico->BPlane[0].CurAdd.w.msw		= Word;		break;
 					case 0x08:		Cortico->BPlane[0].CurAdd.w.lsw		= Word;		break;
 					case 0x09:		Cortico->Shift(0, Word);						break;
@@ -486,8 +506,8 @@ public:
 					case 0x0C:		Cortico->BPlane[0].VEnd				= Word;		break;
 					case 0x0D:		Cortico->BPlane[0].HStart			= Word;		break;
 					case 0x0E:		Cortico->BPlane[0].HEnd				= Word;		break;
-					case 0x0F:		Cortico->BaseAdd[1].w.msw	= Word;		break;
-					case 0x10:		Cortico->BaseAdd[1].w.lsw	= Word;		break;
+					case 0x0F:		Cortico->BaseAdd[1].w.msw			= Word;		break;
+					case 0x10:		Cortico->BaseAdd[1].w.lsw			= Word;		break;
 					case 0x11:		Cortico->BPlane[1].CurAdd.w.msw		= Word;		break;
 					case 0x12:		Cortico->BPlane[1].CurAdd.w.lsw		= Word;		break;
 					case 0x13:		Cortico->Shift(1, Word);						break;
@@ -496,8 +516,8 @@ public:
 					case 0x16:		Cortico->BPlane[1].VEnd				= Word;		break;
 					case 0x17:		Cortico->BPlane[1].HStart			= Word;		break;
 					case 0x18:		Cortico->BPlane[1].HEnd				= Word;		break;
-					case 0x19:		Cortico->BaseAdd[2].w.msw	= Word;		break;
-					case 0x1A:		Cortico->BaseAdd[2].w.lsw	= Word;		break;
+					case 0x19:		Cortico->BaseAdd[2].w.msw			= Word;		break;
+					case 0x1A:		Cortico->BaseAdd[2].w.lsw			= Word;		break;
 					case 0x1B:		Cortico->BPlane[2].CurAdd.w.msw		= Word;		break;
 					case 0x1C:		Cortico->BPlane[2].CurAdd.w.lsw		= Word;		break;
 					case 0x1D:		Cortico->Shift(2, Word);						break;
@@ -506,8 +526,8 @@ public:
 					case 0x20:		Cortico->BPlane[2].VEnd				= Word;		break;
 					case 0x21:		Cortico->BPlane[2].HStart			= Word;		break;
 					case 0x22:		Cortico->BPlane[2].HEnd				= Word;		break;
-					case 0x23:		Cortico->BaseAdd[3].w.msw	= Word;		break;
-					case 0x24:		Cortico->BaseAdd[3].w.lsw	= Word;		break;
+					case 0x23:		Cortico->BaseAdd[3].w.msw			= Word;		break;
+					case 0x24:		Cortico->BaseAdd[3].w.lsw			= Word;		break;
 					case 0x25:		Cortico->BPlane[3].CurAdd.w.msw		= Word;		break;
 					case 0x26:		Cortico->BPlane[3].CurAdd.w.lsw		= Word;		break;
 					case 0x27:		Cortico->Shift(3, Word);						break;
@@ -516,8 +536,8 @@ public:
 					case 0x2A:		Cortico->BPlane[3].VEnd				= Word;		break;
 					case 0x2B:		Cortico->BPlane[3].HStart			= Word;		break;
 					case 0x2C:		Cortico->BPlane[3].HEnd				= Word;		break;
-					case 0x2D:		Cortico->BaseAdd[4].w.msw	= Word;		break;
-					case 0x2E:		Cortico->BaseAdd[4].w.lsw	= Word;		break;
+					case 0x2D:		Cortico->BaseAdd[4].w.msw			= Word;		break;
+					case 0x2E:		Cortico->BaseAdd[4].w.lsw			= Word;		break;
 					case 0x2F:		Cortico->BPlane[4].CurAdd.w.msw		= Word;		break;
 					case 0x30:		Cortico->BPlane[4].CurAdd.w.lsw		= Word;		break;
 					case 0x31:		Cortico->Shift(4, Word);						break;
@@ -526,8 +546,8 @@ public:
 					case 0x34:		Cortico->BPlane[4].VEnd				= Word;		break;
 					case 0x35:		Cortico->BPlane[4].HStart			= Word;		break;
 					case 0x36:		Cortico->BPlane[4].HEnd				= Word;		break;
-					case 0x37:		Cortico->BaseAdd[5].w.msw	= Word;		break;
-					case 0x38:		Cortico->BaseAdd[5].w.lsw	= Word;		break;
+					case 0x37:		Cortico->BaseAdd[5].w.msw			= Word;		break;
+					case 0x38:		Cortico->BaseAdd[5].w.lsw			= Word;		break;
 					case 0x39:		Cortico->BPlane[5].CurAdd.w.msw		= Word;		break;
 					case 0x3A:		Cortico->BPlane[5].CurAdd.w.lsw		= Word;		break;
 					case 0x3B:		Cortico->Shift(5, Word);						break;
@@ -536,8 +556,8 @@ public:
 					case 0x3E:		Cortico->BPlane[5].VEnd				= Word;		break;
 					case 0x3F:		Cortico->BPlane[5].HStart			= Word;		break;
 					case 0x40:		Cortico->BPlane[5].HEnd				= Word;		break;
-					case 0x41:		Cortico->BaseAdd[6].w.msw	= Word;		break;
-					case 0x42:		Cortico->BaseAdd[6].w.lsw	= Word;		break;
+					case 0x41:		Cortico->BaseAdd[6].w.msw			= Word;		break;
+					case 0x42:		Cortico->BaseAdd[6].w.lsw			= Word;		break;
 					case 0x43:		Cortico->BPlane[6].CurAdd.w.msw		= Word;		break;
 					case 0x44:		Cortico->BPlane[6].CurAdd.w.lsw		= Word;		break;
 					case 0x45:		Cortico->Shift(6, Word);						break;
@@ -546,8 +566,8 @@ public:
 					case 0x48:		Cortico->BPlane[6].VEnd				= Word;		break;
 					case 0x49:		Cortico->BPlane[6].HStart			= Word;		break;
 					case 0x4A:		Cortico->BPlane[6].HEnd				= Word;		break;
-					case 0x4B:		Cortico->BaseAdd[7].w.msw	= Word;		break;
-					case 0x4C:		Cortico->BaseAdd[7].w.lsw	= Word;		break;
+					case 0x4B:		Cortico->BaseAdd[7].w.msw			= Word;		break;
+					case 0x4C:		Cortico->BaseAdd[7].w.lsw			= Word;		break;
 					case 0x4D:		Cortico->BPlane[7].CurAdd.w.msw		= Word;		break;
 					case 0x4E:		Cortico->BPlane[7].CurAdd.w.lsw		= Word;		break;
 					case 0x4F:		Cortico->Shift(7, Word);						break;

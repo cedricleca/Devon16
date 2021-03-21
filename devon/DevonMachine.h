@@ -22,10 +22,10 @@ public:
 	KeyBChip	KeyB;
 
 	DevonMachine() :
-		CPU(MMU), 
-		Cortico(MMU, CPU), 
+		CPU(&MMU), 
+		Cortico(&MMU, &CPU), 
 		Timers(CPU), 
-		MTUs(MMU, CPU),
+		MTUs(&MMU, &CPU),
 		JKev(),
 		KeyB()
 	{

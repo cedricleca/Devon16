@@ -14,7 +14,7 @@ struct DisassemblyWindow
 		OldPC = 0;
 	}
 
-	void DrawWindow(const char* title, const DevonMMU & MMU, Devon::CPU & CPU, uLONG base_display_addr = 0x0000)
+	void DrawWindow(const char* title, DevonMMU & MMU, Devon::CPU & CPU, uLONG base_display_addr = 0x0000)
     {
         ImGui::SetNextWindowSizeConstraints(ImVec2(0.0f, 0.0f), ImVec2(FLT_MAX, FLT_MAX));
 
@@ -102,13 +102,13 @@ struct DisassemblyWindow
 
 					ImGui::SameLine(320.0f);
 					uWORD InstData;
-					((DevonMMU &)MMU).ReadWord(InstData, CurAdr, true);
+					MMU.ReadWord<DevonMMU::NoFail>(InstData, CurAdr);
 					ImGui::TextDisabled("%04X", InstData);
 
 					if(InstSize > 1)
 					{
 						ImGui::SameLine();
-						((DevonMMU &)MMU).ReadWord(InstData, CurAdr+1, true);
+						MMU.ReadWord<DevonMMU::NoFail>(InstData, CurAdr+1);
 						ImGui::TextDisabled("%04X ", InstData);
 					}
 
@@ -136,7 +136,7 @@ struct DisassemblyWindow
 	int DisassembleInstruction(std::string & out, uLONG addr, DevonMMU & MMU)
 	{
 		Devon::CPU::InstDecode Inst;
-		MMU.ReadWord(Inst.Helper.Instruction, addr, true);
+		MMU.ReadWord<DevonMMU::NoFail>(Inst.Helper.Instruction, addr);
 
 		if(Inst.Helper.Opcode.f0 < 31)
 			Inst.Opcode = Devon::CPU::EOpcode(Inst.Helper.Opcode.f0 + Devon::CPU::EOpcode::Group0);
@@ -413,7 +413,7 @@ struct DisassemblyWindow
 			)
 		{
 			uWORD Extra = 0;
-			MMU.ReadWord(Extra, addr+1, true);
+			MMU.ReadWord<DevonMMU::NoFail>(Extra, addr+1);
 			LongOP = (Inst.Op<<16) | Extra;
 		}
 		else if(Inst.AdMode == Devon::CPU::EAdMode::Imm8)
