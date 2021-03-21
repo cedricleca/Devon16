@@ -163,7 +163,7 @@ void CPU::Tick_GetInst1()
 
 void CPU::Tick_PreDecrGet()
 {
-	R[ExecInstruction.Op].u--;
+	R[ExecInstruction.Op].u -= ExecInstruction.LongOP ? 2 : 1;
 	Tick = &Devon::CPU::Tick_GetOp0;
 }
 
