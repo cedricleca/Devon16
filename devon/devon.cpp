@@ -320,7 +320,7 @@ void CPU::Tick_Decode()
 		CurOPAddress &= 0xFFFFF;
 	}
 
-	InstSize = (ExecInstruction.AdMode == Imm20 || ExecInstruction.AdMode == XEA20W || ExecInstruction.AdMode == XEA20L) ? 2 : 1;
+	InstSize = ExecInstruction.LongInst ? 2 : 1;
 }
 
 void CPU::Tick_Exec()
@@ -732,7 +732,7 @@ void CPU::Tick_Exec()
 
 void CPU::Tick_PreDecrPut()
 {
-	R[ExecInstruction.Op].u--;
+	R[ExecInstruction.Op].u -= ExecInstruction.LongOP ? 2 : 1;
 	Tick = &Devon::CPU::Tick_PutRes0;
 }
 
@@ -915,6 +915,11 @@ bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 	default:
 		FetchedInstruction.LongInst = false;
 	}
+	/*
+	FetchedInstruction.LongInst = FetchedInstruction.AdMode == XEA20L || FetchedInstruction.AdMode == XEA20W ||FetchedInstruction.AdMode == Imm20;
+	FetchedInstruction.LongOP = FetchedInstruction.AdMode == XEA20L || FetchedInstruction.AdMode != XEA20W && (FetchedInstruction.Op & 1);
+	FetchedInstruction.Op >>= FetchedInstruction.AdMode == Reg || FetchedInstruction.AdMode == XReg || FetchedInstruction.AdMode == XRegInc || FetchedInstruction.AdMode == XRegDec;
+	*/
 
 	return true;
 }
