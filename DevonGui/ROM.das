@@ -56,19 +56,11 @@ DefaultClut:
 	word	0x000, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF
 
 org EntryPoint
-;	mov		#RAM_VBase, r3
-;	mov		#!0, r2
-;	mov		#0x80, r4
-;	jsr		#FUNC_Memcpy_L
+	mov		#RAM_VBase, r3
+	mov		#!0, r2
+	mov		#0x80, r4
+	jsr		#FUNC_Memcpy_L
 
-	mov		#RAM_VBase, r0
-	mov		#!0x0, r1
-	mov		#0x80, r2
-VBaseloop:
-	mov		(r1)+, r3
-	mov		r3, (r0)+
-	sub		#!1, r2
-	bra.p	#!VBaseloop
 	vbase	#RAM_VBase
 	intmask	#%00000000		; enable VBL only
 

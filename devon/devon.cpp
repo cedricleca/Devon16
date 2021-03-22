@@ -640,7 +640,7 @@ void CPU::Tick_Exec()
 	case INTMASK:
 		IntMask = ExecInstruction.Helper.Type9.OP;
 		break;
-	case VBASE:	VectorTableBase = R[ExecInstruction.DstRegister].u & 0xFFFFF;				
+	case VBASE:	VectorTableBase = R[ExecInstruction.SrcRegister].u & 0xFFFFF;				
 		break;
 	case HALT:	Halt(true);																	
 		break;
@@ -799,6 +799,18 @@ bool CPU::FetchInstructionExtension(const uLONG Offset /*= 0*/)
 bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 {
 	const uLONG Add = R[PC].u + Offset;
+
+	if(uWORD inst = (ICache_Add[0] == Add) * ICache_Inst0[0]
+	   + (ICache_Add[1] == Add) * ICache_Inst0[1]
+	   + (ICache_Add[2] == Add) * ICache_Inst0[2]
+	   + (ICache_Add[3] == Add) * ICache_Inst0[3]
+	   + (ICache_Add[4] == Add) * ICache_Inst0[4]
+	   + (ICache_Add[5] == Add) * ICache_Inst0[5]
+	   + (ICache_Add[6] == Add) * ICache_Inst0[6]
+	   + (ICache_Add[7] == Add) * ICache_Inst0[7]
+	   )
+		FetchedInstruction.Helper.Instruction = inst;
+	/*
 	if(ICache_Add[0] == Add)	
 		FetchedInstruction.Helper.Instruction = ICache_Inst0[0];
 	else if(ICache_Add[1] == Add)	
@@ -815,6 +827,7 @@ bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 		FetchedInstruction.Helper.Instruction = ICache_Inst0[6];
 	else if(ICache_Add[7] == Add)	
 		FetchedInstruction.Helper.Instruction = ICache_Inst0[7];
+		*/
 	else if(bMemWriteOperand )
 		return false;
 	else if(!MReadWord(FetchedInstruction.Helper.Instruction, Add))
