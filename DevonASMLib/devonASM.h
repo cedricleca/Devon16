@@ -124,6 +124,7 @@ namespace DevonASM
 
 	struct symbolreference;
 	struct regindex : digit {};
+	struct regSP : TAO_PEGTL_ISTRING("sp") {};
 	struct decimalvalue : plus<digit> {};
 	struct decimalinteger : seq<opt<sor<one<'+'>, one<'-'>>>, decimalvalue> {};
 	struct hexavalue : plus<xdigit> {};
@@ -136,7 +137,7 @@ namespace DevonASM
 	struct integer : sor<hexainteger, decimalinteger, binaryinteger, charinteger, symbolreference> {};
 
 	template <CPU::EAdMode AM> struct AMCode {};
-	template<> struct AMCode<CPU::EAdMode::Reg> : seq<sor<one<'r'>, one<'R'>>, regindex> {};
+	template<> struct AMCode<CPU::EAdMode::Reg> : sor<regSP, seq<sor<one<'r'>, one<'R'>>, regindex>> {};
 	template<> struct AMCode<CPU::EAdMode::XReg> : seq<one<'('>, AMCode<CPU::EAdMode::Reg>, one<')'>> {};
 	template<> struct AMCode<CPU::EAdMode::XRegDec> : seq<one<'-'>, one<'('>, AMCode<CPU::EAdMode::Reg>, one<')'>> {};
 	template<> struct AMCode<CPU::EAdMode::XRegInc> : seq<one<'('>, AMCode<CPU::EAdMode::Reg>, one<')'>, one<'+'>> {};
@@ -579,6 +580,13 @@ namespace DevonASM
 		{
 			ASM.LastRegisterOp = ASM.LastInt;
 			//std::cout << "  OPREG = " << in.string() << '\n';
+		}
+	};
+	template<> struct action< regSP >
+	{
+		template< typename Input > static void apply( const Input& in, Assembler & ASM)
+		{
+			ASM.LastInt = 7;
 		}
 	};
 	template<> struct action< regindex >
