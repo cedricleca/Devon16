@@ -126,6 +126,9 @@ void CPU::Tick_Exception_Jmp()
 {
 	R[PC].u = R[Dummy].u;
 	Tick = &Devon::CPU::Tick_GetInst0;
+	if(PendingInterrupt < EVector::Trap0 && PendingInterrupt >= EVector::ExternalInterrupt0)
+		SR.Flags.IntLvl = PendingInterrupt - EVector::ExternalInterrupt0;
+	PendingInterrupt = NoVector;
 	CurException = EVector::NoVector; // reset exception pipeline
 }
 
@@ -142,9 +145,6 @@ void CPU::Tick_GetInst0()
 	if(PendingInterrupt != NoVector)
 	{
 		Exception(PendingInterrupt);
-		if(PendingInterrupt < EVector::Trap0 && PendingInterrupt >= EVector::ExternalInterrupt0)
-			SR.Flags.IntLvl = 7 - (PendingInterrupt - EVector::ExternalInterrupt0);
-		PendingInterrupt = NoVector;
 		Tick_Exception_ComputeVectorAdd();
 		return;
 	}

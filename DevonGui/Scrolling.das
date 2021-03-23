@@ -3,7 +3,8 @@ include "ControlRegisters.das"
 
 org $0x20000
 
-define	Var1 0x85000
+define	Var1		0x85000
+define	SoundVol	0x85002
 
 	mov		#!2, r0
 	mov.w	r0, $Cort_BPL0_HStart
@@ -55,7 +56,7 @@ define	Var1 0x85000
 	mov		#40100, r0
 	mov		r0, $JKev_R_A_OSC1_OSCSTEP_HI
 	mov		r0, $JKev_L_A_OSC1_OSCSTEP_HI
-	mov		#0x1ff, r0
+	mov		#0x100, r0
 	mov.w	r0, $JKev_R_A_OSC0_WAVEAMPLITUDE
 	mov.w	r0, $JKev_L_A_OSC0_WAVEAMPLITUDE
 	mov		#0x140, r0
@@ -64,7 +65,7 @@ define	Var1 0x85000
 	movi	#0x50, r0
 	mov.w	r0, $JKev_R_A_PREMODOFFSET
 	mov.w	r0, $JKev_L_A_PREMODOFFSET
-	mov		#0x00f8, r0 ; InvM8 Damp4 Drive4
+	mov		#0x00fa, r0 ; InvM8 Damp4 Drive4
 	mov.w	r0, $JKev_R_A_FILTER
 	mov.w	r0, $JKev_L_A_FILTER
 
@@ -88,13 +89,24 @@ lookpback:
 	add		#!1, r4
 	sub		#!1, r1
 	bra.p	#loop2
-continue:
 	add		#!1, r5
 	cmp		#200, r5
 	bra.pn	#startline
 	rts
 
 VBL:
+	mov		$SoundVol, r0
+	sub		#40, r0
+	bra.pz	#VBLVolNeg
+	mov		#0x7ff, r0	
+VBLVolNeg:
+	mov		r0, r1
+	lsri	#3, r1
+	or		#0x100, r1
+	mov.w	r1, $JKev_R_A_OSC0_WAVEAMPLITUDE
+	mov.w	r1, $JKev_L_A_OSC0_WAVEAMPLITUDE
+	mov		r0, $SoundVol
+	
 	mov		$Var1, r0
 	add		#!1, r0
 	and		#0xFF, r0
