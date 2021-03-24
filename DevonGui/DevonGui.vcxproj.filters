@@ -12,9 +12,6 @@
     <Filter Include="Imgui">
       <UniqueIdentifier>{71eda11f-0336-4d05-88c6-6a42518bed7b}</UniqueIdentifier>
     </Filter>
-    <Filter Include="pcx">
-      <UniqueIdentifier>{4aa31675-f288-40ad-b27c-3938d371c3f0}</UniqueIdentifier>
-    </Filter>
     <Filter Include="gl">
       <UniqueIdentifier>{458e8e16-b7f6-4d2e-87d1-8a566acad865}</UniqueIdentifier>
     </Filter>
@@ -25,9 +22,6 @@
     </ClCompile>
     <ClCompile Include="TextEditor.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="pcx\pcx.cpp">
-      <Filter>pcx</Filter>
     </ClCompile>
     <ClCompile Include="..\imgui\imgui.cpp">
       <Filter>Imgui</Filter>
@@ -78,9 +72,6 @@
     </ClInclude>
     <ClInclude Include="TextEditor.h">
       <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="pcx\pcx.h">
-      <Filter>pcx</Filter>
     </ClInclude>
     <ClInclude Include="PictureToolWindow.h">
       <Filter>Source Files</Filter>

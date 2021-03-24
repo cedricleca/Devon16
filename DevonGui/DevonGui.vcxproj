@@ -189,7 +189,6 @@
     <ClCompile Include="GLTools.ixx" />
     <ClCompile Include="ImFileDialog.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="pcx\pcx.cpp" />
     <ClCompile Include="Settings.ixx" />
     <ClCompile Include="SoundTools.ixx" />
     <ClCompile Include="TextEditor.cpp" />
@@ -203,7 +202,6 @@
     <ClInclude Include="ImFileDialog.h" />
     <ClInclude Include="LogWindow.h" />
     <ClInclude Include="MemoryEditor.h" />
-    <ClInclude Include="pcx\pcx.h" />
     <ClInclude Include="PictureToolWindow.h" />
     <ClInclude Include="resource1.h" />
     <ClInclude Include="TextEditor.h" />

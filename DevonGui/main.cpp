@@ -292,7 +292,7 @@ void AssembleAndExport(LogWindow & LogWindow)
 
 void LaunchImageTool()
 {
-	ifd::FileDialog::Instance().Open("OpenImgDialog", "Open a PCX file", "PCX file (*.pcx){.pcx},.*");
+	ifd::FileDialog::Instance().Open("OpenImgDialog", "Open a BMP file", "BMP file (*.bmp){.bmp},.*");
 }
 
 std::atomic<bool> StartCompileThread = false;
@@ -356,6 +356,7 @@ int main(int argn, char**arg)
 		}
 	}
 
+	glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
 	char WinTitle[] = "Devon16 (F11 to switch UI)";
 	GLFWwindow* window = glfwCreateWindow(W, H, WinTitle, Monitor, nullptr);
 	if (window == nullptr)
@@ -838,7 +839,7 @@ int main(int argn, char**arg)
 			// PCX file dialog result
 			OnClosedFileDialog("OpenImgDialog", [&](const std::string & filename)  
 			{
-				if(PicToolWindow.PcxImage.Load(filename.c_str()))
+				if(PicToolWindow.LoadBMP(filename.c_str()))
 					PicToolWindow.Show = true;
 			});
 

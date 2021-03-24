@@ -1,31 +1,36 @@
 #pragma once
 
-#include "pcx\pcx.h"
+#include "atlimage.h"
+#include "atltypes.h"
 
 struct PictureToolWindow
 {
 	bool Show = false;
-	PCX_Image PcxImage;
 	int NbColorsToExport = 32;
 	int NbBitPlanesToExport = 5;
+
+	CImage BMPImage;
+	std::vector<RGBQUAD> BMPPalette;
+	bool LoadBMP(const char * filename)
+	{
+		if(E_FAIL != BMPImage.Load(filename))
+		{
+			NbColorsToExport = BMPImage.GetMaxColorTableEntries();
+			NbBitPlanesToExport = BMPImage.GetBPP();
+			BMPPalette.resize(NbColorsToExport);
+			BMPImage.GetColorTable(0, NbColorsToExport, BMPPalette.data());
+			return true;
+		}
+		return false;
+	}
 	
     void Draw(const char* title)
     {
         ImGui::SetNextWindowSize(ImVec2(500,400), ImGuiCond_FirstUseEver);
         ImGui::Begin(title, &Show);
 		
-		ImGui::Columns(3, 0, false);
-		ImGui::SetColumnWidth(0, 250.0f);
-		ImGui::SetColumnWidth(1, 150.0f);
-
-		ImGui::Text("version %d", PcxImage.hdr.version);
-		ImGui::Text("encoding %d", PcxImage.hdr.encoding);
-		ImGui::Text("bitsPerPixel %d", PcxImage.hdr.bitsPerPixel);
-		ImGui::Text("res = %d x %d", PcxImage.width, PcxImage.height);
-		ImGui::Text("bytesPerLine %d", PcxImage.hdr.bytesPerLine);
-		ImGui::Text("paletteInfo %d", PcxImage.hdr.paletteInfo );
-		
-		ImGui::NextColumn();
+		ImGui::Text("palette entries %d", BMPImage.GetMaxColorTableEntries() );
+		ImGui::Text("%d x %d", BMPImage.GetWidth(), BMPImage.GetHeight() );
 		
 		if(ImGui::Button("Export Palette"))
 		{
@@ -49,7 +54,8 @@ struct PictureToolWindow
 				{
 					for(int i = 0; i < NbColorsToExport; i++)
 					{
-						int col = ((PcxImage.pal[i].r>>4)<<8) | ((PcxImage.pal[i].g>>4)<<4) | (PcxImage.pal[i].b>>4);
+						const auto & Entry = BMPPalette[i];
+						const int col = ((Entry.rgbRed>>4)<<8) | ((Entry.rgbGreen>>4)<<4) | (Entry.rgbBlue>>4);
 						fprintf(f, "\tword 0x%03x\n", col);
 					}
 	
@@ -57,6 +63,10 @@ struct PictureToolWindow
 				}
 			}
 		}
+
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(50.f);
+		ImGui::DragInt("Colors to Export", &NbColorsToExport, 1, 1, 256);
 
 		if(ImGui::Button("Export BitPlanes"))
 		{
@@ -80,19 +90,29 @@ struct PictureToolWindow
 				{
 					for(int bpl = 0; bpl < NbBitPlanesToExport; bpl++)
 					{
-						for(int y = 0; y < PcxImage.height; y++)
+						for(int y = 0; y < BMPImage.GetHeight(); y++)
 						{
-							for(int x = 0; x < PcxImage.width;)
+							for(int x = 0; x < BMPImage.GetWidth();)
 							{
 								unsigned short out = 0;
-								for(int w = 0; w < 16 && x < PcxImage.width; w++, x++)
+								for(int w = 0; w < 16 && x < BMPImage.GetWidth(); w++, x++)
 								{
-									unsigned char pixdata = PcxImage.bufr[y*PcxImage.hdr.bytesPerLine + x];
-									if((pixdata & (1<<bpl)) != 0)
-										out |= (1<<(15-w));
+									COLORREF CRef = BMPImage.GetPixel(x, y);
+									for(int  PalIdx = 0; PalIdx < BMPPalette.size(); PalIdx++)
+									{
+										if(GetBValue(CRef) == BMPPalette[PalIdx].rgbBlue
+										   && GetGValue(CRef) == BMPPalette[PalIdx].rgbGreen
+										   && GetRValue(CRef) == BMPPalette[PalIdx].rgbRed
+											)
+										{
+											if(PalIdx & (1 << bpl))
+												out |= 1 << (15-w);
+
+											break;
+										}
+									}
 								}
-								out = (out<<8) | (out>>8
-									);
+								out = (out<<8) | (out>>8);
 								fwrite(&out, sizeof(out), 1, f);
 							}
 						}
@@ -103,33 +123,31 @@ struct PictureToolWindow
 			}
 		}
 
-		ImGui::NextColumn();
-
-		ImGui::DragInt("Colors to Export", &NbColorsToExport, 1, 1, 256);
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(50.f);
 		ImGui::DragInt("BitPlanes to Export", &NbBitPlanesToExport, 1, 1, 8);
 
-		ImGui::Columns(1);
 		ImGui::Separator();
 
 		for(int i = 0; i < 16; i++)
 		{
 			for(int j = 0; j < 16; j++)
 			{
-				int Index = i*16 + j;
-				ImVec4 Col;
-				if(PcxImage.PaletteLoaded)
+				const uint32_t Index = i*16 + j;
+				if(Index < BMPPalette.size())
 				{
-					Col.x = float(PcxImage.pal[Index].r & 0xf0) / 255.0f;
-					Col.y = float(PcxImage.pal[Index].g & 0xf0) / 255.0f;
-					Col.z = float(PcxImage.pal[Index].b & 0xf0) / 255.0f;
+					auto & Entry = BMPPalette[Index];
+					ImVec4 Col(	float(Entry.rgbRed & 0xf0) / 255.0f,
+								float(Entry.rgbGreen & 0xf0) / 255.0f,
+								float(Entry.rgbBlue & 0xf0) / 255.0f, 
+								1.f
+								);
+					ImGui::ColorButton("MyColor##3b", Col, ImGuiColorEditFlags_NoAlpha, ImVec2(20,20));
 				}
 				else
 				{
-					Col.x = float(PcxImage.hdr.colormap[Index*3+0] & 0xf0) / 255.0f;
-					Col.y = float(PcxImage.hdr.colormap[Index*3+1] & 0xf0) / 255.0f;
-					Col.z = float(PcxImage.hdr.colormap[Index*3+2] & 0xf0) / 255.0f;
+					ImGui::ColorButton("MyColor##3b", ImVec4(), ImGuiColorEditFlags_NoAlpha, ImVec2(20,20));
 				}
-				ImGui::ColorButton("MyColor##3b", Col, ImGuiColorEditFlags_NoAlpha, ImVec2(16,16));
 
 				if(j < 15)
 					ImGui::SameLine();
