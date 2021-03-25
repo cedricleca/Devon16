@@ -53,25 +53,33 @@ void CorticoChip::Tick_Frame_RasterC0()
 			mStreamMask.m256i_i32[i] = 0;
 	}
 
-	for(int i = 0; i < 16; i++) // output 16 pix at once
+	if(Control.flags.OverlayMode == 0)
 	{
-		__m256i Shift = _mm256_sub_epi32(_mm256_setr_epi32(31, 30, 29, 28, 31, 30, 29, 28), _mm256_set1_epi32(i));
-		__m256i PreOr = _mm256_and_si256(mStreamMask, _mm256_srlv_epi32(mOutBuffer, Shift));
-		PreOr = _mm256_hadd_epi32(PreOr, PreOr);
-		PreOr = _mm256_hadd_epi32(PreOr, PreOr);
-	
-		unsigned char FinalClutIdx;
-		if(PreOr.m256i_i32[4] == 0)
-			FinalClutIdx = PreOr.m256i_i32[0];
-		else if(Control.flags.OverlayMode == 0)
-			FinalClutIdx = PreOr.m256i_i32[4] + 16;
-		else
+		for(int i = 0; i < 16; i++) // output 16 pix at once
 		{
-			unsigned char BPLBits = PreOr.m256i_i32[0] | (PreOr.m256i_i32[4]<<4);
-			FinalClutIdx = ((BPLBits>>5) == 0) ? BPLBits : (PreOr.m256i_i32[4] & 0xfe) + 16 + Control.flags.OverlayBPL4Fill;
+			__m256i Shift = _mm256_sub_epi32(_mm256_setr_epi32(31, 30, 29, 28, 31, 30, 29, 28), _mm256_set1_epi32(i));
+			__m256i PreOr = _mm256_and_si256(mStreamMask, _mm256_srlv_epi32(mOutBuffer, Shift));
+			PreOr = _mm256_hadd_epi32(PreOr, PreOr);
+			PreOr = _mm256_hadd_epi32(PreOr, PreOr);
+			__m256i EquZero = _mm256_cmpeq_epi32(_mm256_set1_epi32(0), PreOr);
+			__m256i Composited = _mm256_or_si256(_mm256_and_si256(EquZero, _mm256_permute2x128_si256(PreOr, PreOr, 0x1)), _mm256_andnot_si256(EquZero, _mm256_add_epi32(_mm256_set1_epi32(16), PreOr)));
+		
+			*OutCursor++ = ClutCache[Composited.m256i_i32[4]];
 		}
-
-		*OutCursor++ = ClutCache[FinalClutIdx];
+	}
+	else
+	{
+		for(int i = 0; i < 16; i++) // output 16 pix at once
+		{
+			__m256i Shift = _mm256_sub_epi32(_mm256_setr_epi32(31, 30, 29, 28, 27, 26, 25, 24), _mm256_set1_epi32(i));
+			__m256i PreOr = _mm256_and_si256(mStreamMask, _mm256_srlv_epi32(mOutBuffer, Shift));
+			PreOr = _mm256_hadd_epi32(PreOr, PreOr);
+			PreOr = _mm256_hadd_epi32(PreOr, PreOr);
+		
+			unsigned char BPLBits = PreOr.m256i_i32[0] | PreOr.m256i_i32[4];
+			unsigned char FinalClutIdx = ((BPLBits>>5) == 0) ? BPLBits : ((PreOr.m256i_i32[4]>>4) & 0xfe) + 16 + Control.flags.OverlayBPL4Fill;
+			*OutCursor++ = ClutCache[FinalClutIdx];
+		}
 	}
 
 	if(H++ == INT_H && V == INT_V)
@@ -122,7 +130,11 @@ void CorticoChip::Tick_Frame_Raster()
 			H = 0;
 			V++;
 
-			mVEnable = _mm256_setr_epi32(1, 2, 4, 8, 1, 2, 4, 8);
+			if(Control.flags.OverlayMode == 0)
+				mVEnable = _mm256_setr_epi32(1, 2, 4, 8, 1, 2, 4, 8);
+			else
+				mVEnable = _mm256_setr_epi32(1, 2, 4, 8, 16, 32, 64, 128);
+
 			RVEnable = 0;
 			for(int i = 0; i < CorticoBPlaneNr; i++)
 			{
