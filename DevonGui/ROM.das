@@ -50,6 +50,7 @@ Trap0_FUNC_Table:
 	long	FUNC_ResetDefaultClut
 	long	FUNC_ResetDefaultFont
 	long	FUNC_DrawChar
+	long	FUNC_Print
 
 DefaultClut:
 	word	0x000, 0xAAA, 0xFFF, 0xC33, 0xE79, 0x543, 0xA62, 0xF93, 0xFE6, 0x244, 0x481, 0xAC2, 0x123, 0x058, 0x3AF, 0xBDE
@@ -78,7 +79,6 @@ org EntryPoint
 	ext16	r0
 	add		#!0, r0			; test it
 	jmp.np	#CartBase		; if present -> jmp
-
 
 	mov		#NoCartMsg, r2
 	jsr		#FUNC_Print
@@ -182,7 +182,9 @@ FUNC_ResetCorticoRegs:
 	add		#!4, r0
 	movi	#0xF, r1
 	mov.w	r1, (r0)+		; BPLEnable 
-	
+
+	mov		#!7, r1
+	ssave	#%10	
 	mov		#0x40000, r1
 	mov		r1, (r0)+		; BPL0_Base
 	add		#!2, r0
@@ -201,6 +203,7 @@ FUNC_ResetCorticoRegs:
 	sswap	#%01000000
 	mov.w	r6, (r0)+		; Cort_HEnd
 
+ResetCorticoRegs_Loop:
 	add		#0xFA0, r1		; BPL1
 	mov		r1, (r0)+		
 	add		#!2, r0
@@ -212,31 +215,11 @@ FUNC_ResetCorticoRegs:
 	mov.w	r6, (r0)+		; Cort_HStart
 	sswap	#%01000000
 	mov.w	r6, (r0)+		; Cort_HEnd
-
-	add		#0xFA0, r1		; BPL2
-	mov		r1, (r0)+		
-	add		#!2, r0
-	mov.w	r2, (r0)+		; BPL2_Shift
-	mov.w	r3, (r0)+		; BPL2_Stride
-	mov.w	r4, (r0)+		; Cort_VStart
-	mov.w	r5, (r0)+		; Cort_VEnd
-	sswap	#%01000000
-	mov.w	r6, (r0)+		; Cort_HStart
-	sswap	#%01000000
-	mov.w	r6, (r0)+		; Cort_HEnd
-
-	add		#0xFA0, r1		; BPL3
-	mov		r1, (r0)+		
-	add		#!2, r0
-	mov.w	r2, (r0)+		; BPL3_Shift
-	mov.w	r3, (r0)+		; BPL3_Stride
-	mov.w	r4, (r0)+		; Cort_VStart
-	mov.w	r5, (r0)+		; Cort_VEnd
-	sswap	#%01000000
-	mov.w	r6, (r0)+		; Cort_HStart
-	sswap	#%01000000
-	mov.w	r6, (r0)+		; Cort_HEnd
-
+	
+	sswap	#%10
+	sub		#!1, r1
+	sswap	#%10
+	bra.p	#ResetCorticoRegs_Loop
 	rts
 
 ; r2 -> r3, Wsize = r4

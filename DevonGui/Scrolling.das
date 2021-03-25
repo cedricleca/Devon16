@@ -1,5 +1,6 @@
 
 include "ControlRegisters.das"
+include "ROMFuncDef.das"
 
 org $0x20000
 
@@ -19,13 +20,24 @@ define	SoundVol	0x85002
 	mov.w	r0, $Cort_BPL3_Stride
 
 	mov		#0x40000, r0
+	mov		#7400, r1
 	mov		r0, $Cort_BPL0_BaseAdd_H
-	add		#7400, r0
+	add		r1, r0
 	mov		r0, $Cort_BPL1_BaseAdd_H
-	add		#7400, r0
+	add		r1, r0
 	mov		r0, $Cort_BPL2_BaseAdd_H
-	add		#7400, r0
+	add		r1, r0
 	mov		r0, $Cort_BPL3_BaseAdd_H
+	add		r1, r0
+
+	mov		#3880, r1
+	mov		r0, $Cort_BPL4_BaseAdd_H
+	add		r1, r0
+	mov		r0, $Cort_BPL5_BaseAdd_H
+	add		r1, r0
+	mov		r0, $Cort_BPL6_BaseAdd_H
+	add		r1, r0
+	mov		r0, $Cort_BPL7_BaseAdd_H
 
 	mov		#!0, r2
 	mov		r2, $Var1
@@ -43,8 +55,20 @@ define	SoundVol	0x85002
 	add		#!1, r6
 	bsr		#FillLine
 
-;	mov		#!1, r0
-;	mov.w	r0, $Cort_BPLEnable
+	mov		#CLUTData, r2
+	mov		#Cort_Clut10, r3
+	movi	#16, r4
+	mov		#!FUNC_Memcpy, r0
+	trap	#!0
+
+	mov		#BPLData, r2
+	mov		$Cort_BPL4_BaseAdd_H, r3
+	mov		#7760, r4
+	mov		#!FUNC_Memcpy_L, r0
+	trap	#!0
+
+	mov		#0xFF, r0
+	mov.w	r0, $Cort_Control
 	mov		#VBL, r0
 	mov		r0, $0x8002E
 	intmask	#%10000000
@@ -142,4 +166,7 @@ VBLScroll:
 	add		r1, $Cort_BPL3_CurAdd_H
 	rte
 
-
+CLUTData:
+	include "D16PCXPal.das"
+BPLData:
+	incbin "D16PCX.bin"

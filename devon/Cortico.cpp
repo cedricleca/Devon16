@@ -64,11 +64,11 @@ void CorticoChip::Tick_Frame_RasterC0()
 		if(PreOr.m256i_i32[4] == 0)
 			FinalClutIdx = PreOr.m256i_i32[0];
 		else if(Control.flags.OverlayMode == 0)
-			FinalClutIdx = PreOr.m256i_i32[4] + 16;
+			FinalClutIdx = (PreOr.m256i_i32[4]>>4) + 16;
 		else
 		{
 			unsigned char BPLBits = PreOr.m256i_i32[0] | PreOr.m256i_i32[4];
-			FinalClutIdx = ((BPLBits>>5) == 0) ? BPLBits : (PreOr.m256i_i32[4] & 0xfe) + 16 + Control.flags.OverlayBPL4Fill;
+			FinalClutIdx = ((BPLBits>>5) == 0) ? BPLBits : ((PreOr.m256i_i32[4]>>4) & 0xfe) + 16 + Control.flags.OverlayBPL4Fill;
 		}
 
 		*OutCursor++ = ClutCache[FinalClutIdx];

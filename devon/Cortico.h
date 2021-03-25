@@ -56,7 +56,7 @@ class CorticoChip
 	__m256i mVEnable;
 	__m256i mInBufShift;
 
-	unsigned char RVEnable;
+	unsigned short RVEnable;
 	int CurPack;
 
 	uWORD H;

@@ -98,7 +98,7 @@ struct PictureToolWindow
 								for(int w = 0; w < 16 && x < BMPImage.GetWidth(); w++, x++)
 								{
 									COLORREF CRef = BMPImage.GetPixel(x, y);
-									for(int  PalIdx = 0; PalIdx < BMPPalette.size(); PalIdx++)
+									for(unsigned int PalIdx = 0; PalIdx < BMPPalette.size(); PalIdx++)
 									{
 										if(GetBValue(CRef) == BMPPalette[PalIdx].rgbBlue
 										   && GetGValue(CRef) == BMPPalette[PalIdx].rgbGreen
