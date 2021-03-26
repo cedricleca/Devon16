@@ -41,18 +41,15 @@ void CorticoChip::Tick_Frame_RasterC0()
 {
 	CurPack++;
 	Control.flags.HBL = 0;
-	__m256i mStreamMask = mVEnable;
 	mOutBuffer = _mm256_or_si256(_mm256_slli_epi32(mOutBuffer, 16), _mm256_sllv_epi32(mInBuffer, mInBufShift));
 
-	for(int i = 0; i < CorticoBPlaneNr; i++)
-	{
-		BPlaneControl & BPL = BPlane[i];
-		if(CurPack <= mHStart.m256i_i32[i]
-			|| CurPack > mHEnd.m256i_i32[i]
-			|| (CurPack == mHStart.m256i_i32[i]+1 && mInBufShift.m256i_i32[i] < 16)
-			)
-			mStreamMask.m256i_i32[i] = 0;
-	}
+	__m256i mCurPack = _mm256_set1_epi32(CurPack);
+	__m256i mStreamMask = mVEnable;
+	mStreamMask = _mm256_and_si256(_mm256_cmpgt_epi32(mCurPack, mHStart), mStreamMask);
+	mStreamMask = _mm256_andnot_si256(_mm256_cmpgt_epi32(mCurPack, mHEnd), mStreamMask);
+	__m256i mStartPlusOne = _mm256_add_epi32(mHStart, _mm256_set1_epi32(1));
+	__m256i mShiftCond = _mm256_andnot_si256(_mm256_cmpgt_epi32(mInBufShift, _mm256_set1_epi32(15)), _mm256_cmpeq_epi32(mCurPack, mStartPlusOne));
+	mStreamMask = _mm256_andnot_si256(mShiftCond, mStreamMask);
 
 	if(Control.flags.OverlayMode == 0)
 	{
@@ -62,7 +59,7 @@ void CorticoChip::Tick_Frame_RasterC0()
 			__m256i PreOr = _mm256_and_si256(mStreamMask, _mm256_srlv_epi32(mOutBuffer, Shift));
 			PreOr = _mm256_hadd_epi32(PreOr, PreOr);
 			PreOr = _mm256_hadd_epi32(PreOr, PreOr);
-			__m256i EquZero = _mm256_cmpeq_epi32(_mm256_set1_epi32(0), PreOr);
+			__m256i EquZero = _mm256_cmpeq_epi32(_mm256_setzero_si256(), PreOr);
 			__m256i Composited = _mm256_or_si256(_mm256_and_si256(EquZero, _mm256_permute2x128_si256(PreOr, PreOr, 0x1)), _mm256_andnot_si256(EquZero, _mm256_add_epi32(_mm256_set1_epi32(16), PreOr)));
 		
 			*OutCursor++ = ClutCache[Composited.m256i_i32[4]];
@@ -88,10 +85,9 @@ void CorticoChip::Tick_Frame_RasterC0()
 
 	if(RVEnable & 1)
 	{
-		BPlaneControl & ReadBPL = BPlane[0];
 		if(CurPack >= mHStart.m256i_i32[0])
 		{
-			mInBuffer.m256i_i32[0] = MMU->GFXReadWord(ReadBPL.CurAdd.l);
+			mInBuffer.m256i_i32[0] = MMU->GFXReadWord(BPlane[0].CurAdd.l);
 				
 			if(CurPack == mHEnd.m256i_i32[0]-1)
 				RVEnable &= ~1;
