@@ -266,8 +266,7 @@ void CorticoChip::HardReset()
 
 	mHStart = _mm256_setzero_si256();
 	mHEnd = _mm256_setzero_si256();
-
-	mInBufShift = _mm256_set1_epi32(0);
+	mInBufShift = _mm256_setzero_si256();
 
 	SetOutputSurface(0);
 	Tick = &CorticoChip::Tick_PreFrame;
