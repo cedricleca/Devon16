@@ -20,14 +20,15 @@ void CorticoChip::Tick_PreFrame()
 void CorticoChip::Tick_Frame_P0()
 {
 	const int SubCycle = CycleCount++ & 0xf;
+	const int bpl = SubCycle>>1;
 	if(RVEnable & (1<<SubCycle))
 	{
-		BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
-		if(ReadBPL.HStart == 0)
+		BPlaneControl & ReadBPL = BPlane[bpl];
+		if(mHStart.m256i_i32[bpl] == 0)
 		{
-			mInBuffer.m256i_i32[SubCycle>>1] = MMU->GFXReadWord(ReadBPL.CurAdd.l);
+			mInBuffer.m256i_i32[bpl] = MMU->GFXReadWord(ReadBPL.CurAdd.l);
 				
-			if(ReadBPL.HEnd == 1)
+			if(mHEnd.m256i_i32[bpl] == 1)
 				RVEnable &= ~(1<<SubCycle);
 		}
 	}
@@ -46,9 +47,9 @@ void CorticoChip::Tick_Frame_RasterC0()
 	for(int i = 0; i < CorticoBPlaneNr; i++)
 	{
 		BPlaneControl & BPL = BPlane[i];
-		if(CurPack <= BPL.HStart
-			|| CurPack > BPL.HEnd
-			|| (CurPack == BPL.HStart+1 && mInBufShift.m256i_i32[i] < 16)
+		if(CurPack <= mHStart.m256i_i32[i]
+			|| CurPack > mHEnd.m256i_i32[i]
+			|| (CurPack == mHStart.m256i_i32[i]+1 && mInBufShift.m256i_i32[i] < 16)
 			)
 			mStreamMask.m256i_i32[i] = 0;
 	}
@@ -88,11 +89,11 @@ void CorticoChip::Tick_Frame_RasterC0()
 	if(RVEnable & 1)
 	{
 		BPlaneControl & ReadBPL = BPlane[0];
-		if(CurPack >= ReadBPL.HStart)
+		if(CurPack >= mHStart.m256i_i32[0])
 		{
 			mInBuffer.m256i_i32[0] = MMU->GFXReadWord(ReadBPL.CurAdd.l);
 				
-			if(CurPack == ReadBPL.HEnd-1)
+			if(CurPack == mHEnd.m256i_i32[0]-1)
 				RVEnable &= ~1;
 		}
 	}
@@ -109,12 +110,13 @@ void CorticoChip::Tick_Frame_Raster()
 	const int SubCycle = CycleCount & 0xf;
 	if(RVEnable & (1<<SubCycle))
 	{
-		BPlaneControl & ReadBPL = BPlane[SubCycle>>1];
-		if(CurPack >= ReadBPL.HStart)
+		const int bpl = SubCycle>>1;
+		BPlaneControl & ReadBPL = BPlane[bpl];
+		if(CurPack >= mHStart.m256i_i32[bpl])
 		{
 			mInBuffer.m256i_i32[SubCycle>>1] = MMU->GFXReadWord(ReadBPL.CurAdd.l);
 				
-			if(CurPack == ReadBPL.HEnd-1)
+			if(CurPack == mHEnd.m256i_i32[bpl]-1)
 				RVEnable &= ~(1<<SubCycle);
 		}
 	}
@@ -231,9 +233,10 @@ void CorticoChip::HardReset()
 		BPL.Stride = 0;
 		BPL.VStart = 0;
 		BPL.VEnd = 0;
-		BPL.HStart = 0;
-		BPL.HEnd = 0;
 	}
+
+	mHStart = _mm256_setzero_si256();
+	mHEnd = _mm256_setzero_si256();
 
 	mInBufShift = _mm256_set1_epi32(0);
 

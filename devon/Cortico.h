@@ -46,8 +46,6 @@ class CorticoChip
 		uWORD Stride;
 		uWORD VStart;
 		uWORD VEnd;
-		uWORD HStart;
-		uWORD HEnd;
 		uWORD DumPad;
 	};
 
@@ -55,6 +53,8 @@ class CorticoChip
 	__m256i mOutBuffer;
 	__m256i mVEnable;
 	__m256i mInBufShift;
+	__m256i mHStart;
+	__m256i mHEnd;
 
 	unsigned short RVEnable;
 	int CurPack;

@@ -183,8 +183,8 @@ public:
 					case 0x0A:	Word = Cortico->BPlane[0].Stride;			break;
 					case 0x0B:	Word = Cortico->BPlane[0].VStart;			break;
 					case 0x0C:	Word = Cortico->BPlane[0].VEnd;				break;
-					case 0x0D:	Word = Cortico->BPlane[0].HStart;			break;
-					case 0x0E:	Word = Cortico->BPlane[0].HEnd;				break;
+					case 0x0D:	Word = Cortico->mHStart.m256i_i32[0];		break;
+					case 0x0E:	Word = Cortico->mHEnd.m256i_i32[0];			break;
 					case 0x0F:	Word = Cortico->BaseAdd[1].w.msw;			break;
 					case 0x10:	Word = Cortico->BaseAdd[1].w.lsw;			break;
 					case 0x11:	Word = Cortico->BPlane[1].CurAdd.w.msw;		break;
@@ -193,8 +193,8 @@ public:
 					case 0x14:	Word = Cortico->BPlane[1].Stride;			break;
 					case 0x15:	Word = Cortico->BPlane[1].VStart;			break;
 					case 0x16:	Word = Cortico->BPlane[1].VEnd;				break;
-					case 0x17:	Word = Cortico->BPlane[1].HStart;			break;
-					case 0x18:	Word = Cortico->BPlane[1].HEnd;				break;
+					case 0x17:	Word = Cortico->mHStart.m256i_i32[1];		break;
+					case 0x18:	Word = Cortico->mHEnd.m256i_i32[1];			break;
 					case 0x19:	Word = Cortico->BaseAdd[2].w.msw;			break;
 					case 0x1A:	Word = Cortico->BaseAdd[2].w.lsw;			break;
 					case 0x1B:	Word = Cortico->BPlane[2].CurAdd.w.msw;		break;
@@ -203,8 +203,8 @@ public:
 					case 0x1E:	Word = Cortico->BPlane[2].Stride;			break;
 					case 0x1F:	Word = Cortico->BPlane[2].VStart;			break;
 					case 0x20:	Word = Cortico->BPlane[2].VEnd;				break;
-					case 0x21:	Word = Cortico->BPlane[2].HStart;			break;
-					case 0x22:	Word = Cortico->BPlane[2].HEnd;				break;
+					case 0x21:	Word = Cortico->mHStart.m256i_i32[2];		break;
+					case 0x22:	Word = Cortico->mHEnd.m256i_i32[2];			break;
 					case 0x23:	Word = Cortico->BaseAdd[3].w.msw;			break;
 					case 0x24:	Word = Cortico->BaseAdd[3].w.lsw;			break;
 					case 0x25:	Word = Cortico->BPlane[3].CurAdd.w.msw;		break;
@@ -213,8 +213,8 @@ public:
 					case 0x28:	Word = Cortico->BPlane[3].Stride;			break;
 					case 0x29:	Word = Cortico->BPlane[3].VStart;			break;
 					case 0x2A:	Word = Cortico->BPlane[3].VEnd;				break;
-					case 0x2B:	Word = Cortico->BPlane[3].HStart;			break;
-					case 0x2C:	Word = Cortico->BPlane[3].HEnd;				break;
+					case 0x2B:	Word = Cortico->mHStart.m256i_i32[3];		break;
+					case 0x2C:	Word = Cortico->mHEnd.m256i_i32[3];			break;
 					case 0x2D:	Word = Cortico->BaseAdd[4].w.msw;			break;
 					case 0x2E:	Word = Cortico->BaseAdd[4].w.lsw;			break;
 					case 0x2F:	Word = Cortico->BPlane[4].CurAdd.w.msw;		break;
@@ -223,8 +223,8 @@ public:
 					case 0x32:	Word = Cortico->BPlane[4].Stride;			break;
 					case 0x33:	Word = Cortico->BPlane[4].VStart;			break;
 					case 0x34:	Word = Cortico->BPlane[4].VEnd;				break;
-					case 0x35:	Word = Cortico->BPlane[4].HStart;			break;
-					case 0x36:	Word = Cortico->BPlane[4].HEnd;				break;
+					case 0x35:	Word = Cortico->mHStart.m256i_i32[4];		break;
+					case 0x36:	Word = Cortico->mHEnd.m256i_i32[4];			break;
 					case 0x37:	Word = Cortico->BaseAdd[5].w.msw;			break;
 					case 0x38:	Word = Cortico->BaseAdd[5].w.lsw;			break;
 					case 0x39:	Word = Cortico->BPlane[5].CurAdd.w.msw;		break;
@@ -233,8 +233,8 @@ public:
 					case 0x3C:	Word = Cortico->BPlane[5].Stride;			break;
 					case 0x3D:	Word = Cortico->BPlane[5].VStart;			break;
 					case 0x3E:	Word = Cortico->BPlane[5].VEnd;				break;
-					case 0x3F:	Word = Cortico->BPlane[5].HStart;			break;
-					case 0x40:	Word = Cortico->BPlane[5].HEnd;				break;
+					case 0x3F:	Word = Cortico->mHStart.m256i_i32[5];		break;
+					case 0x40:	Word = Cortico->mHEnd.m256i_i32[5];			break;
 					case 0x41:	Word = Cortico->BaseAdd[6].w.msw;			break;
 					case 0x42:	Word = Cortico->BaseAdd[6].w.lsw;			break;
 					case 0x43:	Word = Cortico->BPlane[6].CurAdd.w.msw;		break;
@@ -243,8 +243,8 @@ public:
 					case 0x46:	Word = Cortico->BPlane[6].Stride;			break;
 					case 0x47:	Word = Cortico->BPlane[6].VStart;			break;
 					case 0x48:	Word = Cortico->BPlane[6].VEnd;				break;
-					case 0x49:	Word = Cortico->BPlane[6].HStart;			break;
-					case 0x4A:	Word = Cortico->BPlane[6].HEnd;				break;
+					case 0x49:	Word = Cortico->mHStart.m256i_i32[6];		break;
+					case 0x4A:	Word = Cortico->mHEnd.m256i_i32[6];			break;
 					case 0x4B:	Word = Cortico->BaseAdd[7].w.msw;			break;
 					case 0x4C:	Word = Cortico->BaseAdd[7].w.lsw;			break;
 					case 0x4D:	Word = Cortico->BPlane[7].CurAdd.w.msw;		break;
@@ -253,8 +253,8 @@ public:
 					case 0x50:	Word = Cortico->BPlane[7].Stride;			break;
 					case 0x51:	Word = Cortico->BPlane[7].VStart;			break;
 					case 0x52:	Word = Cortico->BPlane[7].VEnd;				break;
-					case 0x53:	Word = Cortico->BPlane[7].HStart;			break;
-					case 0x54:	Word = Cortico->BPlane[7].HEnd;				break;
+					case 0x53:	Word = Cortico->mHStart.m256i_i32[7];		break;
+					case 0x54:	Word = Cortico->mHEnd.m256i_i32[7];			break;
 
 					default:
 						if(SubAdd >= 0x100 && SubAdd < 0x120)
@@ -504,8 +504,8 @@ public:
 					case 0x0A:		Cortico->BPlane[0].Stride			= Word;		break;
 					case 0x0B:		Cortico->BPlane[0].VStart			= Word;		break;
 					case 0x0C:		Cortico->BPlane[0].VEnd				= Word;		break;
-					case 0x0D:		Cortico->BPlane[0].HStart			= Word;		break;
-					case 0x0E:		Cortico->BPlane[0].HEnd				= Word;		break;
+					case 0x0D:		Cortico->mHStart.m256i_i32[0]		= Word;		break;
+					case 0x0E:		Cortico->mHEnd.m256i_i32[0]			= Word;		break;
 					case 0x0F:		Cortico->BaseAdd[1].w.msw			= Word;		break;
 					case 0x10:		Cortico->BaseAdd[1].w.lsw			= Word;		break;
 					case 0x11:		Cortico->BPlane[1].CurAdd.w.msw		= Word;		break;
@@ -514,8 +514,8 @@ public:
 					case 0x14:		Cortico->BPlane[1].Stride			= Word;		break;
 					case 0x15:		Cortico->BPlane[1].VStart			= Word;		break;
 					case 0x16:		Cortico->BPlane[1].VEnd				= Word;		break;
-					case 0x17:		Cortico->BPlane[1].HStart			= Word;		break;
-					case 0x18:		Cortico->BPlane[1].HEnd				= Word;		break;
+					case 0x17:		Cortico->mHStart.m256i_i32[1]		= Word;		break;
+					case 0x18:		Cortico->mHEnd.m256i_i32[1]			= Word;		break;
 					case 0x19:		Cortico->BaseAdd[2].w.msw			= Word;		break;
 					case 0x1A:		Cortico->BaseAdd[2].w.lsw			= Word;		break;
 					case 0x1B:		Cortico->BPlane[2].CurAdd.w.msw		= Word;		break;
@@ -524,8 +524,8 @@ public:
 					case 0x1E:		Cortico->BPlane[2].Stride			= Word;		break;
 					case 0x1F:		Cortico->BPlane[2].VStart			= Word;		break;
 					case 0x20:		Cortico->BPlane[2].VEnd				= Word;		break;
-					case 0x21:		Cortico->BPlane[2].HStart			= Word;		break;
-					case 0x22:		Cortico->BPlane[2].HEnd				= Word;		break;
+					case 0x21:		Cortico->mHStart.m256i_i32[2]		= Word;		break;
+					case 0x22:		Cortico->mHEnd.m256i_i32[2]			= Word;		break;
 					case 0x23:		Cortico->BaseAdd[3].w.msw			= Word;		break;
 					case 0x24:		Cortico->BaseAdd[3].w.lsw			= Word;		break;
 					case 0x25:		Cortico->BPlane[3].CurAdd.w.msw		= Word;		break;
@@ -534,8 +534,8 @@ public:
 					case 0x28:		Cortico->BPlane[3].Stride			= Word;		break;
 					case 0x29:		Cortico->BPlane[3].VStart			= Word;		break;
 					case 0x2A:		Cortico->BPlane[3].VEnd				= Word;		break;
-					case 0x2B:		Cortico->BPlane[3].HStart			= Word;		break;
-					case 0x2C:		Cortico->BPlane[3].HEnd				= Word;		break;
+					case 0x2B:		Cortico->mHStart.m256i_i32[3]		= Word;		break;
+					case 0x2C:		Cortico->mHEnd.m256i_i32[3]			= Word;		break;
 					case 0x2D:		Cortico->BaseAdd[4].w.msw			= Word;		break;
 					case 0x2E:		Cortico->BaseAdd[4].w.lsw			= Word;		break;
 					case 0x2F:		Cortico->BPlane[4].CurAdd.w.msw		= Word;		break;
@@ -544,8 +544,8 @@ public:
 					case 0x32:		Cortico->BPlane[4].Stride			= Word;		break;
 					case 0x33:		Cortico->BPlane[4].VStart			= Word;		break;
 					case 0x34:		Cortico->BPlane[4].VEnd				= Word;		break;
-					case 0x35:		Cortico->BPlane[4].HStart			= Word;		break;
-					case 0x36:		Cortico->BPlane[4].HEnd				= Word;		break;
+					case 0x35:		Cortico->mHStart.m256i_i32[4]		= Word;		break;
+					case 0x36:		Cortico->mHEnd.m256i_i32[4]			= Word;		break;
 					case 0x37:		Cortico->BaseAdd[5].w.msw			= Word;		break;
 					case 0x38:		Cortico->BaseAdd[5].w.lsw			= Word;		break;
 					case 0x39:		Cortico->BPlane[5].CurAdd.w.msw		= Word;		break;
@@ -554,8 +554,8 @@ public:
 					case 0x3C:		Cortico->BPlane[5].Stride			= Word;		break;
 					case 0x3D:		Cortico->BPlane[5].VStart			= Word;		break;
 					case 0x3E:		Cortico->BPlane[5].VEnd				= Word;		break;
-					case 0x3F:		Cortico->BPlane[5].HStart			= Word;		break;
-					case 0x40:		Cortico->BPlane[5].HEnd				= Word;		break;
+					case 0x3F:		Cortico->mHStart.m256i_i32[5]		= Word;		break;
+					case 0x40:		Cortico->mHEnd.m256i_i32[5]			= Word;		break;
 					case 0x41:		Cortico->BaseAdd[6].w.msw			= Word;		break;
 					case 0x42:		Cortico->BaseAdd[6].w.lsw			= Word;		break;
 					case 0x43:		Cortico->BPlane[6].CurAdd.w.msw		= Word;		break;
@@ -564,8 +564,8 @@ public:
 					case 0x46:		Cortico->BPlane[6].Stride			= Word;		break;
 					case 0x47:		Cortico->BPlane[6].VStart			= Word;		break;
 					case 0x48:		Cortico->BPlane[6].VEnd				= Word;		break;
-					case 0x49:		Cortico->BPlane[6].HStart			= Word;		break;
-					case 0x4A:		Cortico->BPlane[6].HEnd				= Word;		break;
+					case 0x49:		Cortico->mHStart.m256i_i32[6]		= Word;		break;
+					case 0x4A:		Cortico->mHEnd.m256i_i32[6]			= Word;		break;
 					case 0x4B:		Cortico->BaseAdd[7].w.msw			= Word;		break;
 					case 0x4C:		Cortico->BaseAdd[7].w.lsw			= Word;		break;
 					case 0x4D:		Cortico->BPlane[7].CurAdd.w.msw		= Word;		break;
@@ -574,8 +574,8 @@ public:
 					case 0x50:		Cortico->BPlane[7].Stride			= Word;		break;
 					case 0x51:		Cortico->BPlane[7].VStart			= Word;		break;
 					case 0x52:		Cortico->BPlane[7].VEnd				= Word;		break;
-					case 0x53:		Cortico->BPlane[7].HStart			= Word;		break;
-					case 0x54:		Cortico->BPlane[7].HEnd				= Word;		break;
+					case 0x53:		Cortico->mHStart.m256i_i32[7]		= Word;		break;
+					case 0x54:		Cortico->mHEnd.m256i_i32[7]			= Word;		break;
 
 					default:
 						if(SubAdd >= 0x100 && SubAdd < 0x120)
