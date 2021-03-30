@@ -52,10 +52,8 @@ void CPU::Reset()
 		S[i].u = 0;
 	}
 
-	for(auto Entry : ICache_Add)
-		Entry = -1;
-	for(auto Entry : ICache_Inst0)
-		Entry = -1;
+	mCache_Add = _mm256_set1_epi32(-1);
+	mCache_Inst = _mm256_set1_epi32(-1);
 
 	R[PC].u = 0;
 	R[Dummy].u = 0;
@@ -149,7 +147,7 @@ void CPU::Tick_GetInst0()
 		return;
 	}
 
-	if(FetchInstruction())
+	if(FetchInstruction(R[PC].u))
 	{
 		if(FetchedInstruction.AdMode == Imm20 || FetchedInstruction.AdMode == XEA20W || FetchedInstruction.AdMode ==  XEA20L)
 			Tick = &Devon::CPU::Tick_GetInst1;
@@ -160,7 +158,7 @@ void CPU::Tick_GetInst0()
 
 void CPU::Tick_GetInst1()
 {
-	if(FetchInstructionExtension())
+	if(FetchInstructionExtension(R[PC].u + 1))
 		Tick = &Devon::CPU::Tick_Decode;
 }
 
@@ -326,9 +324,9 @@ void CPU::Tick_Decode()
 void CPU::Tick_Exec()
 {
 	if(!bInstructionPreFetched)
-		bInstructionPreFetched = FetchInstruction(InstSize);
+		bInstructionPreFetched = FetchInstruction(R[PC].u + InstSize);
 	else if(FetchedInstruction.LongInst && !bInstructionExtensionPreFetched) 
-		bInstructionExtensionPreFetched = FetchInstructionExtension(InstSize);
+		bInstructionExtensionPreFetched = FetchInstructionExtension(R[PC].u + InstSize + 1);
 
 	if(ExecCycleCount > 0)
 	{
@@ -763,71 +761,42 @@ void CPU::Tick_PutRes1()
 	}
 }
 
-bool CPU::FetchInstructionExtension(const uLONG Offset /*= 0*/)
+bool CPU::FetchInstructionExtension(const uLONG Add)
 {
 	uWORD OpW2;
-	const uLONG Add = R[PC].u + Offset + 1;
-	if(ICache_Add[0] == Add)		
-		OpW2 = ICache_Inst0[0];
-	else if(ICache_Add[1] == Add)		
-		OpW2 = ICache_Inst0[1];
-	else if(ICache_Add[2] == Add)		
-		OpW2 = ICache_Inst0[2];
-	else if(ICache_Add[3] == Add)		
-		OpW2 = ICache_Inst0[3];
-	else if(ICache_Add[4] == Add)		
-		OpW2 = ICache_Inst0[4];
-	else if(ICache_Add[5] == Add)		
-		OpW2 = ICache_Inst0[5];
-	else if(ICache_Add[6] == Add)		
-		OpW2 = ICache_Inst0[6];
-	else if(ICache_Add[7] == Add)		
-		OpW2 = ICache_Inst0[7];
+	__m256i mAdd = _mm256_set1_epi32(Add);
+	__m256i mAddEq = _mm256_cmpeq_epi32(mAdd, mCache_Add);
+	if(!_mm256_testz_si256(mAddEq, mAddEq))
+	{
+		__m256i mInst = _mm256_and_si256(mAddEq, mCache_Inst);
+		mInst = _mm256_hadd_epi32(mInst, mInst);
+		mInst = _mm256_hadd_epi32(mInst, mInst);
+		OpW2 = mInst.m256i_u32[0] + mInst.m256i_u32[4];
+	}
 	else if(!MReadWord(OpW2, Add))		
 		return false; // read fail/wait
 	else 
 	{
 		CacheIdx = ++CacheIdx & 7;
-		ICache_Add[CacheIdx] = Add;
-		ICache_Inst0[CacheIdx] = OpW2;
+		mCache_Add.m256i_u32[CacheIdx] = Add;
+		mCache_Inst.m256i_u32[CacheIdx] = OpW2;
 	}
 
 	FetchedInstruction.Op = (FetchedInstruction.Op<<16) | OpW2;
 	return true;
 }
 
-bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
+bool CPU::FetchInstruction(const uLONG Add)
 {
-	const uLONG Add = R[PC].u + Offset;
-
-	if(uWORD inst = (ICache_Add[0] == Add) * ICache_Inst0[0]
-	   + (ICache_Add[1] == Add) * ICache_Inst0[1]
-	   + (ICache_Add[2] == Add) * ICache_Inst0[2]
-	   + (ICache_Add[3] == Add) * ICache_Inst0[3]
-	   + (ICache_Add[4] == Add) * ICache_Inst0[4]
-	   + (ICache_Add[5] == Add) * ICache_Inst0[5]
-	   + (ICache_Add[6] == Add) * ICache_Inst0[6]
-	   + (ICache_Add[7] == Add) * ICache_Inst0[7]
-	   )
-		FetchedInstruction.Helper.Instruction = inst;
-	/*
-	if(ICache_Add[0] == Add)	
-		FetchedInstruction.Helper.Instruction = ICache_Inst0[0];
-	else if(ICache_Add[1] == Add)	
-		FetchedInstruction.Helper.Instruction = ICache_Inst0[1];
-	else if(ICache_Add[2] == Add)	
-		FetchedInstruction.Helper.Instruction = ICache_Inst0[2];
-	else if(ICache_Add[3] == Add)	
-		FetchedInstruction.Helper.Instruction = ICache_Inst0[3];
-	else if(ICache_Add[4] == Add)	
-		FetchedInstruction.Helper.Instruction = ICache_Inst0[4];
-	else if(ICache_Add[5] == Add)	
-		FetchedInstruction.Helper.Instruction = ICache_Inst0[5];
-	else if(ICache_Add[6] == Add)	
-		FetchedInstruction.Helper.Instruction = ICache_Inst0[6];
-	else if(ICache_Add[7] == Add)	
-		FetchedInstruction.Helper.Instruction = ICache_Inst0[7];
-		*/
+	__m256i mAdd = _mm256_set1_epi32(Add);
+	__m256i mAddEq = _mm256_cmpeq_epi32(mAdd, mCache_Add);
+	if(!_mm256_testz_si256(mAddEq, mAddEq))
+	{
+		__m256i mInst = _mm256_and_si256(mAddEq, mCache_Inst);
+		mInst = _mm256_hadd_epi32(mInst, mInst);
+		mInst = _mm256_hadd_epi32(mInst, mInst);
+		FetchedInstruction.Helper.Instruction = mInst.m256i_u32[0] + mInst.m256i_u32[4];
+	}
 	else if(bMemWriteOperand )
 		return false;
 	else if(!MReadWord(FetchedInstruction.Helper.Instruction, Add))
@@ -835,8 +804,8 @@ bool CPU::FetchInstruction(const uLONG Offset /*= 0*/)
 	else
 	{
 		CacheIdx = ++CacheIdx & 7;
-		ICache_Add[CacheIdx] = Add;
-		ICache_Inst0[CacheIdx] = FetchedInstruction.Helper.Instruction;
+		mCache_Add.m256i_u32[CacheIdx] = Add;
+		mCache_Inst.m256i_u32[CacheIdx] = FetchedInstruction.Helper.Instruction;
 	}
 
 	if(FetchedInstruction.Helper.Opcode.f0 < 31)

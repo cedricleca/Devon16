@@ -1,6 +1,6 @@
 #pragma once
 
-//#include "devonMMU.h"
+#include <immintrin.h>
 
 class DevonMMU;
 
@@ -167,8 +167,9 @@ namespace Devon
 		InstDecode		FetchedInstruction;
 		DataRegister	R[NbRegs+2];	// general registers + 1 for PC + 1 for volatile operands
 		DataRegister	S[NbRegs];		// backup registers
-		uLONG			ICache_Add[NbICacheEntries];
-		uLONG			ICache_Inst0[NbICacheEntries];
+		__m256i			mCache_Add;
+		__m256i			mCache_Inst;
+
 		uLONG			CurOPAddress;
 		DevonMMU*		MMU;
 		EVector			PendingInterrupt;
@@ -191,8 +192,8 @@ namespace Devon
 
 		inline bool MReadWord(uWORD & Word, const uLONG Address);
 		inline bool MWriteWord(const uWORD Word, const uLONG Address);
-		bool FetchInstruction(const uLONG Offset = 0);
-		inline bool FetchInstructionExtension(const uLONG Offset = 0);
+		bool FetchInstruction(const uLONG Add);
+		inline bool FetchInstructionExtension(const uLONG Add);
 		void Exception(const EVector ExceptionVector);
 		inline void TestReg(const int RegIndex);
 
