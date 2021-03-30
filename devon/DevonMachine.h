@@ -48,30 +48,43 @@ public:
 			MMU.ROMAccessOccured = false;
 
 			(Cortico.*Cortico.Tick)();
-			Timers.Tick();
-			JKev.Tick();
+			
+			if(Timers.ControlRegister)
+				Timers.Tick();
+			
+			JKev.RenderTimer -= 4.0f;
+			if(JKev.RenderTimer < 0.f)
+				JKev.Tick();
+			
 			(CPU.*CPU.Tick)();
-			MMU.PostTick();
+			MMU.CycleCount++;
 			
 			// Odd Cycle
-			Timers.Tick();
+			if(Timers.ControlRegister)
+				Timers.Tick();
 			(CPU.*CPU.Tick)();
-			MMU.PostTick();
+			MMU.CycleCount++;
 
 			// Even Cycle
 			MMU.GFXRAMAccessOccured = false;
 			MMU.RAMAccessOccured = false;
 
 			(Cortico.*Cortico.Tick)();
-			Timers.Tick();
-			MTUs.Tick();
+			
+			if(Timers.ControlRegister)
+				Timers.Tick();
+			
+			if(MTUs.Control.w)
+				MTUs.Tick();
+			
 			(CPU.*CPU.Tick)();
-			MMU.PostTick();
+			MMU.CycleCount++;
 
 			// Odd Cycle
-			Timers.Tick();
+			if(Timers.ControlRegister)
+				Timers.Tick();
 			(CPU.*CPU.Tick)();
-			MMU.PostTick();
+			MMU.CycleCount++;
 		}
 	}
 

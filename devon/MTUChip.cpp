@@ -14,9 +14,6 @@ MTUChip::MTUChip(DevonMMU * InMMU, Devon::CPU * InCPU) : MMU(InMMU), CPU(InCPU)
 
 void MTUChip::Tick()
 {
-	if(Control.w == 0)
-		return;
-
 	const uWORD CycleCount32 = MMU->CycleCount & 0x1F;
 	if(Control.flags.MTUA_Run)
 	{

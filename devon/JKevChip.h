@@ -63,10 +63,10 @@ class JKevChip
 	};
 
 	ChannelControl Channel[JKevChannelNr];
-	float RenderTimer = 0.f;
-	uLONG UnrenderedCount = 0;
 
 public:
+	float RenderTimer = 0.f;
+
 	struct 
 	{
 		std::array<float, 100> Data;
@@ -76,14 +76,6 @@ public:
 
 	void Tick()
 	{
-		UnrenderedCount += 4;
-
-		RenderTimer	-= 4.0f;
-		if(RenderTimer >= 0.0f)
-			return;
-
-		const auto UnrenderedCountSave = UnrenderedCount;
-		UnrenderedCount = 0;
 		RenderTimer += JKevRenderPeriod;
 
 		for(auto & Chan : Channel)
@@ -105,8 +97,8 @@ public:
 				}
 			};
 
-			Chan.Oscillator[0].CurOffset += Chan.Oscillator[0].OscStep.l * UnrenderedCountSave;
-			Chan.Oscillator[1].CurOffset += Chan.Oscillator[1].OscStep.l * UnrenderedCountSave;
+			Chan.Oscillator[0].CurOffset += Chan.Oscillator[0].OscStep.l * uLONG(JKevRenderPeriod); // losing sme precision on the period here, for optim sake
+			Chan.Oscillator[1].CurOffset += Chan.Oscillator[1].OscStep.l * uLONG(JKevRenderPeriod);
 			const float W0 = WaveForm(Chan.Oscillator[0]);
 			const float W1 = WaveForm(Chan.Oscillator[1]);
 			const float out = std::clamp(Chan.PreModOffset + W1, -128.f, 127.f) * W0 / 256.f; // 8b range
@@ -169,7 +161,6 @@ public:
 	void HardReset()
 	{
 		RenderTimer = JKevRenderPeriod;
-		UnrenderedCount = 0;
 
 		for(auto & chan : Channel)
 		{

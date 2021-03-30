@@ -41,11 +41,6 @@ public:
 		RAMBuf.fill(0);
 	}	
 
-	inline void PostTick()
-	{
-		CycleCount++;
-	}
-
 	void SetROM(const std::vector<char> & ROM)			{ SetROMBuf(ROM, ROMBuf); }
 	void PlugCartrige(const std::vector<char> & CART)	{ SetROMBuf(CART, CARTBuf); }
 	void UnplugCartridge() { CARTBuf.resize(0); }

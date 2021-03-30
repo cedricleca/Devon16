@@ -34,13 +34,13 @@ class TimerChip
 	Devon::CPU & CPU;
 	TimerUnit Timer[2];
 
+public:
 	union 
 	{
 		uWORD ControlRegister;
 		struct{ uWORD RUN_A:1, LOOP_A:1, RUN_B:1, LOOP_B:1;};
 	};
 
-public:
 	TimerChip(Devon::CPU & InCPU) : CPU(InCPU)
 	{
 		Reset();
