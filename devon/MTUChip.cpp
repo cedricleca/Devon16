@@ -9,10 +9,15 @@ using namespace Devon;
 MTUChip::MTUChip(DevonMMU * InMMU, Devon::CPU * InCPU) : MMU(InMMU), CPU(InCPU)
 {
 	assert(MMU && CPU);
+	HardReset();
 }
 
 void MTUChip::Tick()
 {
+	if(Control.w == 0)
+		return;
+
+	const uWORD CycleCount32 = MMU->CycleCount & 0x1F;
 	if(Control.flags.MTUA_Run)
 	{
 		switch(CycleCount32)
@@ -20,6 +25,7 @@ void MTUChip::Tick()
 		case 18:
 			if(MTUA.bVRAMAccess)
 				break;
+			[[fallthrough]];
 		case 2:	
 			MMU->ReadWord(MTUA.Buffer, MTUA.SrcPointer.LAddr);
 			MTUA.SrcPointer.WAddr.SubPageAddr++;
@@ -28,6 +34,7 @@ void MTUChip::Tick()
 		case 22:	
 			if(MTUA.bVRAMAccess)
 				break;
+			[[fallthrough]];
 		case 6:	
 			MMU->WriteWord(MTUA.Buffer, MTUA.DstPointer.LAddr);
 			MTUA.DstPointer.WAddr.SubPageAddr++;
@@ -56,6 +63,7 @@ void MTUChip::Tick()
 		case 26:
 			if(MTUB.bVRAMAccess)
 				break;
+		[[fallthrough]];
 		case 10:	
 			MMU->ReadWord(MTUB.Buffer, MTUB.SrcPointer.LAddr);	
 			MTUB.SrcPointer.WAddr.SubPageAddr++;
@@ -64,6 +72,7 @@ void MTUChip::Tick()
 		case 30:
 			if(MTUB.bVRAMAccess)
 				break;
+		[[fallthrough]];
 		case 14:	
 			MMU->WriteWord(MTUB.Buffer, MTUB.DstPointer.LAddr);	
 			MTUB.DstPointer.WAddr.SubPageAddr++;
@@ -84,14 +93,11 @@ void MTUChip::Tick()
 			break;
 		}
 	}
-
-	CycleCount32 = (CycleCount32 + 2) & 0x1F;
 }
 
 void MTUChip::HardReset()
 {
 	Control.w = 0;
-	CycleCount32 = 0;
 	MTUA.Counter = 0;
 	MTUB.Counter = 0;
 	MTUA.CurrentX = 0;

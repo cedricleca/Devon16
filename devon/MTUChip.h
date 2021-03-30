@@ -57,12 +57,12 @@ class MTUChip
 
 	DevonMMU * MMU;
 	Devon::CPU * CPU;
-	uWORD CycleCount32 = 0;
 	MTU MTUA;
 	MTU MTUB;
-	ControlRegiser Control;
 
 public:
+	ControlRegiser Control;
+
 	MTUChip(DevonMMU * InMMU, Devon::CPU * InCPU);
 	void Tick();
 	void HardReset();

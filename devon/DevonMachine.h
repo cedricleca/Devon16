@@ -21,6 +21,8 @@ public:
 	JKevChip	JKev;
 	KeyBChip	KeyB;
 
+	uWORD CycleCount = 0;
+
 	DevonMachine() :
 		CPU(&MMU), 
 		Cortico(&MMU, &CPU), 
@@ -47,7 +49,6 @@ public:
 
 			(Cortico.*Cortico.Tick)();
 			Timers.Tick();
-			MTUs.Tick();
 			JKev.Tick();
 			(CPU.*CPU.Tick)();
 			MMU.PostTick();
