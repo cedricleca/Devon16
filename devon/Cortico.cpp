@@ -76,8 +76,7 @@ void CorticoChip::Tick_Frame_RasterC0_OvM0()
 		}
 	}
 
-	CycleCount++;
-	Tick = &CorticoChip::Tick_Frame_Raster;
+	Tick = &CorticoChip::Tick_Frame_Raster<1>;
 }
 
 void CorticoChip::Tick_Frame_RasterC0_OvM1()
@@ -120,31 +119,34 @@ void CorticoChip::Tick_Frame_RasterC0_OvM1()
 		}
 	}
 
-	CycleCount++;
-	Tick = &CorticoChip::Tick_Frame_Raster;
+	Tick = &CorticoChip::Tick_Frame_Raster<1>;
 }
 
+template<int B>
 void CorticoChip::Tick_Frame_Raster()
 {
 	if(H++ == INT_H && V == INT_V)
 		CPU->Interrupt(5); // trig GFXPos
 
-	const int SubCycle = CycleCount & 0xf;
-	if(RVEnable & (1<<SubCycle))
+	if(RVEnable & (1<<(B)))
 	{
-		const int bpl = SubCycle>>1;
-		BPlaneControl & ReadBPL = BPlane[bpl];
+		const int bpl = (B)>>1;
 		if(CurPack >= mHStart.m256i_i32[bpl])
 		{
-			mInBuffer.m256i_i32[SubCycle>>1] = MMU->GFXReadWord(ReadBPL.CurAdd.l);
+			mInBuffer.m256i_i32[bpl] = MMU->GFXReadWord(BPlane[bpl].CurAdd.l);
 				
 			if(CurPack == mHEnd.m256i_i32[bpl]-1)
-				RVEnable &= ~(1<<SubCycle);
+				RVEnable &= ~(1<<(B));
 		}
 	}
 
-	if(SubCycle == 15)
+	if constexpr (B < 15)
 	{
+		Tick = &CorticoChip::Tick_Frame_Raster<B+1>;
+	}
+	else
+	{
+		CycleCount += 16;
 		if(CurPack == 26)
 		{
 			CPU->Interrupt(6);// trig HBlank
@@ -188,8 +190,6 @@ void CorticoChip::Tick_Frame_Raster()
 			Tick = Tick_Frame_RasterC0_OvM;
 		}
 	}
-
-	CycleCount++;
 }
 	
 void CorticoChip::Tick_Frame_HBL()
@@ -219,7 +219,7 @@ void CorticoChip::Tick_PostFrame()
 		Tick = &CorticoChip::Tick_PreFrame;
 	}
 
-	CycleCount += 1;
+	CycleCount++;
 }
 
 

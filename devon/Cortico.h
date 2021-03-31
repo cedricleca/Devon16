@@ -86,7 +86,7 @@ public:
 	void Tick_Frame_P0();
 	void Tick_Frame_RasterC0_OvM0();
 	void Tick_Frame_RasterC0_OvM1();
-	void Tick_Frame_Raster();	
+	template<int B> void Tick_Frame_Raster();	
 	void Tick_Frame_HBL();
 	void Tick_PostFrame();
 	void SetControlRegister(uWORD uw);
@@ -95,6 +95,5 @@ public:
 	uWORD Shift(int BplIdx) const;
 	void HardReset();
 	void SetOutputSurface(unsigned char * _OutputSurface);
-
 };
 
