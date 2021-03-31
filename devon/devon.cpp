@@ -793,9 +793,10 @@ bool CPU::FetchInstruction(const uLONG Add)
 	if(!_mm256_testz_si256(mAddEq, mAddEq))
 	{
 		__m256i mInst = _mm256_and_si256(mAddEq, mCache_Inst);
+		mInst = _mm256_hadd_epi32(mInst, _mm256_permute2f128_si256(mInst, mInst, 1));
 		mInst = _mm256_hadd_epi32(mInst, mInst);
 		mInst = _mm256_hadd_epi32(mInst, mInst);
-		FetchedInstruction.Helper.Instruction = mInst.m256i_u32[0] + mInst.m256i_u32[4];
+		FetchedInstruction.Helper.Instruction = mInst.m256i_u32[0];
 	}
 	else if(bMemWriteOperand )
 		return false;
