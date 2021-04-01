@@ -50,9 +50,9 @@ void CorticoChip::Tick_Frame_RasterC0_OvM0()
 	__m256i mShiftCond = _mm256_andnot_si256(_mm256_cmpgt_epi32(mInBufShift, _mm256_set1_epi32(15)), _mm256_cmpeq_epi32(mCurPack, mStartPlusOne));
 	mStreamMask = _mm256_andnot_si256(mShiftCond, mStreamMask);
 
+	__m256i Shift = _mm256_setr_epi32(31, 30, 29, 28, 31, 30, 29, 28);
 	for(int i = 0; i < 16; i++) // output 16 pix at once
 	{
-		__m256i Shift = _mm256_sub_epi32(_mm256_setr_epi32(31, 30, 29, 28, 31, 30, 29, 28), _mm256_set1_epi32(i));
 		__m256i PreOr = _mm256_and_si256(mStreamMask, _mm256_srlv_epi32(mOutBuffer, Shift));
 		PreOr = _mm256_hadd_epi32(PreOr, PreOr);
 		PreOr = _mm256_hadd_epi32(PreOr, PreOr);
@@ -60,6 +60,7 @@ void CorticoChip::Tick_Frame_RasterC0_OvM0()
 		__m256i Composited = _mm256_or_si256(_mm256_and_si256(EquZero, _mm256_permute2x128_si256(PreOr, PreOr, 0x1)), _mm256_andnot_si256(EquZero, _mm256_add_epi32(_mm256_set1_epi32(16), PreOr)));
 		
 		*OutCursor++ = ClutCache[Composited.m256i_i32[4]];
+		Shift = _mm256_sub_epi32(Shift, _mm256_set1_epi32(1));
 	}
 
 	if(H++ == INT_H && V == INT_V)
@@ -93,9 +94,9 @@ void CorticoChip::Tick_Frame_RasterC0_OvM1()
 	__m256i mShiftCond = _mm256_andnot_si256(_mm256_cmpgt_epi32(mInBufShift, _mm256_set1_epi32(15)), _mm256_cmpeq_epi32(mCurPack, mStartPlusOne));
 	mStreamMask = _mm256_andnot_si256(mShiftCond, mStreamMask);
 
+	__m256i Shift = _mm256_setr_epi32(31, 30, 29, 28, 27, 26, 25, 24);
 	for(int i = 0; i < 16; i++) // output 16 pix at once
 	{
-		__m256i Shift = _mm256_sub_epi32(_mm256_setr_epi32(31, 30, 29, 28, 27, 26, 25, 24), _mm256_set1_epi32(i));
 		__m256i PreOr = _mm256_and_si256(mStreamMask, _mm256_srlv_epi32(mOutBuffer, Shift));
 		PreOr = _mm256_hadd_epi32(PreOr, PreOr);
 		PreOr = _mm256_hadd_epi32(PreOr, PreOr);
@@ -103,6 +104,7 @@ void CorticoChip::Tick_Frame_RasterC0_OvM1()
 		unsigned char BPLBits = PreOr.m256i_i32[0] | PreOr.m256i_i32[4];
 		unsigned char FinalClutIdx = ((BPLBits>>5) == 0) ? BPLBits : ((PreOr.m256i_i32[4]>>4) & 0xfe) + 16 + Control.flags.OverlayBPL4Fill;
 		*OutCursor++ = ClutCache[FinalClutIdx];
+		Shift = _mm256_sub_epi32(Shift, _mm256_set1_epi32(1));
 	}
 
 	if(H++ == INT_H && V == INT_V)
