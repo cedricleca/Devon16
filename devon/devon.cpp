@@ -55,7 +55,7 @@ void CPU::Reset()
 	mCache_Add = _mm256_set1_epi32(-1);
 	mCache_Inst = _mm256_set1_epi32(-1);
 
-	R[PC].u = 0;
+	PC.u = 0;
 	R[Dummy].u = 0;
 
 	// load stack pointer
@@ -63,8 +63,8 @@ void CPU::Reset()
 	MMU->ReadWord<DevonMMU::NoFail>(R[SP].uw.lsw, VectorTableBase + (ResetStack<<1)+1);
 
 	// load program counter
-	MMU->ReadWord<DevonMMU::NoFail>(R[PC].uw.msw, VectorTableBase + (ResetPC<<1));
-	MMU->ReadWord<DevonMMU::NoFail>(R[PC].uw.lsw, VectorTableBase + (ResetPC<<1)+1);
+	MMU->ReadWord<DevonMMU::NoFail>(PC.uw.msw, VectorTableBase + (ResetPC<<1));
+	MMU->ReadWord<DevonMMU::NoFail>(PC.uw.lsw, VectorTableBase + (ResetPC<<1)+1);
 }
 
 void CPU::Halt(bool NewHalt)
@@ -98,13 +98,13 @@ void CPU::Tick_Exception_GetVector1()
 
 void CPU::Tick_Exception_StackRet0()
 {
-	if(MWriteWord(R[PC].u>>16, R[SP].u))
+	if(MWriteWord(PC.uw.msw, R[SP].u))
 		Tick = &Devon::CPU::Tick_Exception_StackRet1;
 }
 
 void CPU::Tick_Exception_StackRet1()
 {
-	if(MWriteWord(R[PC].u, R[SP].u+1))
+	if(MWriteWord(PC.uw.lsw, R[SP].u+1))
 	{
 		R[SP].u += 2;
 		Tick = &Devon::CPU::Tick_Exception_StackSR;
@@ -122,7 +122,7 @@ void CPU::Tick_Exception_StackSR()
 
 void CPU::Tick_Exception_Jmp()
 {
-	R[PC].u = R[Dummy].u;
+	PC = R[Dummy];
 	Tick = &Devon::CPU::Tick_GetInst0;
 	if(PendingInterrupt < EVector::Trap0 && PendingInterrupt >= EVector::ExternalInterrupt0)
 		SR.Flags.IntLvl = PendingInterrupt - EVector::ExternalInterrupt0;
@@ -147,9 +147,9 @@ void CPU::Tick_GetInst0()
 		return;
 	}
 
-	if(FetchInstruction(R[PC].u))
+	if(FetchInstruction(PC.u))
 	{
-		if(FetchedInstruction.AdMode == Imm20 || FetchedInstruction.AdMode == XEA20W || FetchedInstruction.AdMode ==  XEA20L)
+		if(FetchedInstruction.LongInst)
 			Tick = &Devon::CPU::Tick_GetInst1;
 		else
 			Tick = &Devon::CPU::Tick_Decode;
@@ -158,7 +158,7 @@ void CPU::Tick_GetInst0()
 
 void CPU::Tick_GetInst1()
 {
-	if(FetchInstructionExtension(R[PC].u + 1))
+	if(FetchInstructionExtension(PC.u + 1))
 		Tick = &Devon::CPU::Tick_Decode;
 }
 
@@ -324,9 +324,9 @@ void CPU::Tick_Decode()
 void CPU::Tick_Exec()
 {
 	if(!bInstructionPreFetched)
-		bInstructionPreFetched = FetchInstruction(R[PC].u + InstSize);
+		bInstructionPreFetched = FetchInstruction(PC.u + InstSize);
 	else if(FetchedInstruction.LongInst && !bInstructionExtensionPreFetched) 
-		bInstructionExtensionPreFetched = FetchInstructionExtension(R[PC].u + InstSize + 1);
+		bInstructionExtensionPreFetched = FetchInstructionExtension(PC.u + InstSize + 1);
 
 	if(ExecCycleCount > 0)
 	{
@@ -457,11 +457,11 @@ void CPU::Tick_Exec()
 			)
 		{
 			if(ExecInstruction.Helper.Type4.M != 0)
-				R[PC].u += R[ExecInstruction.DstRegister].s;
+				PC.u += R[ExecInstruction.DstRegister].s;
 			else
-				R[PC].u = R[ExecInstruction.DstRegister].u & 0xFFFFF;
+				PC.u = R[ExecInstruction.DstRegister].u & 0xFFFFF;
 
-			R[PC].u -= InstSize; // To compensate because : Jump Occured 
+			PC.u -= InstSize; // To compensate because : Jump Occured 
 			bInstructionPreFetched = false;
 			bInstructionExtensionPreFetched = false;
 		}
@@ -478,7 +478,7 @@ void CPU::Tick_Exec()
 			case NoStacking:
 				StackingStatus = StackingHi;
 			case StackingHi:
-				if(MWriteWord((((R[PC].u + InstSize)>>16) & 0xFFFF), R[SP].u))
+				if(MWriteWord((((PC.u + InstSize)>>16) & 0xFFFF), R[SP].u))
 				{
 					R[SP].u++;
 					StackingStatus = StackingLo;
@@ -486,7 +486,7 @@ void CPU::Tick_Exec()
 				return;
 
 			case StackingLo:
-				if(MWriteWord((R[PC].u + InstSize & 0xFFFF), R[SP].u))
+				if(MWriteWord((PC.u + InstSize & 0xFFFF), R[SP].u))
 				{
 					R[SP].u++;
 					StackingStatus = StackingOK;
@@ -497,11 +497,11 @@ void CPU::Tick_Exec()
 			StackingStatus = NoStacking;
 
 			if(ExecInstruction.Helper.Type4.M != 0)
-				R[PC].u += R[ExecInstruction.DstRegister].s;
+				PC.u += R[ExecInstruction.DstRegister].s;
 			else
-				R[PC].u = R[ExecInstruction.DstRegister].u & 0xFFFFF;
+				PC.u = R[ExecInstruction.DstRegister].u & 0xFFFFF;
 
-			R[PC].u -= InstSize; // To compensate because : Jump Occured 
+			PC.u -= InstSize; // To compensate because : Jump Occured 
 			bInstructionPreFetched = false;
 			bInstructionExtensionPreFetched = false;
 		}
@@ -666,7 +666,7 @@ void CPU::Tick_Exec()
 			return;
 
 		case StackingLo:
-			if(MReadWord(R[PC].uw.lsw, R[SP].u))
+			if(MReadWord(PC.uw.lsw, R[SP].u))
 			{
 				R[SP].u--;
 				StackingStatus = StackingHi;
@@ -674,13 +674,13 @@ void CPU::Tick_Exec()
 			return;
 
 		case StackingHi:
-			if(MReadWord(R[PC].uw.msw, R[SP].u))
+			if(MReadWord(PC.uw.msw, R[SP].u))
 				StackingStatus = StackingOK;
 			return;
 
 		case StackingOK:
 			StackingStatus = NoStacking;
-			R[PC].u -= InstSize; // To compensate because : Jump Occured
+			PC.u -= InstSize; // To compensate because : Jump Occured
 			bInstructionPreFetched = false;
 			bInstructionExtensionPreFetched = false;
 			break;
@@ -711,7 +711,7 @@ void CPU::Tick_Exec()
 	}
 	else
 	{
-		R[PC].u += InstSize;
+		PC.u += InstSize;
 
 		if(!bInstructionPreFetched || bHalt)
 		{
@@ -740,7 +740,7 @@ void CPU::Tick_PutRes0()
 	{
 		if(MWriteWord(R[Dummy].uw.lsw, CurOPAddress))
 		{
-			R[PC].u += InstSize;
+			PC.u += InstSize;
 			Tick = &Devon::CPU::Tick_GetInst0;
 			bMemWriteOperand = false;
 		}
@@ -755,7 +755,7 @@ void CPU::Tick_PutRes1()
 {
 	if(MWriteWord(R[Dummy].uw.lsw, CurOPAddress+1))
 	{
-		R[PC].u += InstSize;
+		PC.u += InstSize;
 		Tick = &Devon::CPU::Tick_GetInst0;
 		bMemWriteOperand = false;
 	}
@@ -769,9 +769,10 @@ bool CPU::FetchInstructionExtension(const uLONG Add)
 	if(!_mm256_testz_si256(mAddEq, mAddEq))
 	{
 		__m256i mInst = _mm256_and_si256(mAddEq, mCache_Inst);
+		mInst = _mm256_hadd_epi32(mInst, _mm256_permute2f128_si256(mInst, mInst, 1));
 		mInst = _mm256_hadd_epi32(mInst, mInst);
 		mInst = _mm256_hadd_epi32(mInst, mInst);
-		OpW2 = mInst.m256i_u32[0] + mInst.m256i_u32[4];
+		OpW2 = mInst.m256i_u32[0];
 	}
 	else if(!MReadWord(OpW2, Add))		
 		return false; // read fail/wait

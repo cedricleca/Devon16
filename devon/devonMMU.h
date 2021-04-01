@@ -59,10 +59,10 @@ public:
 	template<MemAccessFail Fail = AcceptFail>
 	EMemAck ReadWord(uWORD & Word, const uLONG Address)
 	{
-		const uLONG Page = Address & 0xFFFF0000;
+		const uLONG Page = Address>>16;
 		switch(Page)
 		{
-		case 0x00000: // ROM
+		case 0x0: // ROM
 			if constexpr (Fail == AcceptFail)
 			{
 				if(ROMAccessOccured)
@@ -81,16 +81,16 @@ public:
 			}
 			break;
 
-		case 0x10000: // coprocessors control registers
+		case 0x1: // coprocessors control registers
 			if constexpr (Fail == AcceptFail)
 			{
 				if((CycleCount & 1) != 0)
 					return WAIT;
 			}
 
-			switch(Address & 0xF000)
+			switch((Address>>12) & 0xF)
 			{
-			case 0x0000:
+			case 0x0:
 				// MMU
 				switch(Address & 0xFFF)
 				{
@@ -101,58 +101,51 @@ public:
 					return ERR;
 				}
 				break;
-			case 0x1000:
+			case 0x1:
 				// JKev
-				if(JKev)
+				switch(Address & 0x3F)
 				{
-					switch(Address & 0x3F)
-					{
-					case 0x00:	Word =	JKev->Channel[0].Oscillator[0].OscStep.w.msw;		break;
-					case 0x01:	Word =	JKev->Channel[0].Oscillator[0].OscStep.w.lsw;		break;
-					case 0x02:	Word =	JKev->Channel[0].Oscillator[0].WaveAmplitude.uw;	break;
-					case 0x03:	Word =	JKev->Channel[0].Oscillator[1].OscStep.w.msw;		break;
-					case 0x04:	Word =	JKev->Channel[0].Oscillator[1].OscStep.w.lsw;		break;
-					case 0x05:	Word =	JKev->Channel[0].Oscillator[1].WaveAmplitude.uw;	break;
-					case 0x06:	Word =	JKev->Channel[0].PreModOffset;						break;
-					case 0x07:	Word =	JKev->Channel[0].Out;								break;
-					case 0x08:	Word =	JKev->Channel[0].Filter.uw;							break;
-					case 0x09:	Word =	JKev->Channel[1].Oscillator[0].OscStep.w.msw;		break;
-					case 0x0A:	Word =	JKev->Channel[1].Oscillator[0].OscStep.w.lsw;		break;
-					case 0x0B:	Word =	JKev->Channel[1].Oscillator[0].WaveAmplitude.uw;	break;
-					case 0x0C:	Word =	JKev->Channel[1].Oscillator[1].OscStep.w.msw;		break;
-					case 0x0D:	Word =	JKev->Channel[1].Oscillator[1].OscStep.w.lsw;		break;
-					case 0x0E:	Word =	JKev->Channel[1].Oscillator[1].WaveAmplitude.uw;	break;
-					case 0x0F:	Word =	JKev->Channel[1].PreModOffset;						break;
-					case 0x10:	Word =	JKev->Channel[1].Out;								break;
-					case 0x11:	Word =	JKev->Channel[1].Filter.uw;							break;
-					case 0x12:	Word =	JKev->Channel[2].Oscillator[0].OscStep.w.msw;		break;
-					case 0x13:	Word =	JKev->Channel[2].Oscillator[0].OscStep.w.lsw;		break;
-					case 0x14:	Word =	JKev->Channel[2].Oscillator[0].WaveAmplitude.uw;	break;
-					case 0x15:	Word =	JKev->Channel[2].Oscillator[1].OscStep.w.msw;		break;
-					case 0x16:	Word =	JKev->Channel[2].Oscillator[1].OscStep.w.lsw;		break;
-					case 0x17:	Word =	JKev->Channel[2].Oscillator[1].WaveAmplitude.uw;	break;
-					case 0x18:	Word =	JKev->Channel[2].PreModOffset;						break;
-					case 0x19:	Word =	JKev->Channel[2].Out;								break;
-					case 0x1A:	Word =	JKev->Channel[2].Filter.uw;							break;
-					case 0x1B:	Word =	JKev->Channel[3].Oscillator[0].OscStep.w.msw;		break;
-					case 0x1C:	Word =	JKev->Channel[3].Oscillator[0].OscStep.w.lsw;		break;
-					case 0x1D:	Word =	JKev->Channel[3].Oscillator[0].WaveAmplitude.uw;	break;
-					case 0x1E:	Word =	JKev->Channel[3].Oscillator[1].OscStep.w.msw;		break;
-					case 0x1F:	Word =	JKev->Channel[3].Oscillator[1].OscStep.w.lsw;		break;
-					case 0x20:	Word =	JKev->Channel[3].Oscillator[1].WaveAmplitude.uw;	break;
-					case 0x21:	Word =	JKev->Channel[3].PreModOffset;						break;
-					case 0x22:	Word =	JKev->Channel[3].Out;								break;
-					case 0x23:	Word =	JKev->Channel[3].Filter.uw;							break;
-					default:
-						return ERR;
-					}
-				}
-				else
-				{
+				case 0x00:	Word =	JKev->Channel[0].Oscillator[0].OscStep.w.msw;		break;
+				case 0x01:	Word =	JKev->Channel[0].Oscillator[0].OscStep.w.lsw;		break;
+				case 0x02:	Word =	JKev->Channel[0].Oscillator[0].WaveAmplitude.uw;	break;
+				case 0x03:	Word =	JKev->Channel[0].Oscillator[1].OscStep.w.msw;		break;
+				case 0x04:	Word =	JKev->Channel[0].Oscillator[1].OscStep.w.lsw;		break;
+				case 0x05:	Word =	JKev->Channel[0].Oscillator[1].WaveAmplitude.uw;	break;
+				case 0x06:	Word =	JKev->Channel[0].PreModOffset;						break;
+				case 0x07:	Word =	JKev->Channel[0].Out;								break;
+				case 0x08:	Word =	JKev->Channel[0].Filter.uw;							break;
+				case 0x09:	Word =	JKev->Channel[1].Oscillator[0].OscStep.w.msw;		break;
+				case 0x0A:	Word =	JKev->Channel[1].Oscillator[0].OscStep.w.lsw;		break;
+				case 0x0B:	Word =	JKev->Channel[1].Oscillator[0].WaveAmplitude.uw;	break;
+				case 0x0C:	Word =	JKev->Channel[1].Oscillator[1].OscStep.w.msw;		break;
+				case 0x0D:	Word =	JKev->Channel[1].Oscillator[1].OscStep.w.lsw;		break;
+				case 0x0E:	Word =	JKev->Channel[1].Oscillator[1].WaveAmplitude.uw;	break;
+				case 0x0F:	Word =	JKev->Channel[1].PreModOffset;						break;
+				case 0x10:	Word =	JKev->Channel[1].Out;								break;
+				case 0x11:	Word =	JKev->Channel[1].Filter.uw;							break;
+				case 0x12:	Word =	JKev->Channel[2].Oscillator[0].OscStep.w.msw;		break;
+				case 0x13:	Word =	JKev->Channel[2].Oscillator[0].OscStep.w.lsw;		break;
+				case 0x14:	Word =	JKev->Channel[2].Oscillator[0].WaveAmplitude.uw;	break;
+				case 0x15:	Word =	JKev->Channel[2].Oscillator[1].OscStep.w.msw;		break;
+				case 0x16:	Word =	JKev->Channel[2].Oscillator[1].OscStep.w.lsw;		break;
+				case 0x17:	Word =	JKev->Channel[2].Oscillator[1].WaveAmplitude.uw;	break;
+				case 0x18:	Word =	JKev->Channel[2].PreModOffset;						break;
+				case 0x19:	Word =	JKev->Channel[2].Out;								break;
+				case 0x1A:	Word =	JKev->Channel[2].Filter.uw;							break;
+				case 0x1B:	Word =	JKev->Channel[3].Oscillator[0].OscStep.w.msw;		break;
+				case 0x1C:	Word =	JKev->Channel[3].Oscillator[0].OscStep.w.lsw;		break;
+				case 0x1D:	Word =	JKev->Channel[3].Oscillator[0].WaveAmplitude.uw;	break;
+				case 0x1E:	Word =	JKev->Channel[3].Oscillator[1].OscStep.w.msw;		break;
+				case 0x1F:	Word =	JKev->Channel[3].Oscillator[1].OscStep.w.lsw;		break;
+				case 0x20:	Word =	JKev->Channel[3].Oscillator[1].WaveAmplitude.uw;	break;
+				case 0x21:	Word =	JKev->Channel[3].PreModOffset;						break;
+				case 0x22:	Word =	JKev->Channel[3].Out;								break;
+				case 0x23:	Word =	JKev->Channel[3].Filter.uw;							break;
+				default:
 					return ERR;
 				}
 				break;
-			case 0x2000:
+			case 0x2:
 				// Cortico
 				if constexpr (Fail == AcceptFail)
 				{
@@ -160,7 +153,6 @@ public:
 						return WAIT;
 				}
 
-				if(Cortico)
 				{
 					uWORD SubAdd = Address & 0xFFF;
 					switch(SubAdd)
@@ -258,93 +250,67 @@ public:
 							return ERR;
 					}
 				}
-				else
-				{
-					return ERR;
-				}
 				break;
-			case 0x3000:
+			case 0x3:
 				// Keyb & GamePad
-				if(KeyB)
+				switch(Address & 0xFFF)
 				{
-					uWORD SubAdd = Address & 0xFFF;
-					switch(SubAdd)
-					{
-						case 0x0:	Word = KeyB->PopKeyEvent();			break;
-						case 0x1:	Word = KeyB->KeybType;				break;
-						default:
-							return ERR;
-					}
-				}
-				else
-				{
-					return ERR;
+					case 0x0:	Word = KeyB->PopKeyEvent();			break;
+					case 0x1:	Word = KeyB->KeybType;				break;
+					default:
+						return ERR;
 				}
 				break;
-			case 0x4000:
+			case 0x4:
 				// Timers
-				if(Timers)
+				switch(Address & 0xF)
 				{
-					switch(Address & 0xF)
-					{
-					case 0x0:	Word = Timers->ControlRegister;			break;
-					case 0x1:	Word = Timers->Timer[0].Base.w.msw;		break;
-					case 0x2:	Word = Timers->Timer[0].Base.w.lsw;		break;
-					case 0x3:	Word = Timers->Timer[0].Value.w.msw;	break;
-					case 0x4:	Word = Timers->Timer[0].Value.w.lsw;	break;
-					case 0x5:	Word = Timers->Timer[1].Base.w.msw;		break;
-					case 0x6:	Word = Timers->Timer[1].Base.w.lsw;		break;
-					case 0x7:	Word = Timers->Timer[1].Value.w.msw;	break;
-					case 0x8:	Word = Timers->Timer[1].Value.w.lsw;	break;
-					default:
-						return ERR;
-					}
-				}
-				else
-				{
+				case 0x0:	Word = Timers->ControlRegister;			break;
+				case 0x1:	Word = Timers->Timer[0].Base.w.msw;		break;
+				case 0x2:	Word = Timers->Timer[0].Base.w.lsw;		break;
+				case 0x3:	Word = Timers->Timer[0].Value.w.msw;	break;
+				case 0x4:	Word = Timers->Timer[0].Value.w.lsw;	break;
+				case 0x5:	Word = Timers->Timer[1].Base.w.msw;		break;
+				case 0x6:	Word = Timers->Timer[1].Base.w.lsw;		break;
+				case 0x7:	Word = Timers->Timer[1].Value.w.msw;	break;
+				case 0x8:	Word = Timers->Timer[1].Value.w.lsw;	break;
+				default:
 					return ERR;
 				}
 				break;
-			case 0x5000:
+			case 0x5:
 				// MTUs
-				if(MTUs)
+				switch(Address & 0x1F)
 				{
-					switch(Address & 0x1F)
-					{
-					case 0x00:	Word = MTUs->Control.w;								break;
-					case 0x01:	Word = MTUs->MTUA.SrcPointer.WAddr.Page;			break;
-					case 0x02:	Word = MTUs->MTUA.SrcPointer.WAddr.SubPageAddr;		break;
-					case 0x03:	Word = MTUs->MTUA.DstPointer.WAddr.Page;			break;
-					case 0x04:	Word = MTUs->MTUA.DstPointer.WAddr.SubPageAddr;		break;
-					case 0x05:	Word = MTUs->MTUA.SrcStride;						break;
-					case 0x06:	Word = MTUs->MTUA.DstStride;						break;
-					case 0x07:	Word = MTUs->MTUA.Width;							break;
-					case 0x08:	Word = MTUs->MTUA.Size;								break;
-					case 0x09:	Word = MTUs->MTUB.SrcPointer.WAddr.Page;			break;
-					case 0x0A:	Word = MTUs->MTUB.SrcPointer.WAddr.SubPageAddr;		break;
-					case 0x0B:	Word = MTUs->MTUB.DstPointer.WAddr.Page;			break;
-					case 0x0C:	Word = MTUs->MTUB.DstPointer.WAddr.SubPageAddr;		break;
-					case 0x0D:	Word = MTUs->MTUB.SrcStride;						break;
-					case 0x0E:	Word = MTUs->MTUB.DstStride;						break;
-					case 0x0F:	Word = MTUs->MTUB.Width;							break;
-					case 0x10:	Word = MTUs->MTUB.Size;								break;
-					default:
-						return ERR;
-					}
-				}
-				else
-				{
+				case 0x00:	Word = MTUs->Control.w;								break;
+				case 0x01:	Word = MTUs->MTUA.SrcPointer.WAddr.Page;			break;
+				case 0x02:	Word = MTUs->MTUA.SrcPointer.WAddr.SubPageAddr;		break;
+				case 0x03:	Word = MTUs->MTUA.DstPointer.WAddr.Page;			break;
+				case 0x04:	Word = MTUs->MTUA.DstPointer.WAddr.SubPageAddr;		break;
+				case 0x05:	Word = MTUs->MTUA.SrcStride;						break;
+				case 0x06:	Word = MTUs->MTUA.DstStride;						break;
+				case 0x07:	Word = MTUs->MTUA.Width;							break;
+				case 0x08:	Word = MTUs->MTUA.Size;								break;
+				case 0x09:	Word = MTUs->MTUB.SrcPointer.WAddr.Page;			break;
+				case 0x0A:	Word = MTUs->MTUB.SrcPointer.WAddr.SubPageAddr;		break;
+				case 0x0B:	Word = MTUs->MTUB.DstPointer.WAddr.Page;			break;
+				case 0x0C:	Word = MTUs->MTUB.DstPointer.WAddr.SubPageAddr;		break;
+				case 0x0D:	Word = MTUs->MTUB.SrcStride;						break;
+				case 0x0E:	Word = MTUs->MTUB.DstStride;						break;
+				case 0x0F:	Word = MTUs->MTUB.Width;							break;
+				case 0x10:	Word = MTUs->MTUB.Size;								break;
+				default:
 					return ERR;
 				}
 				break;
-			case 0x6000:
+			case 0x6:
 				// Disk
 				break;
 			}
 			break;
 
-		case 0x20000:
-		case 0x30000: // Cartridge
+		case 0x2:
+		case 0x3: // Cartridge
 			if constexpr (Fail == AcceptFail)
 			{
 				if(ROMAccessOccured)
@@ -362,8 +328,8 @@ public:
 			}
 			break;
 
-		case 0x40000:
-		case 0x50000: // GFX RAM
+		case 0x4:
+		case 0x5: // GFX RAM
 			if constexpr (Fail == AcceptFail)
 			{
 				if(GFXRAMAccessOccured)
@@ -382,8 +348,8 @@ public:
 			break;
 
 
-		case 0x80000:
-		case 0x90000: // RAM
+		case 0x8:
+		case 0x9: // RAM
 			if constexpr (Fail == AcceptFail)
 			{
 				if(RAMAccessOccured)
@@ -412,76 +378,71 @@ public:
 		return OK;
 	}
 
-	EMemAck WriteWord(const uWORD Word, const uLONG Address, const bool bNoFail = false)
+	template<MemAccessFail Fail = AcceptFail>
+	EMemAck WriteWord(const uWORD Word, const uLONG Address)
 	{
-		const uLONG Page = Address & 0xFFFF0000;
+		const uLONG Page = Address>>16;
 		switch(Page)
 		{
-		case 0x10000: // coprocessors control registers
-			if(!bNoFail && (CycleCount & 1) != 0)
+		case 0x1: // coprocessors control registers
+			
+			if constexpr (Fail == AcceptFail)
+			if((CycleCount & 1) != 0)
 				return WAIT;
 
-			switch(Address & 0xF000)
+			switch((Address>>12) & 0xF)
 			{
-			case 0x0000:
+			case 0x0:
 				// MMU
 				return ERR;
-			case 0x1000:
+			case 0x1:
 				// JKev
-				if(JKev)
+				switch(Address & 0x3F)
 				{
-					switch(Address & 0x3F)
-					{
-					case 0x00:	JKev->Channel[0].Oscillator[0].OscStep.w.msw		= Word;		break;
-					case 0x01:	JKev->Channel[0].Oscillator[0].OscStep.w.lsw		= Word;		break;
-					case 0x02:	JKev->Channel[0].Oscillator[0].WaveAmplitude.uw		= Word;		break;
-					case 0x03:	JKev->Channel[0].Oscillator[1].OscStep.w.msw		= Word;		break;
-					case 0x04:	JKev->Channel[0].Oscillator[1].OscStep.w.lsw		= Word;		break;
-					case 0x05:	JKev->Channel[0].Oscillator[1].WaveAmplitude.uw		= Word;		break;
-					case 0x06:	JKev->Channel[0].PreModOffset						= Word;		break;
-					case 0x08:	JKev->SetFilterReg(0, Word);									break;
-					case 0x09:	JKev->Channel[1].Oscillator[0].OscStep.w.msw		= Word;		break;
-					case 0x0A:	JKev->Channel[1].Oscillator[0].OscStep.w.lsw		= Word;		break;
-					case 0x0B:	JKev->Channel[1].Oscillator[0].WaveAmplitude.uw		= Word;		break;
-					case 0x0C:	JKev->Channel[1].Oscillator[1].OscStep.w.msw		= Word;		break;
-					case 0x0D:	JKev->Channel[1].Oscillator[1].OscStep.w.lsw		= Word;		break;
-					case 0x0E:	JKev->Channel[1].Oscillator[1].WaveAmplitude.uw		= Word;		break;
-					case 0x0F:	JKev->Channel[1].PreModOffset						= Word;		break;
-					case 0x11:	JKev->SetFilterReg(1, Word);									break;
-					case 0x12:	JKev->Channel[2].Oscillator[0].OscStep.w.msw		= Word;		break;
-					case 0x13:	JKev->Channel[2].Oscillator[0].OscStep.w.lsw		= Word;		break;
-					case 0x14:	JKev->Channel[2].Oscillator[0].WaveAmplitude.uw		= Word;		break;
-					case 0x15:	JKev->Channel[2].Oscillator[1].OscStep.w.msw		= Word;		break;
-					case 0x16:	JKev->Channel[2].Oscillator[1].OscStep.w.lsw		= Word;		break;
-					case 0x17:	JKev->Channel[2].Oscillator[1].WaveAmplitude.uw		= Word;		break;
-					case 0x18:	JKev->Channel[2].PreModOffset						= Word;		break;
-					case 0x1A:	JKev->SetFilterReg(2, Word);									break;
-					case 0x1B:	JKev->Channel[3].Oscillator[0].OscStep.w.msw		= Word;		break;
-					case 0x1C:	JKev->Channel[3].Oscillator[0].OscStep.w.lsw		= Word;		break;
-					case 0x1D:	JKev->Channel[3].Oscillator[0].WaveAmplitude.uw		= Word;		break;
-					case 0x1E:	JKev->Channel[3].Oscillator[1].OscStep.w.msw		= Word;		break;
-					case 0x1F:	JKev->Channel[3].Oscillator[1].OscStep.w.lsw		= Word;		break;
-					case 0x20:	JKev->Channel[3].Oscillator[1].WaveAmplitude.uw		= Word;		break;
-					case 0x21:	JKev->Channel[3].PreModOffset						= Word;		break;
-					case 0x23:	JKev->SetFilterReg(3, Word);									break;
-					default:
-						return ERR;
-					}
-				}
-				else
-				{
+				case 0x00:	JKev->Channel[0].Oscillator[0].OscStep.w.msw		= Word;		break;
+				case 0x01:	JKev->Channel[0].Oscillator[0].OscStep.w.lsw		= Word;		break;
+				case 0x02:	JKev->Channel[0].Oscillator[0].WaveAmplitude.uw		= Word;		break;
+				case 0x03:	JKev->Channel[0].Oscillator[1].OscStep.w.msw		= Word;		break;
+				case 0x04:	JKev->Channel[0].Oscillator[1].OscStep.w.lsw		= Word;		break;
+				case 0x05:	JKev->Channel[0].Oscillator[1].WaveAmplitude.uw		= Word;		break;
+				case 0x06:	JKev->Channel[0].PreModOffset						= Word;		break;
+				case 0x08:	JKev->SetFilterReg(0, Word);									break;
+				case 0x09:	JKev->Channel[1].Oscillator[0].OscStep.w.msw		= Word;		break;
+				case 0x0A:	JKev->Channel[1].Oscillator[0].OscStep.w.lsw		= Word;		break;
+				case 0x0B:	JKev->Channel[1].Oscillator[0].WaveAmplitude.uw		= Word;		break;
+				case 0x0C:	JKev->Channel[1].Oscillator[1].OscStep.w.msw		= Word;		break;
+				case 0x0D:	JKev->Channel[1].Oscillator[1].OscStep.w.lsw		= Word;		break;
+				case 0x0E:	JKev->Channel[1].Oscillator[1].WaveAmplitude.uw		= Word;		break;
+				case 0x0F:	JKev->Channel[1].PreModOffset						= Word;		break;
+				case 0x11:	JKev->SetFilterReg(1, Word);									break;
+				case 0x12:	JKev->Channel[2].Oscillator[0].OscStep.w.msw		= Word;		break;
+				case 0x13:	JKev->Channel[2].Oscillator[0].OscStep.w.lsw		= Word;		break;
+				case 0x14:	JKev->Channel[2].Oscillator[0].WaveAmplitude.uw		= Word;		break;
+				case 0x15:	JKev->Channel[2].Oscillator[1].OscStep.w.msw		= Word;		break;
+				case 0x16:	JKev->Channel[2].Oscillator[1].OscStep.w.lsw		= Word;		break;
+				case 0x17:	JKev->Channel[2].Oscillator[1].WaveAmplitude.uw		= Word;		break;
+				case 0x18:	JKev->Channel[2].PreModOffset						= Word;		break;
+				case 0x1A:	JKev->SetFilterReg(2, Word);									break;
+				case 0x1B:	JKev->Channel[3].Oscillator[0].OscStep.w.msw		= Word;		break;
+				case 0x1C:	JKev->Channel[3].Oscillator[0].OscStep.w.lsw		= Word;		break;
+				case 0x1D:	JKev->Channel[3].Oscillator[0].WaveAmplitude.uw		= Word;		break;
+				case 0x1E:	JKev->Channel[3].Oscillator[1].OscStep.w.msw		= Word;		break;
+				case 0x1F:	JKev->Channel[3].Oscillator[1].OscStep.w.lsw		= Word;		break;
+				case 0x20:	JKev->Channel[3].Oscillator[1].WaveAmplitude.uw		= Word;		break;
+				case 0x21:	JKev->Channel[3].PreModOffset						= Word;		break;
+				case 0x23:	JKev->SetFilterReg(3, Word);									break;
+				default:
 					return ERR;
 				}
 				break;
-			case 0x2000:
+			case 0x2:
 				// Cortico
-				if(!bNoFail)
+				if constexpr (Fail == AcceptFail)
 				{
 					if(GFXRAMAccessOccured)
 						return WAIT;
 				}
 
-				if(Cortico)
 				{
 					uWORD SubAdd = Address & 0xFFF;
 					switch(SubAdd)
@@ -579,99 +540,90 @@ public:
 							return ERR;
 					}
 				}
-				else
-				{
-					return ERR;
-				}
 				break;
-			case 0x3000:
+			case 0x3:
 				// Keyb & GamePad
 				return ERR;
-				break;
-			case 0x4000:
+			case 0x4:
 				// Timers
-				if(Timers)
+				switch(Address & 0xF)
 				{
-					switch(Address & 0xF)
-					{
-					case 0x0:	Timers->ControlRegister			= Word; 	break;
-					case 0x1:	Timers->Timer[0].Base.w.msw		= Word; 	break;
-					case 0x2:	Timers->Timer[0].Base.w.lsw		= Word; 	break;
-					case 0x3:	Timers->Timer[0].Value.w.msw	= Word;		break;
-					case 0x4:	Timers->Timer[0].Value.w.lsw	= Word;		break;
-					case 0x5:	Timers->Timer[1].Base.w.msw		= Word; 	break;
-					case 0x6:	Timers->Timer[1].Base.w.lsw		= Word; 	break;
-					case 0x7:	Timers->Timer[1].Value.w.msw	= Word;		break;
-					case 0x8:	Timers->Timer[1].Value.w.lsw	= Word;		break;
-					default:
-						return ERR;
-					}
-				}
-				else
-				{
+				case 0x0:	Timers->ControlRegister			= Word; 	break;
+				case 0x1:	Timers->Timer[0].Base.w.msw		= Word; 	break;
+				case 0x2:	Timers->Timer[0].Base.w.lsw		= Word; 	break;
+				case 0x3:	Timers->Timer[0].Value.w.msw	= Word;		break;
+				case 0x4:	Timers->Timer[0].Value.w.lsw	= Word;		break;
+				case 0x5:	Timers->Timer[1].Base.w.msw		= Word; 	break;
+				case 0x6:	Timers->Timer[1].Base.w.lsw		= Word; 	break;
+				case 0x7:	Timers->Timer[1].Value.w.msw	= Word;		break;
+				case 0x8:	Timers->Timer[1].Value.w.lsw	= Word;		break;
+				default:
 					return ERR;
 				}
 				break;
-			case 0x5000:
+			case 0x5:
 				// MTUs
-				if(MTUs)
+				switch(Address & 0x1F)
 				{
-					switch(Address & 0x1F)
-					{
-					case 0x00:	MTUs->Control.w							= Word;								break;
-					case 0x01:	MTUs->MTUA.SetSrcPage(Word);												break;
-					case 0x02:	MTUs->MTUA.SrcPointer.WAddr.SubPageAddr	= Word;								break;
-					case 0x03:	MTUs->MTUA.SetDstPage(Word);												break;
-					case 0x04:	MTUs->MTUA.DstPointer.WAddr.SubPageAddr	= Word;								break;
-					case 0x05:	MTUs->MTUA.SrcStride					= Word;								break;
-					case 0x06:	MTUs->MTUA.DstStride					= Word;								break;
-					case 0x07:	MTUs->MTUA.Width						= Word;	MTUs->MTUA.CurrentX = 0;	break;
-					case 0x08:	MTUs->MTUA.Size							= Word;	MTUs->MTUA.Counter = 0;		break;
-					case 0x09:	MTUs->MTUB.SetSrcPage(Word);												break;
-					case 0x0A:	MTUs->MTUB.SrcPointer.WAddr.SubPageAddr	= Word;								break;
-					case 0x0B:	MTUs->MTUB.SetDstPage(Word);												break;
-					case 0x0C:	MTUs->MTUB.DstPointer.WAddr.SubPageAddr	= Word;								break;
-					case 0x0D:	MTUs->MTUB.SrcStride					= Word;								break;
-					case 0x0E:	MTUs->MTUB.DstStride					= Word;								break;
-					case 0x0F:	MTUs->MTUB.Width						= Word;	MTUs->MTUB.CurrentX = 0;	break;
-					case 0x10:	MTUs->MTUB.Size							= Word;	MTUs->MTUB.Counter = 0;		break;
-					default:
-						return ERR;
-					}
-				}
-				else
-				{
+				case 0x00:	MTUs->Control.w							= Word;								break;
+				case 0x01:	MTUs->MTUA.SetSrcPage(Word);												break;
+				case 0x02:	MTUs->MTUA.SrcPointer.WAddr.SubPageAddr	= Word;								break;
+				case 0x03:	MTUs->MTUA.SetDstPage(Word);												break;
+				case 0x04:	MTUs->MTUA.DstPointer.WAddr.SubPageAddr	= Word;								break;
+				case 0x05:	MTUs->MTUA.SrcStride					= Word;								break;
+				case 0x06:	MTUs->MTUA.DstStride					= Word;								break;
+				case 0x07:	MTUs->MTUA.Width						= Word;	MTUs->MTUA.CurrentX = 0;	break;
+				case 0x08:	MTUs->MTUA.Size							= Word;	MTUs->MTUA.Counter = 0;		break;
+				case 0x09:	MTUs->MTUB.SetSrcPage(Word);												break;
+				case 0x0A:	MTUs->MTUB.SrcPointer.WAddr.SubPageAddr	= Word;								break;
+				case 0x0B:	MTUs->MTUB.SetDstPage(Word);												break;
+				case 0x0C:	MTUs->MTUB.DstPointer.WAddr.SubPageAddr	= Word;								break;
+				case 0x0D:	MTUs->MTUB.SrcStride					= Word;								break;
+				case 0x0E:	MTUs->MTUB.DstStride					= Word;								break;
+				case 0x0F:	MTUs->MTUB.Width						= Word;	MTUs->MTUB.CurrentX = 0;	break;
+				case 0x10:	MTUs->MTUB.Size							= Word;	MTUs->MTUB.Counter = 0;		break;
+				default:
 					return ERR;
 				}
 				break;
-			case 0x6000:
+			case 0x6:
 				// Disk
 				break;
 			}
 			break;
 
-		case 0x40000:
-		case 0x50000: // GFX RAM
-			if(!bNoFail)
+		case 0x4:
+		case 0x5: // GFX RAM
+			if constexpr (Fail == AcceptFail)
 			{
 				if(GFXRAMAccessOccured || (CycleCount & 1) != 0)
 					return WAIT;
 				GFXRAMAccessOccured = true;
 			}
 
-			GFXRAMBuf[Address - 0x40000] = Word;
+			{
+				const uLONG Offset = Address - 0x40000;
+				if(Offset >= GFXRAMBuf.size())
+					return ERR;
+				GFXRAMBuf[Offset] = Word;
+			}
 			break;
 		
-		case 0x80000:
-		case 0x90000: // RAM
-			if(!bNoFail)
+		case 0x8:
+		case 0x9: // RAM
+			if constexpr (Fail == AcceptFail)
 			{
 				if(RAMAccessOccured || (CycleCount & 1) != 0)
 					return WAIT;
 				RAMAccessOccured = true;
 			}			
 
-			RAMBuf[Address - 0x80000] = Word;
+			{
+				const uLONG Offset = Address - 0x80000;
+				if(Offset >= RAMBuf.size())
+					return ERR;
+				RAMBuf[Offset] = Word;
+			}
 			break;
 
 		//case 0x00000: // ROM

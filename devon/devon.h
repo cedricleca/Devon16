@@ -23,8 +23,7 @@ namespace Devon
 	public:
 		const static int NbRegs = 8;
 		const static int SP = 7;
-		const static int PC = 8;
-		const static int Dummy = 9;
+		const static int Dummy = 8;
 		const static int NbICacheEntries = 8;
 
 		union DataRegister
@@ -165,8 +164,9 @@ namespace Devon
 
 		InstDecode		ExecInstruction;
 		InstDecode		FetchedInstruction;
-		DataRegister	R[NbRegs+2];	// general registers + 1 for PC + 1 for volatile operands
+		DataRegister	R[NbRegs+1];	// general registers + 1 for volatile operands
 		DataRegister	S[NbRegs];		// backup registers
+		DataRegister	PC;
 		__m256i			mCache_Add;
 		__m256i			mCache_Inst;
 

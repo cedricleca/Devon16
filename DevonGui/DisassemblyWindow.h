@@ -28,7 +28,7 @@ struct DisassemblyWindow
 				ImGui::Text("S%d  %08x  %d", i, CPU.S[i].u, CPU.S[i].s);
 			}
 			ImGui::Separator();
-			ImGui::Text("PC %08x  %d", CPU.R[CPU::PC].u, CPU.R[CPU::PC].s);
+			ImGui::Text("PC %08x  %d", CPU.PC.u, CPU.PC.s);
 			ImGui::SameLine(230.0f);
 			ImGui::Text("VBase %08x  %d", CPU.VectorTableBase, CPU.VectorTableBase);
 			ImGui::Text("SR %08x  N=%d  Z=%d  X=%d  V=%d  Halt=%d  IntLvl=%d  IntMask=%02x", CPU.SR.SR, CPU.SR.Flags.N?1:0, CPU.SR.Flags.Z?1:0, CPU.SR.Flags.X?1:0, CPU.SR.Flags.V?1:0, CPU.bHalt?1:0, CPU.SR.Flags.IntLvl, CPU.IntMask);
@@ -73,7 +73,7 @@ struct DisassemblyWindow
 			ImGui::SameLine();
 			if(ImGui::Button("Goto PC"))
 			{
-				Jump = CPU.R[Devon::CPU::PC].u - 3;
+				Jump = CPU.PC.u - 3;
 				NextJump = -1;
 			}
 
@@ -90,7 +90,7 @@ struct DisassemblyWindow
 				unsigned int CurAdr = clipper.DisplayStart;
 				for(int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
 				{
-					if(CurAdr == CPU.R[Devon::CPU::PC].u)
+					if(CurAdr == CPU.PC.u)
 					{
 						ImVec2 pos = ImGui::GetCursorScreenPos();
 						draw_list->AddRectFilled(pos, ImVec2(pos.x + ImGui::GetWindowWidth(), pos.y + ImGui::GetFontSize() + 1), IM_COL32(200, 20, 0, 140));
@@ -116,14 +116,12 @@ struct DisassemblyWindow
 				}
 
 				NextJump = -1;
-				if(OldPC != CPU.R[Devon::CPU::PC].u)
+				if(OldPC != CPU.PC.u)
 				{
-					if(CPU.R[Devon::CPU::PC].u > CurAdr - 4 || CPU.R[Devon::CPU::PC].u < (unsigned)clipper.DisplayStart)
-					{
-						NextJump = CPU.R[Devon::CPU::PC].u - 3;
-					}
+					if(CPU.PC.u > CurAdr - 4 || CPU.PC.u < (unsigned)clipper.DisplayStart)
+						NextJump = CPU.PC.u - 3;
 				}
-				OldPC = CPU.R[Devon::CPU::PC].u;
+				OldPC = CPU.PC.u;
 			}
 
 		

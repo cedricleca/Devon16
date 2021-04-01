@@ -132,7 +132,7 @@ MemoryEditor::u16 ReadMMUWord(MemoryEditor::u16* data, size_t off)
 }
 void WriteMMUWord(MemoryEditor::u16* data, size_t off, MemoryEditor::u16 d)
 {
-	Machine.MMU.WriteWord(d, (uLONG)off, true);
+	Machine.MMU.WriteWord<DevonMMU::NoFail>(d, (uLONG)off);
 }
 
 void PlugCartridge(LogWindow & Log)
