@@ -94,6 +94,9 @@
     <ClInclude Include="ImFileDialog.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="WaveToolWindow.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DevonGui1.rc" />

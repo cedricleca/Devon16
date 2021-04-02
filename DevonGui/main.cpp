@@ -24,6 +24,7 @@
 #include "LogWindow.h"
 #include "TextEditor.h"
 #include "PictureToolWindow.h"
+#include "WaveToolWindow.h"
 #include <fstream>
 #include <streambuf>
 #include "ImFileDialog.h"
@@ -80,6 +81,7 @@ static const char * IniName = "DevonGui.ini";
 static std::string DCAExportName;
 static std::string DROExportName;
 static PictureToolWindow PicToolWindow;
+static WaveToolWindow WaveToolWindow;
 
 std::vector<char> ROMBuf;
 std::vector<char> CartridgeBuf;
@@ -293,6 +295,11 @@ void AssembleAndExport(LogWindow & LogWindow)
 void LaunchImageTool()
 {
 	ifd::FileDialog::Instance().Open("OpenImgDialog", "Open a BMP file", "BMP file (*.bmp){.bmp},.*");
+}
+
+void LaunchSoundWaveTool()
+{
+	ifd::FileDialog::Instance().Open("OpenWavDialog", "Open a WAV file", "WAV file (*.wav){.wav},.*");
 }
 
 std::atomic<bool> StartCompileThread = false;
@@ -608,6 +615,9 @@ int main(int argn, char**arg)
 					if (ImGui::MenuItem("Image Tool", "", false, !PicToolWindow.Show))
 						LaunchImageTool();
 
+					if (ImGui::MenuItem("SoundWave Tool", "", false, !WaveToolWindow.Show))
+						LaunchSoundWaveTool();
+
 					ImGui::EndMenu();
 				}
 
@@ -793,6 +803,10 @@ int main(int argn, char**arg)
 			if (!PicToolWindow.Show && ImGui::Button("Image Tool"))
 				LaunchImageTool();
 
+			ImGui::SameLine();
+			if (!PicToolWindow.Show && ImGui::Button("WaveSound Tool"))
+				LaunchSoundWaveTool();
+
 			ImGui::End();
 
 			auto OnClosedFileDialog = [&](const char * label, const std::function<void( const std::string & )> & f)
@@ -836,11 +850,18 @@ int main(int argn, char**arg)
 				ExportROM(filename.c_str(), LogWindow);
 			});
 
-			// PCX file dialog result
+			// BMP file dialog result
 			OnClosedFileDialog("OpenImgDialog", [&](const std::string & filename)  
 			{
 				if(PicToolWindow.LoadBMP(filename.c_str()))
 					PicToolWindow.Show = true;
+			});
+
+			// Wav file dialog result
+			OnClosedFileDialog("OpenWavDialog", [&](const std::string & filename)  
+			{
+				if(WaveToolWindow.LoadWave(filename.c_str()))
+					WaveToolWindow.Show = true;
 			});
 
 			// DAS file dialog result
@@ -866,8 +887,11 @@ int main(int argn, char**arg)
 					Teditor.SaveText(Settings::DASFileName);
 			});
 
-			if (PicToolWindow.Show)
+			if(PicToolWindow.Show)
 				PicToolWindow.Draw("Image Tool");
+
+			if(WaveToolWindow.Show)
+				WaveToolWindow.Draw("WaveSound Tool");
 
 			if (Show_TextEditor_Window)
 				TextEditor::EditorWindow(Teditor, Settings::DASFileName, &Show_TextEditor_Window);
