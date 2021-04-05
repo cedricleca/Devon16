@@ -128,7 +128,7 @@ bool LoadROM(const std::string & ROMFileName, std::vector<char> & OutBuf)
 
 MemoryEditor::u16 ReadMMUWord(MemoryEditor::u16* data, size_t off)
 {
-	Devon::uWORD Val=-1;
+	Devon::uWORD Val;
 	Machine.MMU.ReadWord<DevonMMU::NoFail>(Val, (uLONG)off);
 	return Val;
 }
@@ -183,16 +183,52 @@ void SetDCAFile(LogWindow & LogWindow)
 	ifd::FileDialog::Instance().Open("OpenDcaDialog", "Open a DCA cartridge file", "DCA file (*.dca){.dca},.*");
 }
 
+void ExportCartridge(LogWindow & LogWindow)
+{
+	ifd::FileDialog::Instance().Save("SaveDcaDialog", "Save a Devon Cartridge file", "DCA file (*.dca){.dca},.*");
+}
+
+void LaunchImageTool()
+{
+	ifd::FileDialog::Instance().Open("OpenImgDialog", "Open a BMP file", "BMP file (*.bmp){.bmp},.*");
+}
+
+void LaunchSoundWaveTool()
+{
+	ifd::FileDialog::Instance().Open("OpenWavDialog", "Open a WAV file", "WAV file (*.wav){.wav},.*");
+}
+
+void ExportROM(LogWindow & LogWindow)
+{
+	ifd::FileDialog::Instance().Save("SaveDroDialog", "Save a Devon Rom file", "DRO file (*.dro){.dro},.*");
+}
+
+void SaveDASFile(TextEditor & Teditor, bool bForceDialog=false)
+{
+	if(Settings::DASFileName.empty() || bForceDialog)
+		ifd::FileDialog::Instance().Save("SaveDasDialog", "Save a Devon ASM Source file", "DAS file (*.das){.das},.*");
+
+	if(!Settings::DASFileName.empty())
+		Teditor.SaveText(Settings::DASFileName);
+}
+
+std::string CheckFileExtension(const std::string & Filename, const std::string & Extension)
+{
+	std::string ExistingExtension = Filename.substr(Filename.size()-4);
+	std::string LowExtension;
+	std::transform(ExistingExtension.begin(), ExistingExtension.end(), std::back_inserter(LowExtension), [](unsigned char c){ return std::tolower(c); });
+
+	std::string Ret = Filename;
+	if(LowExtension != Extension)
+		Ret.append(Extension);
+	return Ret;
+}
+
 bool UnplugCartridgeRequest = false;
 std::atomic<bool> CartridgeReadyToPlugin = false;
 void ExportCartridge(std::string Filename, LogWindow & LogWindow)
 {
-	DCAExportName = Filename;
-	std::string Extension = DCAExportName.substr(DCAExportName.size()-4);
-	std::string LowExtension;
-	std::transform(Extension.begin(), Extension.end(), std::back_inserter(LowExtension), tolower);
-	if(LowExtension != ".dca")
-		DCAExportName.append(".dca");
+	DCAExportName = CheckFileExtension(Filename, ".dca");
 	std::stringstream outstream;
 	ScopedRedirect redirect(std::cout, outstream);
 	bool Success = ASM.ExportROMFile(DCAExportName.c_str(), 0x20000, 0x20000, 0x200);
@@ -207,19 +243,9 @@ void ExportCartridge(std::string Filename, LogWindow & LogWindow)
 	}
 }
 
-void ExportCartridge(LogWindow & LogWindow)
-{
-	ifd::FileDialog::Instance().Save("SaveDcaDialog", "Save a Devon Cartridge file", "DCA file (*.dca){.dca},.*");
-}
-
 void ExportROM(std::string Filename, LogWindow & LogWindow)
 {
-	DROExportName = Filename;
-	std::string Extension = DROExportName.substr(DROExportName.size()-4);
-	std::string LowExtension;
-	std::transform(Extension.begin(), Extension.end(), std::back_inserter(LowExtension), tolower);
-	if(LowExtension != ".dro")
-		DROExportName.append(".dro");
+	DROExportName = CheckFileExtension(Filename, ".dro");
 	std::stringstream outstream;
 	ScopedRedirect redirect(std::cout, outstream);
 	bool Success = ASM.ExportROMFile(DROExportName.c_str(), 0x0, 0x10000);
@@ -237,20 +263,6 @@ void ExportROM(std::string Filename, LogWindow & LogWindow)
 		LogWindow.AddLog(outstream.str().c_str());
 		LogWindow.Show = true;
 	}
-}
-
-void ExportROM(LogWindow & LogWindow)
-{
-	ifd::FileDialog::Instance().Save("SaveDroDialog", "Save a Devon Rom file", "DRO file (*.dro){.dro},.*");
-}
-
-void SaveDASFile(TextEditor & Teditor, bool bForceDialog=false)
-{
-	if(Settings::DASFileName.empty() || bForceDialog)
-		ifd::FileDialog::Instance().Save("SaveDasDialog", "Save a Devon ASM Source file", "DAS file (*.das){.das},.*");
-
-	if(!Settings::DASFileName.empty())
-		Teditor.SaveText(Settings::DASFileName);
 }
 
 struct logstream : public std::ostream, std::streambuf
@@ -290,16 +302,6 @@ void AssembleAndExport(LogWindow & LogWindow)
 			}
 		}
 	}
-}
-
-void LaunchImageTool()
-{
-	ifd::FileDialog::Instance().Open("OpenImgDialog", "Open a BMP file", "BMP file (*.bmp){.bmp},.*");
-}
-
-void LaunchSoundWaveTool()
-{
-	ifd::FileDialog::Instance().Open("OpenWavDialog", "Open a WAV file", "WAV file (*.wav){.wav},.*");
 }
 
 std::atomic<bool> StartCompileThread = false;
@@ -860,7 +862,7 @@ int main(int argn, char**arg)
 			// Wav file dialog result
 			OnClosedFileDialog("OpenWavDialog", [&](const std::string & filename)  
 			{
-				if(WaveToolWindow.LoadWave(filename.c_str()))
+				if(WaveToolWindow.LoadWave(filename))
 					WaveToolWindow.Show = true;
 			});
 

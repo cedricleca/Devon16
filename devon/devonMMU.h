@@ -94,9 +94,11 @@ public:
 				// MMU
 				switch(Address & 0xFFF)
 				{
-				case 0x0:	Word = 0;						break;
-				case 0x1:	Word = (uWORD)ROMBuf.size();	break;
-				case 0x2:	Word = (uWORD)CARTBuf.size();	break;
+				case 0x0:	Word = 0;							break;
+				case 0x1:	Word = (uWORD)(ROMBuf.size()>>16);	break;
+				case 0x2:	Word = (uWORD)ROMBuf.size();		break;
+				case 0x3:	Word = (uWORD)(CARTBuf.size()>>16);	break;
+				case 0x4:	Word = (uWORD)CARTBuf.size();		break;
 				default:
 					return ERR;
 				}

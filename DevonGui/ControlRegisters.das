@@ -1,6 +1,8 @@
 define MMU_MemLayout			0x10000
-define MMU_ROMSize				0x10001
-define MMU_CartridgeSize		0x10002
+define MMU_ROMSize_HI			0x10001
+define MMU_ROMSize_LOW			0x10002
+define MMU_CartridgeSize_HI		0x10003
+define MMU_CartridgeSize_LOW	0x10004
 
 define JKev_R_A_OSC0_OSCSTEP_HI			0x11000
 define JKev_R_A_OSC0_OSCSTEP_LOW		0x11001

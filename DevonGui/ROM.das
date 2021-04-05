@@ -1,5 +1,4 @@
 define EntryPoint 0x100
-define CartSize 0x10002
 define CartBase 0x20000
 
 romexport
@@ -16,14 +15,14 @@ BadInstruction:		long DefaultInstructionError
 DivideByZero:		long DefaultZeroDivideError
 
 org $0x20
-Interrupt0:			long DefaultInterrupt_DSKDMA
-Interrupt1:			long DefaultInterrupt_MTUB
-Interrupt2:			long DefaultInterrupt_MTUA
-Interrupt3:			long DefaultInterrupt_TimerB
-Interrupt4:			long DefaultInterrupt_TimerA
-Interrupt5:			long DefaultInterrupt_GFXPos
-Interrupt6:			long DefaultInterrupt_HBlank
-Interrupt7:			long DefaultInterrupt_VBlank
+Interrupt0:			long DefaultInterrupt_DSKDMA	 ; 0x20
+Interrupt1:			long DefaultInterrupt_MTUB		 ; 0x22
+Interrupt2:			long DefaultInterrupt_MTUA		 ; 0x24
+Interrupt3:			long DefaultInterrupt_TimerB	 ; 0x26
+Interrupt4:			long DefaultInterrupt_TimerA	 ; 0x28
+Interrupt5:			long DefaultInterrupt_GFXPos	 ; 0x2a
+Interrupt6:			long DefaultInterrupt_HBlank	 ; 0x2c
+Interrupt7:			long DefaultInterrupt_VBlank	 ; 0x2e
 
 org $0x40
 Trap0:				long DefaultTrap0
@@ -75,8 +74,7 @@ org EntryPoint
 	jsr		#FUNC_ResetDefaultClut	; Reset Clut
 	jsr		#FUNC_ResetDefaultFont	; Restore original font data
 
-	mov.w	$CartSize, r0	; get the Catridge size
-	ext16	r0
+	mov		$MMU_CartridgeSize_HI, r0	; get the Catridge size
 	add		#!0, r0			; test it
 	jmp.np	#CartBase		; if present -> jmp
 
