@@ -207,54 +207,7 @@ void CPU::Tick_Decode()
 	bInstructionPreFetched = false;
 	bInstructionExtensionPreFetched = false;
 
-	switch(ExecInstruction.Opcode)
-	{
-	case SWP:		ExecCycleCount = 3;		break;
-	case EXT:		ExecCycleCount = 2;		break;
-	case MOV:
-	case MOVI:		ExecCycleCount = 0;		break;
-	case SOP:
-		if(ExecInstruction.Helper.Type1.M == SSWAP)
-		{
-			ExecCycleCount = 8;
-			for(int j = 0; j < 8; j++)
-			{
-				if((ExecInstruction.Helper.Type1.RS & (1<<j)) != 0)
-					ExecCycleCount += 2;
-			}
-		}
-		break;
-	case MUL:
-		{
-			int SrcBits = 0;
-			int DstBits = 0;
-			for(int i = 0; i < 16; i++)
-			{
-				SrcBits += ((R[ExecInstruction.SrcRegister].s & (1<<i)) != 0) ? 1 : 0;
-				DstBits += ((R[ExecInstruction.DstRegister].s & (1<<i)) != 0) ? 1 : 0;
-			}
-
-			ExecCycleCount = 16 + ((SrcBits > DstBits ? DstBits : SrcBits) << 1);
-		}
-		break;
-	case DIV:
-		{
-			int num_bits = 32;
-			unsigned int remainder = 0;
-			int dividend = R[ExecInstruction.DstRegister].u;
-			while (remainder < R[ExecInstruction.SrcRegister].u) 
-			{
-				const int bit = (dividend & 0x80000000) >> 31;
-				remainder = (remainder << 1) | bit;
-				dividend = dividend << 1;
-				num_bits--;
-			}
-			ExecCycleCount = 8 + (num_bits<<3);
-		}
-		break;
-	default:
-		ExecCycleCount = 1;
-	}
+	ExecCycleCount = ExecInstruction.CycleCount;
 
 	if(ExecInstruction.Dir == ToRegister)
 	{
@@ -319,14 +272,15 @@ void CPU::Tick_Decode()
 	}
 
 	InstSize = ExecInstruction.LongInst ? 2 : 1;
+	NextInstAdd = PC.u + InstSize;
 }
 
 void CPU::Tick_Exec()
 {
 	if(!bInstructionPreFetched)
-		bInstructionPreFetched = FetchInstruction(PC.u + InstSize);
+		bInstructionPreFetched = FetchInstruction(NextInstAdd);
 	else if(FetchedInstruction.LongInst && !bInstructionExtensionPreFetched) 
-		bInstructionExtensionPreFetched = FetchInstructionExtension(PC.u + InstSize + 1);
+		bInstructionExtensionPreFetched = FetchInstructionExtension(NextInstAdd + 1);
 
 	if(ExecCycleCount > 0)
 	{
@@ -817,19 +771,56 @@ bool CPU::FetchInstruction(const uLONG Add)
 	else
 		FetchedInstruction.Opcode = EOpcode(FetchedInstruction.Helper.Opcode.f2 + Group2);
 
+	FetchedInstruction.CycleCount = 2;
 	switch(FetchedInstruction.Opcode)
 	{
+	case MOV: 
+		FetchedInstruction.CycleCount = 1;
+		[[fallthrough]];
 	case ADD: 
-	case MUL: 
 	case SUB: 
-	case DIV: 
 	case MOD: 
 	case CMP: 
-	case MOV: 
 	case XOR: 
 	case OR: 
 	case AND: 
 	case MOVB: 
+		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type0.AM;
+		FetchedInstruction.Op = FetchedInstruction.Helper.Type0.OP;
+		FetchedInstruction.Dir = FetchedInstruction.Helper.Type0.DIR;
+		FetchedInstruction.Register = FetchedInstruction.Helper.Type0.REG;
+		break;
+	case MUL:
+		{
+			int SrcBits = 0;
+			int DstBits = 0;
+			for(int i = 0; i < 16; i++)
+			{
+				SrcBits += ((R[ExecInstruction.SrcRegister].s & (1<<i)) != 0) ? 1 : 0;
+				DstBits += ((R[ExecInstruction.DstRegister].s & (1<<i)) != 0) ? 1 : 0;
+			}
+
+			FetchedInstruction.CycleCount = 17 + ((SrcBits > DstBits ? DstBits : SrcBits) << 1);
+		}
+		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type0.AM;
+		FetchedInstruction.Op = FetchedInstruction.Helper.Type0.OP;
+		FetchedInstruction.Dir = FetchedInstruction.Helper.Type0.DIR;
+		FetchedInstruction.Register = FetchedInstruction.Helper.Type0.REG;
+		break;
+	case DIV:
+		{
+			int num_bits = 32;
+			unsigned int remainder = 0;
+			int dividend = R[ExecInstruction.DstRegister].u;
+			while (remainder < R[ExecInstruction.SrcRegister].u) 
+			{
+				const int bit = (dividend & 0x80000000) >> 31;
+				remainder = (remainder << 1) | bit;
+				dividend = dividend << 1;
+				num_bits--;
+			}
+			FetchedInstruction.CycleCount = 9 + (num_bits<<3);
+		}
 		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type0.AM;
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type0.OP;
 		FetchedInstruction.Dir = FetchedInstruction.Helper.Type0.DIR;
@@ -840,6 +831,7 @@ bool CPU::FetchInstruction(const uLONG Add)
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type12.OP;
 		FetchedInstruction.Dir = ToRegister;
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type12.REG;		
+		FetchedInstruction.CycleCount = 1;
 		break;
 	case JMP: 
 	case JSR: 
@@ -870,6 +862,23 @@ bool CPU::FetchInstruction(const uLONG Add)
 	case EXT: 
 		FetchedInstruction.AdMode = Reg;		
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type11.REG;
+		FetchedInstruction.CycleCount = 3;
+		break;
+	case SWP:		
+		FetchedInstruction.CycleCount = 4;		
+		FetchedInstruction.AdMode = EAdModeMax;
+		break;
+	case SOP:
+		if(ExecInstruction.Helper.Type1.M == SSWAP)
+		{
+			FetchedInstruction.CycleCount = 9;
+			for(int j = 0; j < 8; j++)
+			{
+				if((ExecInstruction.Helper.Type1.RS & (1<<j)) != 0)
+					FetchedInstruction.CycleCount += 2;
+			}
+		}
+		FetchedInstruction.AdMode = EAdModeMax;
 		break;
 	default:
 		FetchedInstruction.AdMode = EAdModeMax;

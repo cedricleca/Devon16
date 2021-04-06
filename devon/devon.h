@@ -160,6 +160,7 @@ namespace Devon
 				LongOP:1,
 				LongInst:1,
 				Dir:1;
+			unsigned char CycleCount;
 		};
 
 		InstDecode		ExecInstruction;
@@ -176,6 +177,7 @@ namespace Devon
 		EVector			CurException;
 		uLONG			CurExceptionVectorAddress;
 		uLONG			VectorTableBase;
+		uLONG			NextInstAdd;
 		uWORD			IntMask;
 		StateRegister	SR;
 		EStackingStatus	StackingStatus;
