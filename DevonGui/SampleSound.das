@@ -69,6 +69,7 @@ define	SampleCursor	0x85004
 	
 	mov		#1461, r0 ; -> 16MHz / 11025Hz = 1461
 	mov		r0, $TimerA_Base_H
+	mov		r0, $TimerA_Value_H
 
 	mov		#SampleData, r0
 	add		r0, r0 ; *2 because we use movb to get 8bit samples
