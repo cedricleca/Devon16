@@ -41,7 +41,7 @@ void CPU::Reset()
 	bHalt = false;
 	PendingInterrupt = EVector::NoVector;
 	StackingStatus = NoStacking;
-	ExecCycleCount = -1; // execution over
+	ExecInstruction.CycleCount = -1; // execution over
 	CurException = EVector::NoVector;
 	Tick = &Devon::CPU::Tick_GetInst0;
 
@@ -207,8 +207,6 @@ void CPU::Tick_Decode()
 	bInstructionPreFetched = false;
 	bInstructionExtensionPreFetched = false;
 
-	ExecCycleCount = ExecInstruction.CycleCount;
-
 	if(ExecInstruction.Dir == ToRegister)
 	{
 		ExecInstruction.DstRegister = ExecInstruction.Register;
@@ -242,7 +240,7 @@ void CPU::Tick_Decode()
 	case EAdModeMax:
 		break;
 	default:
-		if(FetchedInstruction.Opcode == MOV && FetchedInstruction.Dir == EDirection::ToAdMode)
+		if(ExecInstruction.Opcode == MOV && ExecInstruction.Dir == EDirection::ToAdMode)
 			break;
 			
 		if(ExecInstruction.AdMode == XRegDec && ExecInstruction.Dir == ToRegister)
@@ -271,8 +269,7 @@ void CPU::Tick_Decode()
 		CurOPAddress &= 0xFFFFF;
 	}
 
-	InstSize = ExecInstruction.LongInst ? 2 : 1;
-	NextInstAdd = PC.u + InstSize;
+	NextInstAdd = PC.u + ExecInstruction.InstructionSize;
 }
 
 void CPU::Tick_Exec()
@@ -282,9 +279,9 @@ void CPU::Tick_Exec()
 	else if(FetchedInstruction.LongInst && !bInstructionExtensionPreFetched) 
 		bInstructionExtensionPreFetched = FetchInstructionExtension(NextInstAdd + 1);
 
-	if(ExecCycleCount > 0)
+	if(ExecInstruction.CycleCount > 0)
 	{
-		ExecCycleCount--;
+		ExecInstruction.CycleCount--;
 		return;
 	}
 		
@@ -415,7 +412,7 @@ void CPU::Tick_Exec()
 			else
 				PC.u = R[ExecInstruction.DstRegister].u & 0xFFFFF;
 
-			PC.u -= InstSize; // To compensate because : Jump Occured 
+			PC.u -= ExecInstruction.InstructionSize; // To compensate because : Jump Occured 
 			bInstructionPreFetched = false;
 			bInstructionExtensionPreFetched = false;
 		}
@@ -432,7 +429,7 @@ void CPU::Tick_Exec()
 			case NoStacking:
 				StackingStatus = StackingHi;
 			case StackingHi:
-				if(MWriteWord((((PC.u + InstSize)>>16) & 0xFFFF), R[SP].u))
+				if(MWriteWord((((PC.u + ExecInstruction.InstructionSize)>>16) & 0xFFFF), R[SP].u))
 				{
 					R[SP].u++;
 					StackingStatus = StackingLo;
@@ -440,7 +437,7 @@ void CPU::Tick_Exec()
 				return;
 
 			case StackingLo:
-				if(MWriteWord((PC.u + InstSize & 0xFFFF), R[SP].u))
+				if(MWriteWord((PC.u + ExecInstruction.InstructionSize & 0xFFFF), R[SP].u))
 				{
 					R[SP].u++;
 					StackingStatus = StackingOK;
@@ -455,7 +452,7 @@ void CPU::Tick_Exec()
 			else
 				PC.u = R[ExecInstruction.DstRegister].u & 0xFFFFF;
 
-			PC.u -= InstSize; // To compensate because : Jump Occured 
+			PC.u -= ExecInstruction.InstructionSize; // To compensate because : Jump Occured 
 			bInstructionPreFetched = false;
 			bInstructionExtensionPreFetched = false;
 		}
@@ -634,7 +631,7 @@ void CPU::Tick_Exec()
 
 		case StackingOK:
 			StackingStatus = NoStacking;
-			PC.u -= InstSize; // To compensate because : Jump Occured
+			PC.u -= ExecInstruction.InstructionSize; // To compensate because : Jump Occured
 			bInstructionPreFetched = false;
 			bInstructionExtensionPreFetched = false;
 			break;
@@ -665,7 +662,7 @@ void CPU::Tick_Exec()
 	}
 	else
 	{
-		PC.u += InstSize;
+		PC.u += ExecInstruction.InstructionSize;
 
 		if(!bInstructionPreFetched || bHalt)
 		{
@@ -694,7 +691,7 @@ void CPU::Tick_PutRes0()
 	{
 		if(MWriteWord(R[Dummy].uw.lsw, CurOPAddress))
 		{
-			PC.u += InstSize;
+			PC.u += ExecInstruction.InstructionSize;
 			Tick = &Devon::CPU::Tick_GetInst0;
 			bMemWriteOperand = false;
 		}
@@ -709,7 +706,7 @@ void CPU::Tick_PutRes1()
 {
 	if(MWriteWord(R[Dummy].uw.lsw, CurOPAddress+1))
 	{
-		PC.u += InstSize;
+		PC.u += ExecInstruction.InstructionSize;
 		Tick = &Devon::CPU::Tick_GetInst0;
 		bMemWriteOperand = false;
 	}
@@ -893,20 +890,25 @@ bool CPU::FetchInstruction(const uLONG Add)
 		FetchedInstruction.LongOP = FetchedInstruction.Op & 1;
 		FetchedInstruction.Op >>= 1;
 		FetchedInstruction.LongInst = false;
+		FetchedInstruction.InstructionSize = 1;
 		break;
 	case XEA20L:
 		FetchedInstruction.LongOP = true;
 		FetchedInstruction.LongInst = true;
+		FetchedInstruction.InstructionSize = 2;
 		break;
 	case XEA20W:
 		FetchedInstruction.LongOP = false;
 		FetchedInstruction.LongInst = true;
+		FetchedInstruction.InstructionSize = 2;
 		break;
 	case Imm20:
 		FetchedInstruction.LongInst = true;
+		FetchedInstruction.InstructionSize = 2;
 		break;
 	default:
 		FetchedInstruction.LongInst = false;
+		FetchedInstruction.InstructionSize = 1;
 	}
 	/*
 	FetchedInstruction.LongInst = FetchedInstruction.AdMode == XEA20L || FetchedInstruction.AdMode == XEA20W ||FetchedInstruction.AdMode == Imm20;
@@ -943,7 +945,7 @@ void CPU::Exception(const EVector ExceptionVector)
 {
 	CurException = ExceptionVector;
 	Tick = &Devon::CPU::Tick_Exception_ComputeVectorAdd;
-	ExecCycleCount = -1;
+	ExecInstruction.CycleCount = -1;
 	bInstructionPreFetched = false;
 	bInstructionExtensionPreFetched = false;
 }

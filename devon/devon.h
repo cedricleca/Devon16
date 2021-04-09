@@ -158,9 +158,10 @@ namespace Devon
 			EOpcode Opcode;
 			unsigned char 
 				LongOP:1,
-				LongInst:1,
-				Dir:1;
+				LongInst:1;
+			unsigned char Dir;
 			unsigned char CycleCount;
+			unsigned char InstructionSize;
 		};
 
 		InstDecode		ExecInstruction;
@@ -181,8 +182,6 @@ namespace Devon
 		uWORD			IntMask;
 		StateRegister	SR;
 		EStackingStatus	StackingStatus;
-		char			ExecCycleCount;
-		char			InstSize;
 		unsigned char	CacheIdx;
 
 		unsigned char 
