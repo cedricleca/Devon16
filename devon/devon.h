@@ -191,12 +191,12 @@ namespace Devon
 			bTrace:1,
 			bHalt:1;
 
-		inline bool MReadWord(uWORD & Word, const uLONG Address);
-		inline bool MWriteWord(const uWORD Word, const uLONG Address);
+		__forceinline bool MReadWord(uWORD & Word, const uLONG Address);
+		__forceinline bool MWriteWord(const uWORD Word, const uLONG Address);
 		bool FetchInstruction(const uLONG Add);
-		inline bool FetchInstructionExtension(const uLONG Add);
+		bool FetchInstructionExtension(const uLONG Add);
 		void Exception(const EVector ExceptionVector);
-		inline void TestReg(const int RegIndex);
+		__forceinline void TestReg(const int RegIndex);
 
 	public:
 		CPU(DevonMMU * InMMU);

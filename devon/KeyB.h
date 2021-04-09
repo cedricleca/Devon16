@@ -25,8 +25,8 @@ class KeyBChip
 	uWORD PushEventIndex;
 	uWORD PopEventIndex;
 	KeybType KeybType = KeybType::QWERTY;
-	std::vector<int> AlreadyPressed;
-
+	BYTE KeyState[2][256];
+	int CurKeyStateBuf = 0;
 
 public:
 	KeyBChip()
@@ -92,52 +92,47 @@ public:
 				}
 			};
 
-			auto result = std::find(std::begin(AlreadyPressed), std::end(AlreadyPressed), key);
-			if(GetKeyState(key) < 0)
+			if((KeyState[CurKeyStateBuf][key] & 0x80) && !(KeyState[1 - CurKeyStateBuf][key] & 0x80))
 			{
-				if(result == std::end(AlreadyPressed))
-				{
-					KeyEvents[PushEventIndex] = Toggles | (TranslateKey(key) & 0xff);
-					PushEventIndex = (PushEventIndex + 1) % EventBufSize;
-					AlreadyPressed.push_back(key);
-				}
+				KeyEvents[PushEventIndex] = Toggles | (TranslateKey(key) & 0xff);
+				PushEventIndex = (PushEventIndex + 1) % EventBufSize;
 			}
-			else
+			else if(!(KeyState[CurKeyStateBuf][key] & 0x80) && (KeyState[1 - CurKeyStateBuf][key] & 0x80))
 			{
-				if(result != std::end(AlreadyPressed))
-				{
-					KeyEvents[PushEventIndex] = 0x8000 | Toggles | (TranslateKey(key) & 0xff);
-					PushEventIndex = (PushEventIndex + 1) % EventBufSize;
-					AlreadyPressed.erase(result);
-				}
+				KeyEvents[PushEventIndex] = 0x8000 | Toggles | (TranslateKey(key) & 0xff);
+				PushEventIndex = (PushEventIndex + 1) % EventBufSize;
 			}
 		};
 
-		uWORD Toggles = ((GetKeyState(VK_CAPITAL) & 1)<<8)
-				| ((GetKeyState(VK_NUMLOCK) & 1)<<9)
-				| ((GetKeyState(VK_SCROLL) & 1)<<10)
-				| ((GetKeyState(VK_INSERT) & 1)<<11)
-				| ((GetKeyState(VK_SHIFT) < 0)<<12)
-				| ((GetKeyState(VK_CONTROL) < 0)<<13)
-				| ((GetKeyState(VK_MENU) < 0)<<14);
+		CurKeyStateBuf = 1 - CurKeyStateBuf;
+		if(GetKeyboardState(KeyState[CurKeyStateBuf]))
+		{
+			uWORD Toggles =	  ((KeyState[CurKeyStateBuf][VK_CAPITAL]>>7)<<8)
+							| ((KeyState[CurKeyStateBuf][VK_NUMLOCK]>>7)<<9)
+							| ((KeyState[CurKeyStateBuf][VK_SCROLL]>>7)<<10)
+							| ((KeyState[CurKeyStateBuf][VK_INSERT]>>7)<<11)
+							| ((KeyState[CurKeyStateBuf][VK_SHIFT]>>7)<<12)
+							| ((KeyState[CurKeyStateBuf][VK_CONTROL]>>7)<<13)
+							| ((KeyState[CurKeyStateBuf][VK_MENU]>>7)<<14);
 
-		for(int key = VK_BACK; key <= VK_HELP; key++)
-			PushEvent(key, Toggles);
+			for(int key = VK_BACK; key <= VK_HELP; key++)
+				PushEvent(key, Toggles);
 
-		for(int key = '0'; key <= '9'; key++)
-			PushEvent(key, Toggles);
+			for(int key = '0'; key <= '9'; key++)
+				PushEvent(key, Toggles);
 
-		for(int key = 'A'; key <= 'Z'; key++)
-			PushEvent(key, Toggles);
+			for(int key = 'A'; key <= 'Z'; key++)
+				PushEvent(key, Toggles);
 
-		for(int key = VK_NUMPAD0; key <= VK_F6; key++)
-			PushEvent(key, Toggles);
+			for(int key = VK_NUMPAD0; key <= VK_F6; key++)
+				PushEvent(key, Toggles);
 
-		for(int key = VK_OEM_1; key <= VK_OEM_3; key++)
-			PushEvent(key, Toggles);
+			for(int key = VK_OEM_1; key <= VK_OEM_3; key++)
+				PushEvent(key, Toggles);
 
-		for(int key = VK_OEM_4; key <= VK_OEM_7; key++)
-			PushEvent(key, Toggles);
+			for(int key = VK_OEM_4; key <= VK_OEM_7; key++)
+				PushEvent(key, Toggles);
+		}
 	}
 
 	uWORD PopKeyEvent()

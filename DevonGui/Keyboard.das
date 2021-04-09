@@ -1,6 +1,7 @@
 
 include "ControlRegisters.das"
 include "SystemRam.das"
+include "ROMFuncDef.das"
 
 org $0x20000
 	mov		#0x40000, r0
@@ -25,7 +26,7 @@ CharLoop:
 	mov		r1, r2
 	add		#'!', r2
 	ssave	#%11111111
-	mov		#!5, r0 ; call DrawChar
+	mov		#!FUNC_DrawChar, r0 ; call DrawChar
 	trap	#!0
 	sload	#%11111111
 	add		#!1, r1
@@ -199,8 +200,8 @@ VBL_PopKeyb_PressReturn:
 	bra		#VBL_PopKeyb
 
 VBL_PopKeyb_SendToWriter:
-
-	mov		#!5, r0 ; call DrawChar
+	mov		r0, r2
+	mov		#!FUNC_DrawChar, r0 ; call DrawChar
 	trap	#!0
 	bsr		#StoreCursorBack
 	bra		#VBL_PopKeyb
