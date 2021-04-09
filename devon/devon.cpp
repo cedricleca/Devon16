@@ -910,11 +910,6 @@ bool CPU::FetchInstruction(const uLONG Add)
 		FetchedInstruction.LongInst = false;
 		FetchedInstruction.InstructionSize = 1;
 	}
-	/*
-	FetchedInstruction.LongInst = FetchedInstruction.AdMode == XEA20L || FetchedInstruction.AdMode == XEA20W ||FetchedInstruction.AdMode == Imm20;
-	FetchedInstruction.LongOP = FetchedInstruction.AdMode == XEA20L || FetchedInstruction.AdMode != XEA20W && (FetchedInstruction.Op & 1);
-	FetchedInstruction.Op >>= FetchedInstruction.AdMode == Reg || FetchedInstruction.AdMode == XReg || FetchedInstruction.AdMode == XRegInc || FetchedInstruction.AdMode == XRegDec;
-	*/
 
 	return true;
 }

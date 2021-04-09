@@ -24,7 +24,6 @@
 #include "LogWindow.h"
 #include "TextEditor.h"
 #include "PictureToolWindow.h"
-#include "WaveToolWindow.h"
 #include <fstream>
 #include <streambuf>
 #include "ImFileDialog.h"
@@ -81,7 +80,6 @@ static const char * IniName = "DevonGui.ini";
 static std::string DCAExportName;
 static std::string DROExportName;
 static PictureToolWindow PicToolWindow;
-static WaveToolWindow WaveToolWindow;
 
 std::vector<char> ROMBuf;
 std::vector<char> CartridgeBuf;
@@ -191,11 +189,6 @@ void ExportCartridge(LogWindow & LogWindow)
 void LaunchImageTool()
 {
 	ifd::FileDialog::Instance().Open("OpenImgDialog", "Open a BMP file", "BMP file (*.bmp){.bmp},.*");
-}
-
-void LaunchSoundWaveTool()
-{
-	ifd::FileDialog::Instance().Open("OpenWavDialog", "Open a WAV file", "WAV file (*.wav){.wav},.*");
 }
 
 void ExportROM(LogWindow & LogWindow)
@@ -617,9 +610,6 @@ int main(int argn, char**arg)
 					if (ImGui::MenuItem("Image Tool", "", false, !PicToolWindow.Show))
 						LaunchImageTool();
 
-					if (ImGui::MenuItem("SoundWave Tool", "", false, !WaveToolWindow.Show))
-						LaunchSoundWaveTool();
-
 					ImGui::EndMenu();
 				}
 
@@ -805,10 +795,6 @@ int main(int argn, char**arg)
 			if (!PicToolWindow.Show && ImGui::Button("Image Tool"))
 				LaunchImageTool();
 
-			ImGui::SameLine();
-			if (!PicToolWindow.Show && ImGui::Button("WaveSound Tool"))
-				LaunchSoundWaveTool();
-
 			ImGui::End();
 
 			auto OnClosedFileDialog = [&](const char * label, const std::function<void( const std::string & )> & f)
@@ -859,13 +845,6 @@ int main(int argn, char**arg)
 					PicToolWindow.Show = true;
 			});
 
-			// Wav file dialog result
-			OnClosedFileDialog("OpenWavDialog", [&](const std::string & filename)  
-			{
-				if(WaveToolWindow.LoadWave(filename))
-					WaveToolWindow.Show = true;
-			});
-
 			// DAS file dialog result
 			OnClosedFileDialog("OpenDasDialog", [&](const std::string & filename)  
 			{
@@ -891,9 +870,6 @@ int main(int argn, char**arg)
 
 			if(PicToolWindow.Show)
 				PicToolWindow.Draw("Image Tool");
-
-			if(WaveToolWindow.Show)
-				WaveToolWindow.Draw("WaveSound Tool");
 
 			if (Show_TextEditor_Window)
 				TextEditor::EditorWindow(Teditor, Settings::DASFileName, &Show_TextEditor_Window);
