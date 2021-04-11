@@ -496,7 +496,8 @@ namespace DevonASM
 		{
 			try
 			{
-				ASM.Incbin(ASM.LastFileName.c_str());
+				const std::string filepath = Assembler::FilePath(ASM.IncludePathStack.front()) + '\\' + ASM.LastFileName;
+				ASM.Incbin(filepath.c_str());
 			}
 			catch(std::runtime_error err)
 			{
@@ -511,26 +512,31 @@ namespace DevonASM
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
+			const std::string filepath = Assembler::FilePath(ASM.IncludePathStack.front()) + '\\' + ASM.LastFileName;
+			ASM.IncludePathStack.push_back(filepath);
 			try
 			{
-				pegtl::file_input<> inFile( ASM.LastFileName );
+				pegtl::file_input<> inFile( filepath );
 				try
 				{
 					pegtl::parse< DevonASM::grammar, DevonASM::action >(inFile, ASM);
 				}
 				catch (pegtl::parse_error & err)
 				{
+					ASM.IncludePathStack.pop_back();
 					std::cout << err.what() << "\n";
 					return;
 				}
 			}
 			catch (std::system_error & err)
 			{
+				ASM.IncludePathStack.pop_back();
 				std::cout << err.what() << "\n";
 				ASM.ErrorMessage(ErrorIncludeFileFailed);
 				return;
 			}
 
+			ASM.IncludePathStack.pop_back();
 			ASM.LastFileName = "";
 		}
 	};

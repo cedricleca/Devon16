@@ -69,6 +69,7 @@ namespace DevonASM
 		std::map<std::string, int> Symbols;
 		std::map<std::string, int>::iterator SymbolsIt;
 		std::string LastFileName;
+		std::vector<std::string> IncludePathStack;
 
 		std::vector<CodeChunk> CodeChunks;
 		std::vector<EErrorCode> ErrorsThisLine;
@@ -90,5 +91,6 @@ namespace DevonASM
 		void ErrorMessage(EErrorCode ErrorCode);
 		void AssemblyCompleteMessage();
 		bool DumpErrorsThisLine(std::string source, size_t line);
+		static std::string FilePath(const std::string & FileName);
 	};
 };

@@ -1,6 +1,6 @@
 
-include "ControlRegisters.das"
-include "ROMFuncDef.das"
+include "..\ControlRegisters.das"
+include "..\ROMFuncDef.das"
 
 org $0x20000
 

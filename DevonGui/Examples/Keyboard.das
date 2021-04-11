@@ -1,7 +1,7 @@
 
-include "ControlRegisters.das"
-include "SystemRam.das"
-include "ROMFuncDef.das"
+include "..\ControlRegisters.das"
+include "..\SystemRam.das"
+include "..\ROMFuncDef.das"
 
 org $0x20000
 	mov		#0x40000, r0

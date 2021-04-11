@@ -2,12 +2,14 @@
 
 #include "DevonASM.h"
 #include <fstream>
+#include <string>
 
 void DevonASM::Assembler::Reset()
 {
 	Symbols.clear();
 	CodeChunks.clear();
 	CodeChunks.push_back(CodeChunk()); // add first code chunk 
+	IncludePathStack.clear();
 
 	LastInt = -1;
 	CurAddress = 0;
@@ -630,12 +632,21 @@ void DevonASM::Assembler::Incbin(const char * FileName)
 	}
 }
 
+std::string DevonASM::Assembler::FilePath(const std::string & FileName)
+{
+	size_t cur = FileName.size() - 1;
+	for(; cur > 0 && FileName[cur] != '//' && FileName[cur] != '\\'; --cur)	{}
+	return FileName.substr(0, cur);
+}
+
 bool DevonASM::Assembler::AssembleFile(const char * FileName)
 {
 	Reset();
 
 	std::cout << "Assembling "<<FileName<<"\n";
 	std::cout << "Pass 0\n";
+
+	IncludePathStack.push_back(FileName);
 
 	try
 	{
