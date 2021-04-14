@@ -10,35 +10,25 @@ class TimerChip
 
 	union TimerRegister
 	{
-		uLONG l;
-
-		struct
-		{
-			uWORD lsw;
-			uWORD msw;
-		} w;
+		uLONG l = 0;
+		struct { uWORD lsw; uWORD msw; } w;
 	};
 
 	struct TimerUnit
 	{
 		TimerRegister Base;
 		TimerRegister Value;
-
-		TimerUnit()
-		{
-			Base.l = 0; 
-			Value.l = 0;
-		}
 	};
 
 	Devon::CPU & CPU;
-	TimerUnit Timer[2];
+	TimerUnit TimerA;
+	TimerUnit TimerB;
 
 public:
 	union 
 	{
 		uWORD ControlRegister;
-		struct{ uWORD RUN_A:1, LOOP_A:1, RUN_B:1, LOOP_B:1;};
+		struct { uWORD RUN_A:1, LOOP_A:1, RUN_B:1, LOOP_B:1;};
 	};
 
 	TimerChip(Devon::CPU & InCPU) : CPU(InCPU)
@@ -50,33 +40,33 @@ public:
 	{
 		if(RUN_A)
 		{
-			if(Timer[0].Value.l == 0)
+			if(TimerA.Value.l == 0)
 			{
 				CPU.Interrupt(4);
 				if(LOOP_A)
-					Timer[0].Value.l = Timer[0].Base.l;
+					TimerA.Value.l = TimerA.Base.l;
 				else
 					RUN_A = 0;
 			}
 			else
 			{
-				Timer[0].Value.l--;
+				TimerA.Value.l--;
 			}
 		}
 
 		if(RUN_B)
 		{
-			if(Timer[1].Value.l == 0)
+			if(TimerB.Value.l == 0)
 			{
 				CPU.Interrupt(3);
 				if(LOOP_B)
-					Timer[1].Value.l = Timer[1].Base.l;
+					TimerB.Value.l = TimerB.Base.l;
 				else
 					RUN_B = 0;
 			}
 			else
 			{
-				Timer[1].Value.l--;
+				TimerB.Value.l--;
 			}
 		}
 	}
@@ -84,10 +74,9 @@ public:
 	void Reset()
 	{
 		ControlRegister = 0;
-		for(int i = 0; i < 2; i++)
-		{
-			Timer[i].Base.l = 0; 
-			Timer[i].Value.l = 0;
-		}
+		TimerA.Base.l = 0; 
+		TimerA.Value.l = 0;
+		TimerB.Base.l = 0; 
+		TimerB.Value.l = 0;
 	}
 };

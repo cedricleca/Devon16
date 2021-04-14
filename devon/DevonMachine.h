@@ -47,15 +47,12 @@ public:
 			MMU.RAMAccessOccured = false;
 			MMU.ROMAccessOccured = false;
 
-			(Cortico.*Cortico.Tick)();
-			
+			(Cortico.*Cortico.Tick)();			
 			if(Timers.ControlRegister)
-				Timers.Tick();
-			
+				Timers.Tick();			
 			JKev.RenderTimer -= 4.0f;
 			if(JKev.RenderTimer < 0.f)
-				JKev.Tick();
-			
+				JKev.Tick();			
 			(CPU.*CPU.Tick)();
 			MMU.CycleCount++;
 			
@@ -70,13 +67,10 @@ public:
 			MMU.RAMAccessOccured = false;
 
 			(Cortico.*Cortico.Tick)();
-			
 			if(Timers.ControlRegister)
 				Timers.Tick();
-			
 			if(MTUs.Control.w)
 				MTUs.Tick();
-			
 			(CPU.*CPU.Tick)();
 			MMU.CycleCount++;
 

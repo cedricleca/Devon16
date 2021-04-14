@@ -268,14 +268,14 @@ public:
 				switch(Address & 0xF)
 				{
 				case 0x0:	Word = Timers->ControlRegister;			break;
-				case 0x1:	Word = Timers->Timer[0].Base.w.msw;		break;
-				case 0x2:	Word = Timers->Timer[0].Base.w.lsw;		break;
-				case 0x3:	Word = Timers->Timer[0].Value.w.msw;	break;
-				case 0x4:	Word = Timers->Timer[0].Value.w.lsw;	break;
-				case 0x5:	Word = Timers->Timer[1].Base.w.msw;		break;
-				case 0x6:	Word = Timers->Timer[1].Base.w.lsw;		break;
-				case 0x7:	Word = Timers->Timer[1].Value.w.msw;	break;
-				case 0x8:	Word = Timers->Timer[1].Value.w.lsw;	break;
+				case 0x1:	Word = Timers->TimerA.Base.w.msw;		break;
+				case 0x2:	Word = Timers->TimerA.Base.w.lsw;		break;
+				case 0x3:	Word = Timers->TimerA.Value.w.msw;		break;
+				case 0x4:	Word = Timers->TimerA.Value.w.lsw;		break;
+				case 0x5:	Word = Timers->TimerB.Base.w.msw;		break;
+				case 0x6:	Word = Timers->TimerB.Base.w.lsw;		break;
+				case 0x7:	Word = Timers->TimerB.Value.w.msw;		break;
+				case 0x8:	Word = Timers->TimerB.Value.w.lsw;		break;
 				default:
 					return ERR;
 				}
@@ -551,14 +551,14 @@ public:
 				switch(Address & 0xF)
 				{
 				case 0x0:	Timers->ControlRegister			= Word; 	break;
-				case 0x1:	Timers->Timer[0].Base.w.msw		= Word; 	break;
-				case 0x2:	Timers->Timer[0].Base.w.lsw		= Word; 	break;
-				case 0x3:	Timers->Timer[0].Value.w.msw	= Word;		break;
-				case 0x4:	Timers->Timer[0].Value.w.lsw	= Word;		break;
-				case 0x5:	Timers->Timer[1].Base.w.msw		= Word; 	break;
-				case 0x6:	Timers->Timer[1].Base.w.lsw		= Word; 	break;
-				case 0x7:	Timers->Timer[1].Value.w.msw	= Word;		break;
-				case 0x8:	Timers->Timer[1].Value.w.lsw	= Word;		break;
+				case 0x1:	Timers->TimerA.Base.w.msw		= Word; 	break;
+				case 0x2:	Timers->TimerA.Base.w.lsw		= Word; 	break;
+				case 0x3:	Timers->TimerA.Value.w.msw		= Word;		break;
+				case 0x4:	Timers->TimerA.Value.w.lsw		= Word;		break;
+				case 0x5:	Timers->TimerB.Base.w.msw		= Word; 	break;
+				case 0x6:	Timers->TimerB.Base.w.lsw		= Word; 	break;
+				case 0x7:	Timers->TimerB.Value.w.msw		= Word;		break;
+				case 0x8:	Timers->TimerB.Value.w.lsw		= Word;		break;
 				default:
 					return ERR;
 				}
