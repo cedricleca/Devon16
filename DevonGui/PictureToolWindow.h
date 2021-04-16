@@ -31,9 +31,13 @@ struct PictureToolWindow
         ImGui::SetNextWindowSize(ImVec2(500,400), ImGuiCond_FirstUseEver);
         ImGui::Begin(title, &Show);
 		
-		ImGui::Text("palette entries %d", BMPImage.GetMaxColorTableEntries() );
-		ImGui::Text("%d x %d", BMPImage.GetWidth(), BMPImage.GetHeight() );
-		
+		ImGui::Text("%d x %d, ", BMPImage.GetWidth(), BMPImage.GetHeight() );
+		ImGui::SameLine();
+		ImGui::Text("%d colors", BMPImage.GetMaxColorTableEntries() );
+
+		const int nbwordsperline = ((BMPImage.GetWidth() - 1) / 16) + 1;
+		const int BPLSize = nbwordsperline * BMPImage.GetHeight();
+		ImGui::Text("each bitplane is %d (0x%x) words long", BPLSize, BPLSize);
 
 		auto OnClosedFileDialog = [&](const char * label, const std::function<void( const std::string & )> & f)
 		{
@@ -82,41 +86,48 @@ struct PictureToolWindow
 
 		OnClosedFileDialog("ExportBitPlanesDialog", [&](const std::string & filename)  
 		{
-			FILE * f;
-			fopen_s(&f, filename.c_str(), "wb");
-			if(f)
+			try
 			{
-				for(int bpl = 0; bpl < NbBitPlanesToExport; bpl++)
+				FILE * f;
+				fopen_s(&f, filename.c_str(), "wb");
+				if(f)
 				{
-					for(int y = 0; y < BMPImage.GetHeight(); y++)
+					for(int bpl = 0; bpl < NbBitPlanesToExport; bpl++)
 					{
-						for(int x = 0; x < BMPImage.GetWidth();)
+						for(int y = 0; y < BMPImage.GetHeight(); y++)
 						{
-							unsigned short out = 0;
-							for(int w = 0; w < 16 && x < BMPImage.GetWidth(); w++, x++)
+							for(int x = 0; x < BMPImage.GetWidth();)
 							{
-								COLORREF CRef = BMPImage.GetPixel(x, y);
-								for(unsigned int PalIdx = 0; PalIdx < BMPPalette.size(); PalIdx++)
+								unsigned short out = 0;
+								for(int w = 0; w < 16 && x < BMPImage.GetWidth(); w++, x++)
 								{
-									if(GetBValue(CRef) == BMPPalette[PalIdx].rgbBlue
-										&& GetGValue(CRef) == BMPPalette[PalIdx].rgbGreen
-										&& GetRValue(CRef) == BMPPalette[PalIdx].rgbRed
-										)
+									COLORREF CRef = BMPImage.GetPixel(x, y);
+									for(unsigned int PalIdx = 0; PalIdx < BMPPalette.size(); PalIdx++)
 									{
-										if(PalIdx & (1 << bpl))
-											out |= 1 << (15-w);
+										if(GetBValue(CRef) == BMPPalette[PalIdx].rgbBlue
+											&& GetGValue(CRef) == BMPPalette[PalIdx].rgbGreen
+											&& GetRValue(CRef) == BMPPalette[PalIdx].rgbRed
+											)
+										{
+											if(PalIdx & (1 << bpl))
+												out |= 1 << (15-w);
 
-										break;
+											break;
+										}
 									}
 								}
+								out = (out<<8) | (out>>8);
+								fwrite(&out, sizeof(out), 1, f);
 							}
-							out = (out<<8) | (out>>8);
-							fwrite(&out, sizeof(out), 1, f);
 						}
 					}
-				}
 
-				fclose(f);
+					fclose(f);
+				}
+			}
+			catch(const std::exception & err)
+			{
+				std::cout << err.what() << '/n';
 			}
 		});
 
