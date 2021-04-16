@@ -2,6 +2,8 @@
 
 #include "atlimage.h"
 #include "atltypes.h"
+#include "ImFileDialog.h"
+#include <functional>
 
 struct PictureToolWindow
 {
@@ -32,24 +34,27 @@ struct PictureToolWindow
 		ImGui::Text("palette entries %d", BMPImage.GetMaxColorTableEntries() );
 		ImGui::Text("%d x %d", BMPImage.GetWidth(), BMPImage.GetHeight() );
 		
-		if(ImGui::Button("Export Palette"))
+
+		auto OnClosedFileDialog = [&](const char * label, const std::function<void( const std::string & )> & f)
 		{
-			char filename[ MAX_PATH ];
-			OPENFILENAMEA ofn;
-			ZeroMemory( &filename, sizeof( filename ) );
-			ZeroMemory( &ofn,      sizeof( ofn ) );
-			ofn.lStructSize  = sizeof( ofn );
-			ofn.hwndOwner    = NULL;  // If you have a window to center over, put its HANDLE here
-			ofn.lpstrFilter  = "Devon ASM Files (.das)\0*.das\0Any File\0*.*\0";
-			ofn.lpstrFile    = filename;
-			ofn.nMaxFile     = MAX_PATH;
-			ofn.lpstrTitle   = "Select a File";
-			ofn.Flags        = OFN_DONTADDTORECENT;
-  
-			if (GetSaveFileNameA( &ofn ))
+			if (ifd::FileDialog::Instance().IsDone(label)) 
+			{
+				if (ifd::FileDialog::Instance().HasResult()) 
+					f(std::move(ifd::utf8_encode(ifd::FileDialog::Instance().GetResult())));
+
+				ifd::FileDialog::Instance().Close();
+			}
+		};
+
+		if(ImGui::Button("Export Palette"))
+			ifd::FileDialog::Instance().Save("SavePaletteDialog", "Save palette as a Devon ASM File", "DAS file (*.das){.das},.*");
+
+		OnClosedFileDialog("SavePaletteDialog", [&](const std::string & filename)  
+		{
+			try
 			{
 				FILE * f;
-				fopen_s(&f, filename, "wt");
+				fopen_s(&f, filename.c_str(), "wt");
 				if(f)
 				{
 					for(int i = 0; i < NbColorsToExport; i++)
@@ -62,66 +67,58 @@ struct PictureToolWindow
 					fclose(f);
 				}
 			}
-		}
+			catch(const std::exception & err)
+			{
+				std::cout << err.what() << '/n';
+			}
+		});
 
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(50.f);
 		ImGui::DragInt("Colors to Export", &NbColorsToExport, 1, 1, 256);
 
 		if(ImGui::Button("Export BitPlanes"))
+			ifd::FileDialog::Instance().Save("ExportBitPlanesDialog", "Export bitplanes as a Binary File", "BIN file (*.bin){.bin},.*");
+
+		OnClosedFileDialog("ExportBitPlanesDialog", [&](const std::string & filename)  
 		{
-			char filename[ MAX_PATH ];
-			OPENFILENAMEA ofn;
-			ZeroMemory( &filename, sizeof( filename ) );
-			ZeroMemory( &ofn,      sizeof( ofn ) );
-			ofn.lStructSize  = sizeof( ofn );
-			ofn.hwndOwner    = NULL;  // If you have a window to center over, put its HANDLE here
-			ofn.lpstrFilter  = "Binary Files (.bin)\0*.bin\0Any File\0*.*\0";
-			ofn.lpstrFile    = filename;
-			ofn.nMaxFile     = MAX_PATH;
-			ofn.lpstrTitle   = "Select a File";
-			ofn.Flags        = OFN_DONTADDTORECENT;
-
-			if (GetSaveFileNameA( &ofn ))
+			FILE * f;
+			fopen_s(&f, filename.c_str(), "wb");
+			if(f)
 			{
-				FILE * f;
-				fopen_s(&f, filename, "wb");
-				if(f)
+				for(int bpl = 0; bpl < NbBitPlanesToExport; bpl++)
 				{
-					for(int bpl = 0; bpl < NbBitPlanesToExport; bpl++)
+					for(int y = 0; y < BMPImage.GetHeight(); y++)
 					{
-						for(int y = 0; y < BMPImage.GetHeight(); y++)
+						for(int x = 0; x < BMPImage.GetWidth();)
 						{
-							for(int x = 0; x < BMPImage.GetWidth();)
+							unsigned short out = 0;
+							for(int w = 0; w < 16 && x < BMPImage.GetWidth(); w++, x++)
 							{
-								unsigned short out = 0;
-								for(int w = 0; w < 16 && x < BMPImage.GetWidth(); w++, x++)
+								COLORREF CRef = BMPImage.GetPixel(x, y);
+								for(unsigned int PalIdx = 0; PalIdx < BMPPalette.size(); PalIdx++)
 								{
-									COLORREF CRef = BMPImage.GetPixel(x, y);
-									for(unsigned int PalIdx = 0; PalIdx < BMPPalette.size(); PalIdx++)
+									if(GetBValue(CRef) == BMPPalette[PalIdx].rgbBlue
+										&& GetGValue(CRef) == BMPPalette[PalIdx].rgbGreen
+										&& GetRValue(CRef) == BMPPalette[PalIdx].rgbRed
+										)
 									{
-										if(GetBValue(CRef) == BMPPalette[PalIdx].rgbBlue
-										   && GetGValue(CRef) == BMPPalette[PalIdx].rgbGreen
-										   && GetRValue(CRef) == BMPPalette[PalIdx].rgbRed
-											)
-										{
-											if(PalIdx & (1 << bpl))
-												out |= 1 << (15-w);
+										if(PalIdx & (1 << bpl))
+											out |= 1 << (15-w);
 
-											break;
-										}
+										break;
 									}
 								}
-								out = (out<<8) | (out>>8);
-								fwrite(&out, sizeof(out), 1, f);
 							}
+							out = (out<<8) | (out>>8);
+							fwrite(&out, sizeof(out), 1, f);
 						}
 					}
-
-					fclose(f);
 				}
+
+				fclose(f);
 			}
-		}
+		});
 
 		ImGui::SameLine();
 		ImGui::SetNextItemWidth(50.f);
