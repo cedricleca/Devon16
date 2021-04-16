@@ -14,7 +14,7 @@ class DevonMachine
 {
 public:
 	DevonMMU	MMU;
-	Devon::CPU	CPU;
+	CPU			CPU;
 	CorticoChip	Cortico;
 	TimerChip	Timers;
 	MTUChip		MTUs;

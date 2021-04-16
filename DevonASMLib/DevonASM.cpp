@@ -750,31 +750,33 @@ bool DevonASM::Assembler::ExportROMFile(const char * FileName, int ROMBaseAddres
 		return false;
 	}
 
-	int csize = MinSize;
-	while(size > csize)
-		csize *= 2;
-
-	// alloc cartridge memory
-	std::vector<uWORD> cartridge;
-	cartridge.resize(csize);
-	std::fill(cartridge.begin(), cartridge.end(), 0);
-
-	// deploy chunks
-	for(const auto & chunk : CodeChunks)
-		memcpy(cartridge.data() + chunk.BaseAddress - ROMBaseAddress, chunk.Data.data(), chunk.WordSize * sizeof(uWORD));
-
 	// save file
-	FILE * f;
-	fopen_s(&f, FileName, "wb");
-	if(f)
+	try
 	{
-		fwrite(cartridge.data(), sizeof(uWORD), csize, f);
-		fclose(f);
+		std::ofstream out(FileName, std::ios_base::out | std::ios_base::binary);
+
+		// write chunks
+		int outsize = 0;
+		for(const auto & chunk : CodeChunks)
+		{
+			out.write((const char *)chunk.Data.data(), chunk.WordSize * sizeof(uWORD));
+			outsize += chunk.WordSize;
+		}
+
+		// write padding to power of 2 size
+		int csize = MinSize;
+		while(size > csize)
+			csize *= 2;
+
+		for(; outsize < csize; outsize++)
+			out.put('X').put('X');
+
+		out.close();
 	}
-	else
+	catch(std::exception & err)
 	{
-		// can't open file for saving
-		std::cout << "ExportROMFile : can't open file for saving\n";
+		std::cout << "ExportROMFile failed :\n";
+		std::cout << err.what() << '\n';
 		return false;
 	}
 
