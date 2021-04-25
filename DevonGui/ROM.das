@@ -80,6 +80,22 @@ org EntryPoint
 
 	mov		#NoCartMsg, r2
 	jsr		#FUNC_Print
+
+	mov		#0x10000, r1
+	mov		$MMU_MemLayout, r0
+	btsti	#1, r0
+	mov		#0x80000, r0
+	bra.z	#RAMTest
+	lsli	#1, r1
+RAMTest:
+	mov		(r0), r2
+	mov		r2, (r0)+
+	sub		#!1, r1
+	bra.p	#RAMTest
+	
+	mov		#CpuRamTestOK, r2
+	jsr		#FUNC_Print	
+
 	halt
 
 DefaultBusError:
@@ -345,6 +361,26 @@ FUNC_Print_Loop:
 	movb	(r0)+, r2
 	add		#!0, r2
 	bra.z	#FUNC_Print_Ret
+	cmp		#'\n', r2
+	bra.np	#FUNC_Print_DrawChar
+	
+	mov		#!0, r2
+	mov.w	r2, $RAM_Writer_XOffset
+
+	mov.w	$Cort_BPL0_HEnd, r5
+	mov.w	$Cort_BPL0_HStart, r6
+	sub		r6, r5
+	mov.w	$Cort_BPL0_Stride, r6
+	ext16	r6
+	add		r6, r5
+	mul		#18, r5
+
+	mov.w	$RAM_Writer_YOffset, r2
+	add		r5, r2
+	mov.w	r2, $RAM_Writer_YOffset
+	jmp		#FUNC_Print_Loop
+	
+FUNC_Print_DrawChar:
 	ssave	#%00000001
 	jsr		#FUNC_DrawChar
 	sload	#%00000001
@@ -352,8 +388,11 @@ FUNC_Print_Loop:
 FUNC_Print_Ret:
 	rts
 	
+CpuRamTestOK:
+	byte "RAM Check OK.", 0
+
 NoCartMsg:
-	byte "No Cartridge detected.", 0
+	byte "No Cartridge detected.", '\n', 0
 	
 DefaultFontData:
 	incbin	"Font.bin"
