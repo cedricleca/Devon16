@@ -757,10 +757,17 @@ bool DevonASM::Assembler::ExportROMFile(const char * FileName, int ROMBaseAddres
 
 		// write chunks
 		int outsize = 0;
-		for(const auto & chunk : CodeChunks)
+		for(size_t i = 0; i < CodeChunks.size(); i++)
 		{
+			const auto & chunk = CodeChunks[i];
 			out.write((const char *)chunk.Data.data(), chunk.WordSize * sizeof(uWORD));
 			outsize += chunk.WordSize;
+
+			if(i < CodeChunks.size() - 1)
+			{
+				for(; outsize < CodeChunks[i+1].BaseAddress; outsize++)
+					out.put('A').put('B');
+			}
 		}
 
 		// write padding to power of 2 size
