@@ -26,21 +26,21 @@ Interrupt7:			long DefaultInterrupt_VBlank	 ; 0x2e
 
 org $0x40
 Trap0:				long DefaultTrap0
-Trap1:				long DefaultTrap1
-Trap2:				long DefaultTrap2
-Trap3:				long DefaultTrap3
-Trap4:				long DefaultTrap4
-Trap5:				long DefaultTrap5
-Trap6:				long DefaultTrap6
-Trap7:				long DefaultTrap7
-Trap8:				long DefaultTrap8
-Trap9:				long DefaultTrap9
-TrapA:				long DefaultTrapA
-TrapB:				long DefaultTrapB
-TrapC:				long DefaultTrapC
-TrapD:				long DefaultTrapD
-TrapE:				long DefaultTrapE
-TrapF:				long DefaultTrapF
+Trap1:				long DefaultTrap_Unused
+Trap2:				long DefaultTrap_Unused
+Trap3:				long DefaultTrap_Unused
+Trap4:				long DefaultTrap_Unused
+Trap5:				long DefaultTrap_Unused
+Trap6:				long DefaultTrap_Unused
+Trap7:				long DefaultTrap_Unused
+Trap8:				long DefaultTrap_Unused
+Trap9:				long DefaultTrap_Unused
+TrapA:				long DefaultTrap_Unused
+TrapB:				long DefaultTrap_Unused
+TrapC:				long DefaultTrap_Unused
+TrapD:				long DefaultTrap_Unused
+TrapE:				long DefaultTrap_Unused
+TrapF:				long DefaultTrap_Unused
 
 Trap0_FUNC_Table:
 	long	FUNC_Memcpy
@@ -65,9 +65,8 @@ org EntryPoint
 	vbase	#RAM_VBase
 	intmask	#%00000000		; enable VBL only
 
-	mov		#!0x0, r0
-	mov.w	r0, $RAM_Writer_YOffset
-	mov.w	r0, $RAM_Writer_XOffset
+	mov		#!0, r0
+	mov		r0, $RAM_Writer_YOffset ; also resets XOffset
 	movi	#40, r0
 	mov.w	r0, $RAM_Writer_Width
 
@@ -84,6 +83,7 @@ org EntryPoint
 	mov		#NoCartMsg, r2
 	jsr		#FUNC_Print
 
+	; ********* RAM Test *********
 	mov		#0x10000, r1
 	mov		$MMU_MemLayout, r0
 	btsti	#1, r0
@@ -98,46 +98,34 @@ RAMTest:
 	
 	mov		#CpuRamTestOK, r2
 	jsr		#FUNC_Print	
-
 	halt
 
 DefaultBusError:
-	MOV #!0, r0
-	HALT
+	mov		#KrakenStrike_BusError, r2
+	jsr		#KrakenStrike	
+	halt
 
 DefaultInstructionError:
-	MOV #!1, r0
-	HALT
+	mov		#KrakenStrike_InstructionError, r2
+	jsr		#KrakenStrike	
+	halt
 
 DefaultZeroDivideError:
-	MOV #!2, r0
-	HALT
+	mov		#KrakenStrike_DivideByZero, r2
+	jsr		#KrakenStrike	
+	halt
 
 DefaultInterrupt_VBlank:
-	mov #0xabcde, r5
 	rte
 
 DefaultInterrupt_HBlank:
-	MOV #!1, r0
-	RTE
 DefaultInterrupt_GFXPos:
-	MOV #!2, r0
-	RTE
 DefaultInterrupt_TimerA:
-	MOV #!3, r0
-	RTE
 DefaultInterrupt_TimerB:
-	MOV #!4, r0
-	RTE
 DefaultInterrupt_MTUA:
-	MOV #!5, r0
-	RTE
 DefaultInterrupt_MTUB:
-	MOV #!6, r0
-	RTE
 DefaultInterrupt_DSKDMA:
-	MOV #!7, r0
-	RTE
+	rte
 
 DefaultTrap0:
 	; r0 = function Id
@@ -148,51 +136,8 @@ DefaultTrap0:
 	jsr (r1)
 	rte
 
-DefaultTrap1:
-	MOV #!0x1, r0
-	RTE
-DefaultTrap2:
-	MOV #!0x2, r0
-	RTE
-DefaultTrap3:
-	MOV #!0x3, r0
-	RTE
-DefaultTrap4:
-	MOV #!0x4, r0
-	RTE
-DefaultTrap5:
-	MOV #!0x5, r0
-	RTE
-DefaultTrap6:
-	MOV #!0x6, r0
-	RTE
-DefaultTrap7:
-	MOV #!0x7, r0
-	RTE
-DefaultTrap8:
-	MOVI #0x8, r0
-	RTE
-DefaultTrap9:
-	MOVI #0x9, r0
-	RTE
-DefaultTrapA:
-	MOVI #0xA, r0
-	RTE
-DefaultTrapB:
-	MOVI #0xB, r0
-	RTE
-DefaultTrapC:
-	MOVI #0xC, r0
-	RTE
-DefaultTrapD:
-	MOVI #0xD, r0
-	RTE
-DefaultTrapE:
-	MOVI #0xE, r0
-	RTE
-DefaultTrapF:
-	MOVI #0xf, r0
-	RTE
+DefaultTrap_Unused:
+	rte
 
 FUNC_ResetCorticoRegs:
 	mov		#Cort_H, r0
@@ -410,12 +355,31 @@ FUNC_Print_DrawChar:
 	bra		#FUNC_Print_Loop
 FUNC_Print_Ret:
 	rts
-	
-CpuRamTestOK:
-	byte "RAM Check OK.", 0
 
-NoCartMsg:
-	byte "No Cartridge detected.", '\n', 0
+; unrecoverable error : r2=Error message to display
+KrakenStrike:
+	ssave	#%00000100
+	jsr		#FUNC_ResetCorticoRegs	; Reset Cortico registers
+	jsr		#FUNC_ResetDefaultClut	; Reset Clut
+	jsr		#FUNC_ClearScreen
+	mov		#!0, r2
+	mov		r2, $RAM_Writer_YOffset ; resets X & Y
+	mov		#KrakenStrike_Title, r2
+	jsr		#FUNC_Print	
+	sload	#%00000100
+	jsr		#FUNC_Print	
+	mov		#KrakenStrike_Text, r2
+	jsr		#FUNC_Print	
+	rts
+
+KrakenStrike_Title:				byte "Kraken strike: ", 0
+KrakenStrike_Text:				byte '\n', "This is an unrecoverable event", '\n', "Please reset", 0
+KrakenStrike_BusError:			byte "Bus error", 0
+KrakenStrike_InstructionError:	byte "Bad instruction", 0
+KrakenStrike_DivideByZero:		byte "Divide by zero", 0
+		
+CpuRamTestOK:	byte "RAM Check OK.", 0
+NoCartMsg:		byte "No Cartridge detected.", '\n', 0
 	
-DefaultFontData:
-	incbin	"Font.bin"
+DefaultFontData:	incbin	"Font.bin"
+
