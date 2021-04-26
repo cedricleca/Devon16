@@ -5,3 +5,4 @@ define FUNC_ResetDefaultClut	3
 define FUNC_ResetDefaultFont	4
 define FUNC_DrawChar			5
 define FUNC_Print				6
+define FUNC_ClearScreen			7

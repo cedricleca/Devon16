@@ -50,6 +50,7 @@ Trap0_FUNC_Table:
 	long	FUNC_ResetDefaultFont
 	long	FUNC_DrawChar
 	long	FUNC_Print
+	long	FUNC_ClearScreen
 
 DefaultClut:
 	word	0x000, 0xAAA, 0xFFF, 0xC33, 0xE79, 0x543, 0xA62, 0xF93, 0xFE6, 0x244, 0x481, 0xAC2, 0x123, 0x058, 0x3AF, 0xBDE
@@ -78,6 +79,8 @@ org EntryPoint
 	add		#!0, r0			; test it
 	jmp.np	#CartBase		; if present -> jmp
 
+	jsr		#FUNC_ClearScreen	
+	
 	mov		#NoCartMsg, r2
 	jsr		#FUNC_Print
 
@@ -265,6 +268,26 @@ FUNC_ResetDefaultFont:
 	jsr		#FUNC_Memcpy
 	rts
 
+FUNC_ClearScreen:
+	mov.w	$Cort_BPL0_HEnd, r5
+	mov.w	$Cort_BPL0_HStart, r6
+	sub		r6, r5
+	mov.w	$Cort_BPL0_Stride, r6
+	ext16	r6
+	add		r6, r5
+	mov.w	$Cort_BPL0_VEnd, r4
+	mov.w	$Cort_BPL0_VStart, r6
+	sub		r6, r4
+	mul		r5, r4
+	
+	mov		$Cort_BPL0_BaseAdd_H, r2
+	mov		#!0, r1
+FUNC_ClearScreen_Loop:
+	mov		r1, (r2)+
+	sub		#!1, r4
+	bra.p	#!FUNC_ClearScreen_Loop
+	rts
+	
 FUNC_DrawChar:
 	mov		r2, r0
 	mov.w	$Cort_BPL0_HEnd, r5
