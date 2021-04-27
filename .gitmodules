@@ -7,6 +7,3 @@
 [submodule "stb"]
 	path = stb
 	url = https://github.com/nothings/stb
-[submodule "WavFileReader"]
-	path = WavFileReader
-	url = https://github.com/KojiroSakado/WavFileReader
