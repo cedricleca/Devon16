@@ -766,7 +766,7 @@ bool DevonASM::Assembler::ExportROMFile(const char * FileName, int ROMBaseAddres
 			if(i < CodeChunks.size() - 1)
 			{
 				for(; outsize < CodeChunks[i+1].BaseAddress; outsize++)
-					out.put('A').put('B');
+					out.put('?').put('.');
 			}
 		}
 
@@ -776,7 +776,7 @@ bool DevonASM::Assembler::ExportROMFile(const char * FileName, int ROMBaseAddres
 			csize *= 2;
 
 		for(; outsize < csize; outsize++)
-			out.put('X').put('X');
+			out.put('|').put('_');
 
 		out.close();
 	}

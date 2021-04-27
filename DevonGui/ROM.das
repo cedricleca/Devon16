@@ -1,4 +1,3 @@
-define EntryPoint 0x100
 define CartBase 0x20000
 
 romexport
@@ -8,7 +7,7 @@ include "ControlRegisters.das"
 
 ;VectorTable
 org $0x0
-ResetPC:			long EntryPoint
+ResetPC:			long ROM_EntryPoint
 ResetStack:			long DefaultStack
 BusError:			long DefaultBusError
 BadInstruction:		long DefaultInstructionError
@@ -56,7 +55,7 @@ DefaultClut:
 	word	0x000, 0xAAA, 0xFFF, 0xC33, 0xE79, 0x543, 0xA62, 0xF93, 0xFE6, 0x244, 0x481, 0xAC2, 0x123, 0x058, 0x3AF, 0xBDE
 	word	0x000, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xA, 0xB, 0xC, 0xD, 0xE, 0xF
 
-org EntryPoint
+ROM_EntryPoint:
 	mov		#RAM_VBase, r3
 	mov		#!0, r2
 	mov		#0x80, r4
@@ -373,13 +372,13 @@ KrakenStrike:
 	rts
 
 KrakenStrike_Title:				byte "Kraken strike: ", 0
-KrakenStrike_Text:				byte '\n', "This is an unrecoverable event", '\n', "Please reset", 0
+KrakenStrike_Text:				byte "\nThis is an unrecoverable event\nPlease reset", 0
 KrakenStrike_BusError:			byte "Bus error", 0
 KrakenStrike_InstructionError:	byte "Bad instruction", 0
 KrakenStrike_DivideByZero:		byte "Divide by zero", 0
 		
 CpuRamTestOK:	byte "RAM Check OK.", 0
-NoCartMsg:		byte "No Cartridge detected.", '\n', 0
+NoCartMsg:		byte "No Cartridge detected.\n", 0
 	
 DefaultFontData:	incbin	"Font.bin"
 

@@ -270,7 +270,7 @@ namespace DevonASM
 
 	struct directive_origin : seq<TAO_PEGTL_ISTRING("org"), blk_, opt<one<'$'>>, integer> {};
 	struct directive_entry : seq<TAO_PEGTL_ISTRING("entry"), blk_, opt<one<'$'>>, integer> {};
-	struct quotedstringCharValue : if_then_else<at<one<'"'>>, failure, seven> {};
+	struct quotedstringCharValue : if_then_else<at<one<'"'>>, failure, if_then_else<one<'\\'>, escapecharvalue, charvalue>> {};
 	struct quotedstring : seq<one<'"'>, star<quotedstringCharValue>, one<'"'>> {};
 	struct byteintValue : integer {};
 	struct filename : star<if_then_else<at<one<'"'>>, failure, seven>> {};
@@ -560,8 +560,7 @@ namespace DevonASM
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
-			std::string input = in.string();
-			ASM.AddByte(input.at(0));
+			ASM.AddByte(ASM.LastInt);
 		}
 	};
 	template<> struct action< directive_worddata >
@@ -599,9 +598,8 @@ namespace DevonASM
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
-			std::string input = in.string();
 			std::string::size_type sz;
-			ASM.LastInt = std::stoi(input, &sz);
+			ASM.LastInt = std::stoi(in.string(), &sz);
 		}
 	};
 	template <CPU::EAdMode AM> struct action< AMCode<AM> >
@@ -665,43 +663,38 @@ namespace DevonASM
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
-			std::string input = in.string();
 			std::string::size_type sz;
-			ASM.LastInt = std::stoi(input, &sz);
+			ASM.LastInt = std::stoi(in.string(), &sz);
 		}
 	};
 	template<> struct action< hexainteger >
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
-			std::string input = in.string();
 			std::string::size_type sz;
-			ASM.LastInt = std::stoul(input, &sz, 0);
+			ASM.LastInt = std::stoul(in.string(), &sz, 0);
 		}
 	};
 	template<> struct action< binaryvalue >
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
-			std::string input = in.string();
 			std::string::size_type sz;
-			ASM.LastInt = std::stoul(input, &sz, 2);
+			ASM.LastInt = std::stoul(in.string(), &sz, 2);
 		}
 	};
 	template<> struct action< charvalue >
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
-			std::string input = in.string();
-			ASM.LastInt = input.at(0);
+			ASM.LastInt = in.string()[0];
 		}
 	};
 	template<> struct action< escapecharvalue >
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
-			std::string input = in.string();
-			switch(input.at(0))
+			switch(in.string()[0])
 			{
 			case 'a':	ASM.LastInt = 0x07;		break;
 			case 'b':	ASM.LastInt = 0x08;		break;
