@@ -27,6 +27,7 @@
 #include <fstream>
 #include <streambuf>
 #include "ImFileDialog.h"
+#include "resource1.h"
 
 import SoundTools;
 import GLTools;
@@ -396,7 +397,13 @@ int main(int argn, char**arg)
 	Teditor.SetLanguageDefinition(lang);
 
 	if(auto hwndFound = FindWindow(nullptr, WinTitle))
+	{
 		DSoundTools::Init(hwndFound, Machine);
+
+		HICON hIcon = LoadIcon(GetModuleHandleA(nullptr), MAKEINTRESOURCE(IDI_ICON1));
+		SendMessage(hwndFound, WM_SETICON, ICON_SMALL, (LPARAM)hIcon);
+		SendMessage(hwndFound, WM_SETICON, ICON_BIG, (LPARAM)hIcon);
+	}
 
 	// Setup Dear ImGui context
 	IMGUI_CHECKVERSION();
