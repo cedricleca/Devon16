@@ -36,6 +36,7 @@
 
 #pragma once
 #include <stdio.h>  // sprintf, scanf
+#include <imgui_internal.h>
 
 struct MemoryEditor
 {
@@ -204,6 +205,24 @@ struct MemoryEditor
             if (scroll_desired)
                 ImGui::SetScrollY(ImGui::GetScrollY() + scroll_offset * s.LineHeight);
         }
+
+		if(ImGuiWindow * window = ImGui::GetCurrentWindow())
+		{
+			if(ImGui::IsWindowFocused())
+			{
+				if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_PageUp)))
+					ImGui::SetScrollY(ImGui::GetScrollY() - window->ClipRect.GetHeight() + 2.f * s.LineHeight);
+
+				if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_PageDown)))
+					ImGui::SetScrollY(ImGui::GetScrollY() + window->ClipRect.GetHeight() - 2.f * s.LineHeight);
+
+				if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow)))
+					ImGui::SetScrollY(ImGui::GetScrollY() - s.LineHeight);
+
+				if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)))
+					ImGui::SetScrollY(ImGui::GetScrollY() + s.LineHeight);
+			}
+		}
 
         // Draw vertical separator
         ImVec2 window_pos = ImGui::GetWindowPos();
