@@ -1,6 +1,7 @@
 #pragma once
 
 #include "..\devon\devonMMU.h"
+#include <imgui_internal.h>
 
 struct DisassemblyWindow
 {
@@ -82,9 +83,27 @@ struct DisassemblyWindow
 			ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
 			if(Jump >= 0)
-				ImGui::SetScrollY(Jump * ImGui::GetTextLineHeight());
+				ImGui::SetScrollY(Jump * ImGui::GetTextLineHeightWithSpacing());
 
-			ImGuiListClipper clipper(0xA0000, ImGui::GetTextLineHeight());
+			if(ImGuiWindow * window = ImGui::GetCurrentWindow())
+			{
+				if(ImGui::IsWindowFocused())
+				{
+					if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_PageUp)))
+						ImGui::SetScrollY(ImGui::GetScrollY() - window->ClipRect.GetHeight());
+
+					if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_PageDown)))
+						ImGui::SetScrollY(ImGui::GetScrollY() + window->ClipRect.GetHeight());
+
+					if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow)))
+						ImGui::SetScrollY(ImGui::GetScrollY() - ImGui::GetTextLineHeightWithSpacing());
+
+					if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)))
+						ImGui::SetScrollY(ImGui::GetScrollY() + ImGui::GetTextLineHeightWithSpacing());
+				}
+			}
+
+			ImGuiListClipper clipper(0xA0000, ImGui::GetTextLineHeightWithSpacing());
 			while(clipper.Step())
 			{
 				unsigned int CurAdr = clipper.DisplayStart;
