@@ -85,7 +85,7 @@ ROM_EntryPoint:
 	; ********* RAM Test *********
 	mov		#0x10000, r1
 	mov		$MMU_MemLayout, r0
-	btsti	#1, r0
+	btsti	#1, r0 ; check if we have cpu ran extension
 	mov		#0x80000, r0
 	bra.z	#RAMTest
 	lsli	#1, r1
@@ -97,6 +97,23 @@ RAMTest:
 	
 	mov		#CpuRamTestOK, r2
 	jsr		#FUNC_Print	
+	
+	; ********* GFX RAM Test *********
+	mov		#0x10000, r1
+	mov		$MMU_MemLayout, r0
+	btsti	#0, r0 ; check if we have gfx ran extension
+	mov		#0x40000, r0
+	bra.z	#GFXRAMTest
+	lsli	#1, r1
+GFXRAMTest:
+	mov		(r0), r2
+	mov		r2, (r0)+
+	sub		#!1, r1
+	bra.p	#GFXRAMTest
+	
+	mov		#GfxRamTestOK, r2
+	jsr		#FUNC_Print	
+
 	halt
 
 DefaultBusError:
@@ -377,7 +394,8 @@ KrakenStrike_BusError:			byte "Bus error", 0
 KrakenStrike_InstructionError:	byte "Bad instruction", 0
 KrakenStrike_DivideByZero:		byte "Divide by zero", 0
 		
-CpuRamTestOK:	byte "RAM Check OK.", 0
+CpuRamTestOK:	byte "CPU RAM Check OK.\n", 0
+GfxRamTestOK:	byte "GFX RAM Check OK.", 0
 NoCartMsg:		byte "No Cartridge detected.\n", 0
 	
 DefaultFontData:	incbin	"Font.bin"
