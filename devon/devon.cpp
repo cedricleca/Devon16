@@ -44,6 +44,7 @@ void CPU::Reset()
 	ExecInstruction.CycleCount = -1; // execution over
 	CurException = EVector::NoVector;
 	Tick = &Devon::CPU::Tick_GetInst0;
+	bMemWriteOperand = false;
 
 	// reset registers
 	for(int i = 0; i < NbRegs; i++)
