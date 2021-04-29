@@ -90,5 +90,6 @@ public:
 		Timers.Reset();
 		MTUs.HardReset();
 		JKev.HardReset();
+		KeyB.Reset();
 	}
 };
