@@ -204,6 +204,11 @@ VBL_PopKeyb_SendToWriter:
 	mov		#!FUNC_DrawChar, r0 ; call DrawChar
 	trap	#!0
 	bsr		#StoreCursorBack
+
+	movi	#1, r0
+	mov.w	r0, $RAM_Writer_CursorTimer	
+	movi	#0, r0
+	mov.w	r0, $RAM_Writer_CursorState
 	bra		#VBL_PopKeyb
 	
 VBL_PopKeyb_End:
