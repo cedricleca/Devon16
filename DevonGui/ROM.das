@@ -234,9 +234,17 @@ VBL_PopKeyb:
 
 VBL_PopKeyb_NoPressQuote:
 	bsr		#QWERTY_ShiftChar
+	mov		r0, r2	
+	bsr		#FUNC_DrawChar
+	bsr		#StoreCursorBack
 
-	bra		#VBL_PopKeyb_SendToWriter
-
+	movi	#1, r0
+	mov.w	r0, $RAM_Writer_CursorTimer	
+	movi	#0, r0
+	mov.w	r0, $RAM_Writer_CursorState
+	
+	bra		#VBL_PopKeyb
+	
 VBL_PopKeyb_PressLeft:
 	bsr		#RemoveCursor
 	mov.w	$RAM_Writer_XOffset, r3
@@ -294,18 +302,6 @@ VBL_PopKeyb_PressReturn:
 	bsr		#StoreCursorBack
 	bra		#VBL_PopKeyb
 
-VBL_PopKeyb_SendToWriter:
-	mov		r0, r2	
-	bsr		#FUNC_DrawChar
-	bsr		#StoreCursorBack
-
-	movi	#1, r0
-	mov.w	r0, $RAM_Writer_CursorTimer	
-	movi	#0, r0
-	mov.w	r0, $RAM_Writer_CursorState
-	
-	bra		#VBL_PopKeyb
-	
 VBL_PopKeyb_End:
 	rte
 
@@ -660,99 +656,47 @@ QWERTY_ShiftChar:
 	cmp		#'Z', r0
 	bra.p	#QWERTY_ShiftChar_Ret
 	add		#32, r0
-	rts
-
-QWERTY_ShiftOn:
-	cmp		#'1', r0
-	bra.np	#!QWERTY_ShiftChar_No_1
-	mov		#'!', r0
-QWERTY_ShiftChar_No_1:
-	cmp		#'2', r0
-	bra.np	#!QWERTY_ShiftChar_No_2
-	mov		#'@', r0
-QWERTY_ShiftChar_No_2:
-	cmp		#'3', r0
-	bra.np	#!QWERTY_ShiftChar_No_3
-	mov		#'#', r0
-QWERTY_ShiftChar_No_3:
-	cmp		#'4', r0
-	bra.np	#!QWERTY_ShiftChar_No_4
-	mov		#'$', r0
-QWERTY_ShiftChar_No_4:
-	cmp		#'5', r0
-	bra.np	#!QWERTY_ShiftChar_No_5
-	mov		#'%', r0
-QWERTY_ShiftChar_No_5:
-	cmp		#'6', r0
-	bra.np	#!QWERTY_ShiftChar_No_6
-	mov		#'^', r0
-QWERTY_ShiftChar_No_6:
-	cmp		#'7', r0
-	bra.np	#!QWERTY_ShiftChar_No_7
-	mov		#'&', r0
-QWERTY_ShiftChar_No_7:
-	cmp		#'8', r0
-	bra.np	#!QWERTY_ShiftChar_No_8
-	mov		#'*', r0
-QWERTY_ShiftChar_No_8:
-	cmp		#'9', r0
-	bra.np	#!QWERTY_ShiftChar_No_9
-	mov		#'(', r0
-QWERTY_ShiftChar_No_9:
-	cmp		#'0', r0
-	bra.np	#!QWERTY_ShiftChar_No_0
-	mov		#')', r0
-QWERTY_ShiftChar_No_0:
-	cmp		#'-', r0
-	bra.np	#!QWERTY_ShiftChar_No_Minus
-	mov		#'_', r0
-QWERTY_ShiftChar_No_Minus:
-	cmp		#'=', r0
-	bra.np	#!QWERTY_ShiftChar_No_Equal
-	mov		#'+', r0
-QWERTY_ShiftChar_No_Equal:
-	cmp		#'\\', r0
-	bra.np	#!QWERTY_ShiftChar_No_Slash
-	mov		#'|', r0
-QWERTY_ShiftChar_No_Slash:
-	cmp		#'[', r0
-	bra.np	#!QWERTY_ShiftChar_No_BracketOpen
-	mov		#'{', r0
-QWERTY_ShiftChar_No_BracketOpen:
-	cmp		#']', r0
-	bra.np	#!QWERTY_ShiftChar_No_BracketClose
-	mov		#'}', r0
-QWERTY_ShiftChar_No_BracketClose:
-	cmp		#',', r0
-	bra.np	#!QWERTY_ShiftChar_No_Comma
-	mov		#'<', r0
-QWERTY_ShiftChar_No_Comma:
-	cmp		#'.', r0
-	bra.np	#!QWERTY_ShiftChar_No_Dot
-	mov		#'>', r0
-QWERTY_ShiftChar_No_Dot:
-	cmp		#'/', r0
-	bra.np	#!QWERTY_ShiftChar_No_Slash2
-	mov		#'?', r0
-QWERTY_ShiftChar_No_Slash2:
-	cmp		#';', r0
-	bra.np	#!QWERTY_ShiftChar_No_SemiCol
-	mov		#':', r0
-QWERTY_ShiftChar_No_SemiCol:
-	cmp		#'\'', r0
-	bra.np	#!QWERTY_ShiftChar_No_Quote
-	mov		#'"', r0
-QWERTY_ShiftChar_No_Quote:
-	cmp		#'`', r0
-	bra.np	#!QWERTY_ShiftChar_No_BackQuote
-	mov		#'~', r0
-QWERTY_ShiftChar_No_BackQuote:
-
 QWERTY_ShiftChar_Ret:
 	rts
 
-;QWERTY_ShiftChar_LookUp:
-;	byte ';', ':'
+QWERTY_ShiftOn:
+	mov		#QWERTY_ShiftChar_LookUp, r1
+QWERTY_ShiftOn_Loop:
+	mov.w	(r1)+, r2
+	mov		r2, r3
+	lsri	#8, r3	
+	cmp		r3, r0
+	bra.np	#!QWERTY_ShiftChar_NoMatch
+	and		#0xff, r2
+	mov		r2, r0
+QWERTY_ShiftChar_NoMatch:
+	cmp		#QWERTY_ShiftChar_LookUp_End, r1
+	bra.np	#QWERTY_ShiftOn_Loop
+	rts
+
+QWERTY_ShiftChar_LookUp:
+	byte '1', '!'
+	byte '2', '@'
+	byte '3', '#'
+	byte '4', '$'
+	byte '5', '%'
+	byte '6', '^'
+	byte '7', '&'
+	byte '8', '*'
+	byte '9', '('
+	byte '0', ')'
+	byte '-', '_'
+	byte '=', '+'
+	byte '\\', '|'
+	byte '[', '{'
+	byte ']', '}'
+	byte ',', '<'
+	byte '.', '>'
+	byte '/', '?'
+	byte ';', ':'
+	byte '\'', '"'
+	byte '`', '~'
+QWERTY_ShiftChar_LookUp_End:
 
 KrakenStrike_Title:				byte "Kraken strike: ", 0
 KrakenStrike_Text:				byte "\nThis is an unrecoverable event\nPlease reset", 0
