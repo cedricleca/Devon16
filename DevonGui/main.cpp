@@ -360,7 +360,7 @@ int main(int argn, char**arg)
 	}
 
 	glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
-	char WinTitle[] = "Devon16 (F11 to switch UI)";
+	char WinTitle[] = "Devon16 (F11 to switch UI, F9 to reset";
 	GLFWwindow* window = glfwCreateWindow(W, H, WinTitle, Monitor, nullptr);
 	if (window == nullptr)
 		return 1;
@@ -686,9 +686,6 @@ int main(int argn, char**arg)
 			if(ImGui::IsKeyPressed(GLFW_KEY_F5, false))
 				CompileShaders();
 
-			if (ImGui::IsKeyPressed(GLFW_KEY_F9, false))
-				Machine.HardReset();
-
 			if (ImGui::Button("Set ROM (.dro) File"))
 				SetROMFile(LogWindow);
 
@@ -888,6 +885,9 @@ int main(int argn, char**arg)
 				Settings::Lock(false);
 			}
 		}
+
+		if (ImGui::IsKeyPressed(GLFW_KEY_F9, false))
+			Machine.HardReset();
 
 		if (ImGui::IsKeyPressed(GLFW_KEY_F11, false))
 			Show_UI = !Show_UI;
