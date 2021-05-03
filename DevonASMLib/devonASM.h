@@ -286,6 +286,7 @@ namespace DevonASM
 	struct directive_include : seq<TAO_PEGTL_ISTRING("include"), blk_, one<'"'>, filename, one<'"'>> {};
 	struct directive_incbin : seq<TAO_PEGTL_ISTRING("incbin"), blk_, one<'"'>, filename, one<'"'>> {};
 	struct directive_romexport : TAO_PEGTL_ISTRING("romexport") {};
+	struct directive_align : seq<TAO_PEGTL_ISTRING("align"), blk_, integer> {};
 	struct directive : sor<directive_origin,
 		directive_define,
 		directive_include,
@@ -294,7 +295,8 @@ namespace DevonASM
 		directive_byte,
 		directive_word,
 		directive_long,
-		directive_romexport
+		directive_romexport,
+		directive_align
 	> {};
 
 	struct linebody : seq<blk, opt<sor<directive, inst>>, if_then_else<at<one<';'>>, comment, until<eol, seven>>> {};
@@ -482,6 +484,21 @@ namespace DevonASM
 		}
 	};
 		
+	template<> struct action< directive_align >
+	{
+		template< typename Input > static void apply( const Input& in, Assembler & ASM)
+		{
+			if(ASM.LastCharAvailable)
+				ASM.AddByte(0);
+
+			if(ASM.LastInt != 0 )
+			{
+				while(ASM.CurAddress % ASM.LastInt != 0)
+					ASM.AddWord(0);
+			}
+		}
+	};
+
 	template<> struct action< directive_romexport >
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)

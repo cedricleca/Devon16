@@ -674,6 +674,7 @@ QWERTY_ShiftChar_NoMatch:
 	bra.np	#QWERTY_ShiftOn_Loop
 	rts
 
+	align	1	
 QWERTY_ShiftChar_LookUp:
 	byte '1', '!'
 	byte '2', '@'

@@ -542,7 +542,7 @@ void DevonASM::Assembler::AdvanceAddress()
 
 void DevonASM::Assembler::AddWord(uWORD w)
 {
-	CurAddress += 1;
+	CurAddress++;
 	if (CurPass == 0)
 		CodeChunks.back().WordSize++;
 	else if (CurPass == 1)

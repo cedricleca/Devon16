@@ -3178,7 +3178,7 @@ const TextEditor::LanguageDefinition & TextEditor::LanguageDefinition::DevonASM(
 			langDef.mKeywords.insert(k);
 
 		static const char* const identifiers[] = {
-"org","entry","byte","word","long","define","include","incbin","romexport"
+"org","entry","byte","word","long","define","include","incbin","romexport","align"
 		};
 		for (auto& k : identifiers)
 		{
