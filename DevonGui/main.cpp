@@ -923,7 +923,7 @@ int main(int argn, char**arg)
 		}
 
 		Machine.Cortico.SetOutputSurface((unsigned char *)GLTools::PrimaryBuffer.data());
-		Machine.KeyB.PushKeyEvents();
+		Machine.KeyB.PushKeyEvents(!Show_UI);
 		Machine.TickFrame();
 
 		DSoundTools::Render(Machine, Settings::Current.Volume);

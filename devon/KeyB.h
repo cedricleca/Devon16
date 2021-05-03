@@ -69,11 +69,11 @@ public:
 		}
 	}
 
-	void PushKeyEvents()
+	void PushKeyEvents(bool IncludeKeyDowns)
 	{
-		auto PushEvent = [this](int key, uWORD Toggles)
+		auto PushEvent = [this, IncludeKeyDowns](int key, uWORD Toggles)
 		{
-			auto TranslateKey = [](int key) -> int
+			auto TranslateKey = [IncludeKeyDowns](int key) -> int
 			{
 				switch(key)
 				{
@@ -92,7 +92,7 @@ public:
 				}
 			};
 
-			if((KeyState[CurKeyStateBuf][key] & 0x80) && !(KeyState[1 - CurKeyStateBuf][key] & 0x80))
+			if(IncludeKeyDowns && (KeyState[CurKeyStateBuf][key] & 0x80) && !(KeyState[1 - CurKeyStateBuf][key] & 0x80))
 			{
 				KeyEvents[PushEventIndex] = Toggles | (TranslateKey(key) & 0xff);
 				PushEventIndex = (PushEventIndex + 1) % EventBufSize;
