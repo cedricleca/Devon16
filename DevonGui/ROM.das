@@ -648,18 +648,14 @@ DrawCursor_:
 
 QWERTY_ShiftChar:
 	mov.w	$RAM_SpecialKeyToggles, r1
-	btsti	#4, r1
-	bra.np	#QWERTY_ShiftOn
+	btsti	#0, r1	; caps lock
+	bra.z	#!QWERTY_ShiftChar_CheckShift	
+	bnoti	#4, r1
+	
+QWERTY_ShiftChar_CheckShift:
+	btsti	#4, r1	; shift
+	bra.z	#QWERTY_ShiftChar_Ret
 
-	cmp		#'A', r0
-	bra.n	#QWERTY_ShiftChar_Ret
-	cmp		#'Z', r0
-	bra.p	#QWERTY_ShiftChar_Ret
-	add		#32, r0
-QWERTY_ShiftChar_Ret:
-	rts
-
-QWERTY_ShiftOn:
 	mov		#QWERTY_ShiftChar_LookUp, r1
 QWERTY_ShiftOn_Loop:
 	mov.w	(r1)+, r2
@@ -669,9 +665,18 @@ QWERTY_ShiftOn_Loop:
 	bra.np	#!QWERTY_ShiftChar_NoMatch
 	and		#0xff, r2
 	mov		r2, r0
+	rts
+	
 QWERTY_ShiftChar_NoMatch:
 	cmp		#QWERTY_ShiftChar_LookUp_End, r1
 	bra.np	#QWERTY_ShiftOn_Loop
+
+	cmp		#'A', r0
+	bra.n	#!QWERTY_ShiftChar_Ret
+	cmp		#'Z', r0
+	bra.p	#!QWERTY_ShiftChar_Ret
+	add		#32, r0
+QWERTY_ShiftChar_Ret:
 	rts
 
 	align	1	

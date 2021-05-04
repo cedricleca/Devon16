@@ -27,6 +27,7 @@ class KeyBChip
 	KeybType KeybType = KeybType::QWERTY;
 	BYTE KeyState[2][256];
 	int CurKeyStateBuf = 0;
+	int Toggles = 0;
 
 public:
 	KeyBChip()
@@ -107,31 +108,43 @@ public:
 		CurKeyStateBuf = 1 - CurKeyStateBuf;
 		if(GetKeyboardState(KeyState[CurKeyStateBuf]))
 		{
-			uWORD Toggles =	  ((KeyState[CurKeyStateBuf][VK_CAPITAL]>>7)<<8)
-							| ((KeyState[CurKeyStateBuf][VK_NUMLOCK]>>7)<<9)
-							| ((KeyState[CurKeyStateBuf][VK_SCROLL]>>7)<<10)
-							| ((KeyState[CurKeyStateBuf][VK_INSERT]>>7)<<11)
+			auto UpdateToggle = [this](int Key, int Shift)
+			{
+				if((KeyState[CurKeyStateBuf][Key] & 0x80) && !(KeyState[1 - CurKeyStateBuf][Key] & 0x80))
+				{
+					if(Toggles & (1<<Shift))
+						Toggles &= ~(1<<Shift);
+					else
+						Toggles |= (1<<Shift);
+				}
+			};
+
+			UpdateToggle(VK_CAPITAL, 8);
+			UpdateToggle(VK_NUMLOCK, 9);
+			UpdateToggle(VK_SCROLL, 10);
+			UpdateToggle(VK_INSERT, 11);
+			uWORD lToggles = Toggles
 							| ((KeyState[CurKeyStateBuf][VK_SHIFT]>>7)<<12)
 							| ((KeyState[CurKeyStateBuf][VK_CONTROL]>>7)<<13)
 							| ((KeyState[CurKeyStateBuf][VK_MENU]>>7)<<14);
 
 			for(int key = VK_BACK; key <= VK_HELP; key++)
-				PushEvent(key, Toggles);
+				PushEvent(key, lToggles);
 
 			for(int key = '0'; key <= '9'; key++)
-				PushEvent(key, Toggles);
+				PushEvent(key, lToggles);
 
 			for(int key = 'A'; key <= 'Z'; key++)
-				PushEvent(key, Toggles);
+				PushEvent(key, lToggles);
 
 			for(int key = VK_NUMPAD0; key <= VK_F6; key++)
-				PushEvent(key, Toggles);
+				PushEvent(key, lToggles);
 
 			for(int key = VK_OEM_1; key <= VK_OEM_3; key++)
-				PushEvent(key, Toggles);
+				PushEvent(key, lToggles);
 
 			for(int key = VK_OEM_4; key <= VK_OEM_7; key++)
-				PushEvent(key, Toggles);
+				PushEvent(key, lToggles);
 		}
 	}
 
