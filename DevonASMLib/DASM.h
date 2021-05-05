@@ -70,6 +70,7 @@ namespace DevonASM
 		std::map<std::string, int>::iterator SymbolsIt;
 		std::string LastFileName;
 		std::vector<std::string> IncludePathStack;
+		std::vector<int> IntsToAdd;
 
 		std::vector<CodeChunk> CodeChunks;
 		std::vector<EErrorCode> ErrorsThisLine;

@@ -10,6 +10,7 @@ void DevonASM::Assembler::Reset()
 	CodeChunks.clear();
 	CodeChunks.push_back(CodeChunk()); // add first code chunk 
 	IncludePathStack.clear();
+	IntsToAdd.clear();
 
 	LastInt = -1;
 	CurAddress = 0;
@@ -30,6 +31,7 @@ void DevonASM::Assembler::Pass1()
 	LastOPLong = false;
 	LastCharAvailable = false;
 	CurChunk = 0;
+	IntsToAdd.clear();
 
 	// reserve chunks data
 	for(auto & chunck : CodeChunks)

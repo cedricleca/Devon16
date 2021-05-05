@@ -1,5 +1,6 @@
 #pragma once
 
+#include <numeric>
 #include <string>
 #include <iostream>
 #include <stdio.h>
@@ -134,7 +135,8 @@ namespace DevonASM
 	struct charvalue : any {};
 	struct escapecharvalue : any {};
 	struct charinteger : seq<one<'\''>, if_then_else<one<'\\'>, escapecharvalue, charvalue>, one<'\''>> {};
-	struct integer : sor<hexainteger, decimalinteger, binaryinteger, charinteger, symbolreference> {};
+	struct integerToAdd : sor<hexainteger, decimalinteger, binaryinteger, charinteger, symbolreference> {};
+	struct integer : seq<integerToAdd, star<blk, one<'+'>, blk, integerToAdd>> {};
 
 	template <CPU::EAdMode AM> struct AMCode {};
 	template<> struct AMCode<CPU::EAdMode::Reg> : sor<regSP, seq<sor<one<'r'>, one<'R'>>, regindex>> {};
@@ -676,6 +678,21 @@ namespace DevonASM
 		}
 	};
 
+	template<> struct action< integer >
+	{
+		template< typename Input > static void apply( const Input& in, Assembler & ASM)
+		{
+			ASM.LastInt = std::accumulate(ASM.IntsToAdd.begin(), ASM.IntsToAdd.end(), 0);
+			ASM.IntsToAdd.clear();
+		}
+	};
+	template<> struct action< integerToAdd >
+	{
+		template< typename Input > static void apply( const Input& in, Assembler & ASM)
+		{
+			ASM.IntsToAdd.push_back(ASM.LastInt);
+		}
+	};
 	template<> struct action< decimalinteger >
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
