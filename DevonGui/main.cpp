@@ -172,17 +172,17 @@ void PlugROM(LogWindow & Log)
 	}
 }
 
-void SetROMFile(LogWindow & LogWindow)
+void SetROMFile()
 {
 	ifd::FileDialog::Instance().Open("OpenDroDialog", "Open a DRO cartridge file", "DRO file (*.dro){.dro},.*");
 }
 
-void SetDCAFile(LogWindow & LogWindow)
+void SetDCAFile()
 {
 	ifd::FileDialog::Instance().Open("OpenDcaDialog", "Open a DCA cartridge file", "DCA file (*.dca){.dca},.*");
 }
 
-void ExportCartridge(LogWindow & LogWindow)
+void ExportCartridge()
 {
 	ifd::FileDialog::Instance().Save("SaveDcaDialog", "Save a Devon Cartridge file", "DCA file (*.dca){.dca},.*");
 }
@@ -192,7 +192,7 @@ void LaunchImageTool()
 	ifd::FileDialog::Instance().Open("OpenImgDialog", "Open a BMP file", "BMP file (*.bmp){.bmp},.*");
 }
 
-void ExportROM(LogWindow & LogWindow)
+void ExportROM()
 {
 	ifd::FileDialog::Instance().Save("SaveDroDialog", "Save a Devon Rom file", "DRO file (*.dro){.dro},.*");
 }
@@ -591,20 +591,20 @@ int main(int argn, char**arg)
 						Show_SymbolList_Window = !Show_SymbolList_Window;
 
 					if (ImGui::MenuItem("Export Cartridge (.dca) File", "", false, AssemblySuccess && AssemblyDone))
-						ExportCartridge(LogWindow);
+						ExportCartridge();
 
 					if (ImGui::MenuItem("Export Rom (.dro) File", "", false, AssemblySuccess && AssemblyDone))
-						ExportROM(LogWindow);
+						ExportROM();
 
 					ImGui::EndMenu();
 				}
 				if (ImGui::BeginMenu("Machine"))
 				{
 					if (ImGui::MenuItem("Set ROM File", ""))
-						SetROMFile(LogWindow);
+						SetROMFile();
 
 					if (ImGui::MenuItem("Set Cartridge File", ""))
-						SetDCAFile(LogWindow);
+						SetDCAFile();
 
 					if (ImGui::MenuItem("General Reset", "F9"))
 						Machine.HardReset();
@@ -687,7 +687,7 @@ int main(int argn, char**arg)
 				CompileShaders();
 
 			if (ImGui::Button("Set ROM (.dro) File"))
-				SetROMFile(LogWindow);
+				SetROMFile();
 
 			if (!Settings::ROMFileName.empty())
 			{
@@ -696,7 +696,7 @@ int main(int argn, char**arg)
 			}
 
 			if (ImGui::Button("Set Cartridge (.dca) File"))
-				SetDCAFile(LogWindow);
+				SetDCAFile();
 
 			if (!Settings::CartridgeFileName.empty())
 			{
