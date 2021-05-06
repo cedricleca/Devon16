@@ -78,6 +78,9 @@ ROM_EntryPoint:
 
 	jsr		#FUNC_ClearScreen	
 	
+	mov		#WelcomeMsg, r2
+	jsr		#FUNC_Print
+
 	mov		#NoCartMsg, r2
 	jsr		#FUNC_Print
 
@@ -111,8 +114,17 @@ GFXRAMTest:
 	bra.p	#GFXRAMTest
 	
 	mov		#GfxRamTestOK, r2
-	jsr		#FUNC_Print	
+	jsr		#FUNC_Print
 
+	mov		#ReadyMsg, r2
+	jsr		#FUNC_Print
+	
+	mov		#!0, r1
+	mov		#RAM_ConsoleString, r2
+	mov		r1, (r2) ; null terminate the string
+	add		r2, r2 ; set to byte space
+	mov		r2, $RAM_ConsoleStringCsr
+	
 	bsr		#StoreCursorBack
 	intmask	#%10000000		; enable VBL only
 
@@ -210,6 +222,9 @@ VBL_PopKeyb:
 	cmp		#0x75, r0		; F6
 	bra.z	#VBL_PopKeyb
 
+	cmp		#0x08, r0		; BackSpace
+	bra.z	#VBL_PopKeyb_PressBackspace
+
 	cmp		#0x09, r0		; Tab
 	bra.z	#VBL_PopKeyb_PressTab
 
@@ -228,13 +243,21 @@ VBL_PopKeyb:
 	cmp		#0x28, r0		; Down
 	bra.z	#VBL_PopKeyb_PressDown
 
+	cmp		#0x2e, r0		; Delete
+	bra.z	#VBL_PopKeyb_PressDelete
+
 	cmp		#0xDE, r0		; '
 	bra.np	#VBL_PopKeyb_NoPressQuote
 	mov		#'\'', r0
 
 VBL_PopKeyb_NoPressQuote:
 	bsr		#QWERTY_ShiftChar
-	mov		r0, r2	
+	mov		r0, r2
+	
+	mov		$RAM_ConsoleStringCsr, r0
+	movb	r2, (r0)+
+	mov		r0, $RAM_ConsoleStringCsr
+	
 	bsr		#FUNC_DrawChar
 	bsr		#StoreCursorBack
 
@@ -245,7 +268,39 @@ VBL_PopKeyb_NoPressQuote:
 	
 	bra		#VBL_PopKeyb
 	
+VBL_PopKeyb_PressDelete:
+	mov		#' ', r2
+	mov		$RAM_ConsoleStringCsr, r0
+	movb	r2, (r0)+
+	mov		r0, $RAM_ConsoleStringCsr
+
+	bsr		#RemoveCursor
+	mov		#' ', r2
+	bsr		#FUNC_DrawChar
+	bsr		#StoreCursorBack
+	bra		#VBL_PopKeyb
+	
+VBL_PopKeyb_PressBackspace:
+	mov		$RAM_ConsoleStringCsr, r0
+	add		#!-1, r0
+	mov		#' ', r3
+	movb	r3, (r0)
+	
+	bsr		#RemoveCursor
+
+	mov.w	$RAM_Writer_XOffset, r3
+	sub		#!1, r3
+	mov.w	r3, $RAM_Writer_XOffset	
+
+	mov		#' ', r2
+	bsr		#FUNC_DrawChar
+	bsr		#StoreCursorBack
+	
 VBL_PopKeyb_PressLeft:
+	mov		$RAM_ConsoleStringCsr, r0
+	add		#!-1, r0
+	mov		r0, $RAM_ConsoleStringCsr
+
 	bsr		#RemoveCursor
 	mov.w	$RAM_Writer_XOffset, r3
 	sub		#!1, r3
@@ -254,16 +309,20 @@ VBL_PopKeyb_PressLeft:
 	bra		#VBL_PopKeyb
 
 VBL_PopKeyb_PressUp:
-	bsr		#RemoveCursor
-	mov.w	$RAM_Writer_LineWidth, r5
-	mul		#18, r5
-	mov.w	$RAM_Writer_YOffset, r3
-	sub		r5, r3
-	mov.w	r3, $RAM_Writer_YOffset	
-	bsr		#StoreCursorBack
+;	bsr		#RemoveCursor
+;	mov.w	$RAM_Writer_LineWidth, r5
+;	mul		#18, r5
+;	mov.w	$RAM_Writer_YOffset, r3
+;	sub		r5, r3
+;	mov.w	r3, $RAM_Writer_YOffset	
+;	bsr		#StoreCursorBack
 	bra		#VBL_PopKeyb
 
 VBL_PopKeyb_PressRight:
+	mov		$RAM_ConsoleStringCsr, r0
+	add		#!1, r0
+	mov		r0, $RAM_ConsoleStringCsr
+	
 	bsr		#RemoveCursor
 	mov.w	$RAM_Writer_XOffset, r3
 	add		#!1, r3
@@ -272,16 +331,21 @@ VBL_PopKeyb_PressRight:
 	bra		#VBL_PopKeyb
 
 VBL_PopKeyb_PressDown:
-	bsr		#RemoveCursor
-	mov.w	$RAM_Writer_LineWidth, r5
-	mul		#18, r5
-	mov.w	$RAM_Writer_YOffset, r3
-	add		r5, r3
-	mov.w	r3, $RAM_Writer_YOffset	
-	bsr		#StoreCursorBack
+;	bsr		#RemoveCursor
+;	mov.w	$RAM_Writer_LineWidth, r5
+;	mul		#18, r5
+;	mov.w	$RAM_Writer_YOffset, r3
+;	add		r5, r3
+;	mov.w	r3, $RAM_Writer_YOffset	
+;	bsr		#StoreCursorBack
 	bra		#VBL_PopKeyb
 
 VBL_PopKeyb_PressTab:
+	mov		$RAM_ConsoleStringCsr, r0
+	add		#!4, r0
+	and		#0xFFFC, r0
+	mov		r0, $RAM_ConsoleStringCsr
+
 	bsr		#RemoveCursor
 	mov.w	$RAM_Writer_XOffset, r3
 	add		#!4, r3
@@ -710,6 +774,8 @@ KrakenStrike_BusError:			byte "Bus error", 0
 KrakenStrike_InstructionError:	byte "Bad instruction", 0
 KrakenStrike_DivideByZero:		byte "Divide by zero", 0
 		
+WelcomeMsg:		byte "Devon16 prototype, welcome.\n", 0
+ReadyMsg:		byte "Ready\n", 0
 CpuRamTestOK:	byte "CPU RAM Check OK.\n", 0
 GfxRamTestOK:	byte "GFX RAM Check OK.\n", 0
 NoCartMsg:		byte "No Cartridge detected.\n", 0

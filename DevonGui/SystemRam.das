@@ -11,4 +11,8 @@ define RAM_Writer_CursorTimer	RAM_Writer_CursorState		+ 1
 define RAM_Writer_CursorChar	RAM_Writer_CursorTimer		+ 1			
 define RAM_Writer_LineWidth		RAM_Writer_CursorChar		+ 1			
 define RAM_Writer_BkSav			RAM_Writer_LineWidth		+ 1			
-define RAM_Writer_BkSavAdd		RAM_Writer_BkSav			+ 7			
+define RAM_Writer_BkSavAdd		RAM_Writer_BkSav			+ 7	
+define RAM_ConsoleString		RAM_Writer_BkSavAdd			+ 2
+define RAM_ConsoleStringCsr		RAM_ConsoleString			+ 256
+
+define RAM_FirstAvailable		RAM_ConsoleStringCsr		+ 2
