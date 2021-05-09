@@ -515,7 +515,7 @@ namespace DevonASM
 		{
 			try
 			{
-				const std::string filepath = Assembler::FilePath(ASM.IncludePathStack.front()) + '\\' + ASM.LastFileName;
+				const std::string filepath = Assembler::FilePath(ASM.IncludePathStack.front()) + ASM.LastFileName;
 				ASM.Incbin(filepath.c_str());
 			}
 			catch(std::runtime_error err)
@@ -531,7 +531,7 @@ namespace DevonASM
 	{
 		template< typename Input > static void apply( const Input& in, Assembler & ASM)
 		{
-			const std::string filepath = Assembler::FilePath(ASM.IncludePathStack.front()) + '\\' + ASM.LastFileName;
+			const std::string filepath = Assembler::FilePath(ASM.IncludePathStack.front()) + ASM.LastFileName;
 			ASM.IncludePathStack.push_back(filepath);
 			try
 			{

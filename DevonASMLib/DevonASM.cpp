@@ -637,8 +637,12 @@ void DevonASM::Assembler::Incbin(const char * FileName)
 std::string DevonASM::Assembler::FilePath(const std::string & FileName)
 {
 	size_t cur = FileName.size() - 1;
-	for(; cur > 0 && FileName[cur] != '//' && FileName[cur] != '\\'; --cur)	{}
-	return FileName.substr(0, cur);
+	for(; cur > 0 && FileName[cur] != '//' && FileName[cur] != '\\'; --cur);
+
+	if(cur > 0)
+		return FileName.substr(0, cur).append("//");
+	else
+		return "";
 }
 
 bool DevonASM::Assembler::AssembleFile(const char * FileName)

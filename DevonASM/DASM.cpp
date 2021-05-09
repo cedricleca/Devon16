@@ -2,7 +2,6 @@
 //
 
 #include "stdafx.h"
-
 #include <string>
 #include <iostream>
 #include <stdio.h>
@@ -11,21 +10,36 @@
 
 int main(int argc, char * argv[])
 {
-	if (argc > 1)
+	try
 	{
-		DevonASM::Assembler ASM = DevonASM::Assembler();
-		ASM.AssembleFile(argv[1]);
-
-		if (argc > 2 && 0 == strncmp(argv[2], "-dca:", 5))
+		if(argc > 1)
 		{
-			ASM.ExportROMFile(argv[2] + 5, 0x20000, 0x20000, 0x200);
-		}
+			DevonASM::Assembler ASM = DevonASM::Assembler();
+			ASM.AssembleFile(argv[1]);
 
-		if (argc > 2 && 0 == strncmp(argv[2], "-dro:", 5))
-		{
-			ASM.ExportROMFile(argv[2] + 5, 0x0, 0x10000);
+			if(argc > 2)
+			{
+				if(0 == strncmp(argv[2], "-dca:", 5))
+				{
+					ASM.ExportROMFile(argv[2] + 5, 0x20000, 0x20000, 0x200);
+					std::cout << "Done exporting cartridge file.\n";
+				}
+				else if(0 == strncmp(argv[2], "-dro:", 5))
+				{
+					ASM.ExportROMFile(argv[2] + 5, 0x0, 0x10000);
+					std::cout << "Done exporting rom file.\n";
+				}
+				else
+				{
+					std::cout << "-dca:filename.das to export cartridge file\n";
+					std::cout << "-dro:filename.dro to export rom file\n";
+				}
+			}
 		}
-
-		std::cin.get();
+	}
+	catch(std::exception & err)
+	{
+		std::cout << err.what() << '\n';
+		return false;
 	}
 }
