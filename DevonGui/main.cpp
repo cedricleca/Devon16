@@ -17,6 +17,9 @@
 #include <algorithm>    // std::transform
 #include <iterator>
 #include <thread>
+#include <sys/types.h>
+#include <sys/stat.h> 
+
 #include "..\DevonASMLib\DASM.h"
 #include "..\devon\DevonMachine.h"
 #include "MemoryEditor.h"
@@ -74,13 +77,14 @@ static void glfw_error_callback(int error, const char* description)
 	fprintf(stderr, "Glfw Error %d: %s\n", error, description);
 }
 
-
 // Data
 static DevonASM::Assembler ASM;
 static const char * IniName = "DevonGui.ini";
 static std::string DCAExportName;
 static std::string DROExportName;
 static PictureToolWindow PicToolWindow;
+time_t ROMFileTimeStamp;
+time_t CARTFileTimeStamp;
 
 std::vector<char> ROMBuf;
 std::vector<char> CartridgeBuf;
@@ -233,7 +237,6 @@ void ExportCartridge(std::string Filename, LogWindow & LogWindow)
 		Settings::Lock(true);
 		Settings::CartridgeFileName = DCAExportName;
 		Settings::Lock(false);
-		CartridgeReadyToPlugin = true;
 	}
 }
 
@@ -250,7 +253,6 @@ void ExportROM(std::string Filename, LogWindow & LogWindow)
 		Settings::Lock(true);
 		Settings::ROMFileName = DROExportName;
 		Settings::Lock(false);
-		PlugROM(LogWindow);
 	}
 	else
 	{
@@ -303,13 +305,45 @@ bool IsWorkThreadBusy() { return StartCompileThread; }
 std::atomic<bool> WorkThreadQuit = false;
 void WorkThreadFunc(LogWindow* _LogWindow)
 {
-	while (!WorkThreadQuit)
+	int NbIterToFileCheck = 0;
+	while(!WorkThreadQuit)
 	{
 		Sleep(200);
-		if (StartCompileThread)
+		if(StartCompileThread)
 		{
 			AssembleAndExport(*_LogWindow);
 			StartCompileThread = false;
+		}
+
+		// check if rom files have changed and need relaoding
+		if(NbIterToFileCheck == 0)
+		{
+			struct stat st;
+			Settings::Lock(true);
+			stat(Settings::ROMFileName.c_str(), &st);
+			Settings::Lock(false);
+			time_t ROMftime = st.st_mtime;
+			if(ROMftime > ROMFileTimeStamp)
+			{
+				PlugROM(*_LogWindow);
+				ROMFileTimeStamp = ROMftime;
+			}
+
+			Settings::Lock(true);
+			stat(Settings::CartridgeFileName.c_str(), &st);
+			Settings::Lock(false);
+			time_t CARTftime = st.st_mtime;
+			if(CARTftime > CARTFileTimeStamp)
+			{
+				CartridgeReadyToPlugin = true;
+				CARTFileTimeStamp = CARTftime;
+			}
+
+			NbIterToFileCheck = 5;
+		}
+		else
+		{
+			NbIterToFileCheck--;
 		}
 	}
 }
@@ -507,6 +541,21 @@ int main(int argn, char**arg)
 
 	PlugROM(LogWindow);
 	PlugCartridge(LogWindow);
+
+	{
+		struct stat st;
+		Settings::Lock(true);
+		stat(Settings::ROMFileName.c_str(), &st);
+		Settings::Lock(false);
+		time_t ROMftime = st.st_mtime;
+		ROMFileTimeStamp = ROMftime;
+
+		Settings::Lock(true);
+		stat(Settings::CartridgeFileName.c_str(), &st);
+		Settings::Lock(false);
+		time_t CARTftime = st.st_mtime;
+		CARTFileTimeStamp = CARTftime;
+	}
 
 	ImVec4 clear_col = ImColor(61, 61, 61);
 
@@ -818,7 +867,7 @@ int main(int argn, char**arg)
 				Settings::Lock(true);
 				Settings::ROMFileName = filename;
 				Settings::Lock(false);
-				PlugROM(LogWindow);
+				ROMFileTimeStamp = 0; // trig a DRO relaod
 			});
 
 			// open DCA file dialog result
@@ -827,7 +876,7 @@ int main(int argn, char**arg)
 				Settings::Lock(true);
 				Settings::CartridgeFileName = filename;
 				Settings::Lock(false);
-				CartridgeReadyToPlugin = true;
+				CARTFileTimeStamp = 0; // trig a CART reload
 			});
 
 			// save DCA file dialog result
