@@ -428,7 +428,7 @@ ResetCorticoRegs_Loop:
 	mov.w	r6, (r0)+		; Cort_HStart
 	sswap	#%01000000
 	mov.w	r6, (r0)+		; Cort_HEnd
-	
+
 	sswap	#%10
 	sub		#!1, r1
 	sswap	#%10
