@@ -124,6 +124,7 @@ GFXRAMTest:
 	mov		r1, (r2) ; null terminate the string
 	add		r2, r2 ; set to byte space
 	mov		r2, $RAM_ConsoleStringCsr
+	mov		r2, $RAM_ConsoleString_ByteSpace
 	
 	bsr		#StoreCursorBack
 	intmask	#%10000000		; enable VBL only
@@ -297,15 +298,40 @@ VBL_PopKeyb_PressBackspace:
 	bsr		#StoreCursorBack
 	
 VBL_PopKeyb_PressLeft:
+	mov		#!0, r1
 	mov		$RAM_ConsoleStringCsr, r0
 	add		#!-1, r0
+	cmp		$RAM_ConsoleString_ByteSpace, r0
+	bra.p	#!VBL_PopKeyb_PressLeft_1
+	mov		$RAM_ConsoleString_ByteSpace, r0
+	mov		#!1, r1 ; beginning of the buffer
+VBL_PopKeyb_PressLeft_1:
 	mov		r0, $RAM_ConsoleStringCsr
-
+	ssave	#%10
 	bsr		#RemoveCursor
-	mov.w	$RAM_Writer_XOffset, r3
-	sub		#!1, r3
-	mov.w	r3, $RAM_Writer_XOffset	
+	sload	#%10
+	mov.w	$RAM_Writer_XOffset, r0
+	add		#!-1, r0
+	bra.pz	#VBL_PopKeyb_PressLeft_2
+	add		#!0, r1
+	bra.p	#VBL_PopKeyb_PressLeft_3
+	mov.w	$RAM_Writer_Width, r0
+	add		#!-1, r0
+	mov.w	$RAM_Writer_LineWidth, r2
+	mul		#18, r2
+	mov.w	$RAM_Writer_YOffset, r1
+	sub		r2, r1
+	mov.w	r1, $RAM_Writer_YOffset
+	bra		#!VBL_PopKeyb_PressLeft_2
+VBL_PopKeyb_PressLeft_3:
+	mov		#!0, r0
+VBL_PopKeyb_PressLeft_2:
+	mov.w	r0, $RAM_Writer_XOffset	
 	bsr		#StoreCursorBack
+	movi	#1, r0
+	mov.w	r0, $RAM_Writer_CursorTimer	
+	movi	#0, r0
+	mov.w	r0, $RAM_Writer_CursorState
 	bra		#VBL_PopKeyb
 
 VBL_PopKeyb_PressUp:
@@ -321,13 +347,35 @@ VBL_PopKeyb_PressUp:
 VBL_PopKeyb_PressRight:
 	mov		$RAM_ConsoleStringCsr, r0
 	add		#!1, r0
+	cmp		$RAM_ConsoleString_ByteSpace, r0
+	bra.p	#!VBL_PopKeyb_PressRight_1
+	mov		$RAM_ConsoleString_ByteSpace, r0
+VBL_PopKeyb_PressRight_1:
 	mov		r0, $RAM_ConsoleStringCsr
-	
+	ssave	#%10
 	bsr		#RemoveCursor
-	mov.w	$RAM_Writer_XOffset, r3
-	add		#!1, r3
-	mov.w	r3, $RAM_Writer_XOffset	
+	sload	#%10
+	mov.w	$RAM_Writer_XOffset, r0
+	add		#!1, r0
+	
+	; TODO : check buffer overflow
+	
+	mov.w	$RAM_Writer_Width, r2
+	cmp		r2, r0
+	bra.n	#VBL_PopKeyb_PressRight_2
+	mov		#!0, r0
+	mov.w	$RAM_Writer_LineWidth, r2
+	mul		#18, r2
+	mov.w	$RAM_Writer_YOffset, r1
+	add		r2, r1
+	mov.w	r1, $RAM_Writer_YOffset
+VBL_PopKeyb_PressRight_2:
+	mov.w	r0, $RAM_Writer_XOffset	
 	bsr		#StoreCursorBack
+	movi	#1, r0
+	mov.w	r0, $RAM_Writer_CursorTimer	
+	movi	#0, r0
+	mov.w	r0, $RAM_Writer_CursorState
 	bra		#VBL_PopKeyb
 
 VBL_PopKeyb_PressDown:
@@ -612,6 +660,8 @@ KrakenStrike:
 	jsr		#FUNC_ResetCorticoRegs	; Reset Cortico registers
 	jsr		#FUNC_ResetDefaultClut	; Reset Clut
 	jsr		#FUNC_ClearScreen
+	mov		#0xf40, r2
+	mov.w		r2, $Cort_Clut01
 	mov		#!0, r2
 	mov		r2, $RAM_Writer_YOffset ; resets X & Y
 	mov		#KrakenStrike_Title, r2
