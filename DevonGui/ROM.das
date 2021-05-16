@@ -560,8 +560,6 @@ FUNC_DrawChar:
 	add		r6, r5
 	add		r5, r5
 
-	mov		#RAM_Font, r6
-	
 	mov		$Cort_BPL0_BaseAdd_H, r2
 	add		r2, r2
 	mov.w	$RAM_Writer_YOffset, r3
@@ -573,50 +571,19 @@ FUNC_DrawChar:
 	mov		r0, r1
 	lsri	#1, r1
 	mul		#9, r1
-	add		r6, r1
+	add		#RAM_Font, r1
 	add		r1, r1
 	and		#!1, r0
 	add		r0, r1
-
+	
+	movi	#8, r6	
+FUNC_DrawChar_Loop:
 	movb	(r1), r4
 	movb	r4, (r2)
 	add		r5, r2
 	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
-
-	movb	(r1), r4
-	movb	r4, (r2)
-	add		r5, r2
-	add		#!2, r1
+	sub		#!1, r6
+	bra.pn	#!FUNC_DrawChar_Loop
 
 	movb	(r1), r4
 	movb	r4, (r2)
