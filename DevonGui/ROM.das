@@ -50,6 +50,8 @@ Trap0_FUNC_Table:
 	long	FUNC_DrawChar
 	long	FUNC_Print
 	long	FUNC_ClearScreen
+	long	FUNC_Memclr
+	long	FUNC_Memset
 
 DefaultClut:
 	word	0x000, 0xAAA, 0xFFF, 0xC33, 0xE79, 0x543, 0xA62, 0xF93, 0xFE6, 0x244, 0x481, 0xAC2, 0x123, 0x058, 0x3AF, 0xBDE
@@ -412,6 +414,12 @@ VBL_PopKeyb_PressReturn:
 	add		r5, r3
 	mov.w	r3, $RAM_Writer_YOffset
 	bsr		#StoreCursorBack
+	
+	mov		$RAM_ConsoleString_ByteSpace, r2
+	mov		r2, $RAM_ConsoleStringCsr
+	mov		#RAM_ConsoleString, r2
+	mov		#0x100, r4
+	jsr		#FUNC_Memclr
 	bra		#VBL_PopKeyb
 
 VBL_PopKeyb_End:
@@ -496,6 +504,16 @@ FUNC_Memcpy_L:
 	mov		r5, (r3)+
 	sub		#!1, r4
 	bra.pn	#!FUNC_Memcpy_L
+	rts
+
+; baseAdd = r2, Wsize = r4, filldata = r3
+FUNC_Memclr:
+	mov		#!0, r3
+FUNC_Memset:
+FUNC_Memclr_Loop:
+	mov.w	r3, (r2)+
+	sub		#!1, r4
+	bra.pn	#!FUNC_Memclr_Loop
 	rts
 
 FUNC_ResetDefaultClut:
