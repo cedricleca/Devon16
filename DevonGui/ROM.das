@@ -52,6 +52,7 @@ Trap0_FUNC_Table:
 	long	FUNC_ClearScreen
 	long	FUNC_Memclr
 	long	FUNC_Memset
+	long	FUNC_DrawChar_Color
 
 DefaultClut:
 	word	0x000, 0xAAA, 0xFFF, 0xC33, 0xE79, 0x543, 0xA62, 0xF93, 0xFE6, 0x244, 0x481, 0xAC2, 0x123, 0x058, 0x3AF, 0xBDE
@@ -120,6 +121,19 @@ GFXRAMTest:
 
 	mov		#ReadyMsg, r2
 	jsr		#FUNC_Print
+	
+	mov		#!0, r3
+	mov		#'A', r2
+testXXX:
+	mov		r2, (r7)+
+	mov		r3, (r7)+
+	jsr		#FUNC_DrawChar_Color
+	mov		-(r7), r3
+	mov		-(r7), r2
+	add		#!1, r3
+	add		#!1, r2
+	cmp		#15, r3
+	bra.n	#testXXX
 	
 	mov		#!0, r1
 	mov		#RAM_ConsoleString, r2
@@ -285,7 +299,7 @@ VBL_PopKeyb_PressDelete:
 	
 VBL_PopKeyb_PressBackspace:
 	mov		$RAM_ConsoleStringCsr, r0
-	add		#!-1, r0
+	sub		#!1, r0
 	mov		#' ', r3
 	movb	r3, (r0)
 	
@@ -447,8 +461,7 @@ DefaultTrap_Unused:
 	rte
 
 FUNC_ResetCorticoRegs:
-	mov		#Cort_H, r0
-	add		#!4, r0
+	mov		#Cort_Control, r0
 	movi	#0xF, r1
 	mov.w	r1, (r0)+		; BPLEnable 
 
@@ -550,22 +563,59 @@ FUNC_ClearScreen_Loop:
 	bra.p	#!FUNC_ClearScreen_Loop
 	rts
 	
+; r2 = char, r3 = color
+FUNC_DrawChar_Color:
+	movi	#0, r0
+	mov.w 	r0, $RAM_Writer_AdvanceCursor
+FUNC_DrawChar_Color_Loop:
+	btst	r0, r3
+	bra.z	#FUNC_DrawChar_Color_Continue
+	mov		r0, (r7)+
+	mov		r2, (r7)+
+	mov		r3, (r7)+
+	mov		r0, r3 ; pass in the BPL #
+	bsr		#FUNC_DrawChar_wBPLOffset
+	mov		-(r7), r3
+	mov		-(r7), r2
+	mov		-(r7), r0
+FUNC_DrawChar_Color_Continue:
+	add		#!1, r0
+	btsti	#3, r0
+	bra.z	#FUNC_DrawChar_Color_Loop	
+	movi	#1, r0
+	mov.w 	r0, $RAM_Writer_AdvanceCursor
+	bra		#FUNC_DrawChar_AdvanceCursor
+
+; r2 = char, r3 = BPL #
 FUNC_DrawChar:
+	mov		#!0, r3
+	mov		#!1, r0
+	mov.w	r0, $RAM_Writer_AdvanceCursor
+FUNC_DrawChar_wBPLOffset:
 	mov		r2, r0
-	mov.w	$Cort_BPL0_HEnd, r5
-	mov.w	$Cort_BPL0_HStart, r6
+	mul		#10, r3
+	mov		#Cort_BPL0_HEnd, r1
+	add		r3, r1
+	mov.w	(r1), r5
+	mov		#Cort_BPL0_HStart, r1
+	add		r3, r1
+	mov.w	(r1), r6
 	sub		r6, r5
-	mov.w	$Cort_BPL0_Stride, r6
+	mov		#Cort_BPL0_Stride, r1
+	add		r3, r1
+	mov.w	(r1), r6
 	ext16	r6
 	add		r6, r5
 	add		r5, r5
 
-	mov		$Cort_BPL0_BaseAdd_H, r2
+	mov		#Cort_BPL0_BaseAdd_H, r1
+	add		r3, r1
+	mov		(r1), r2
 	add		r2, r2
-	mov.w	$RAM_Writer_YOffset, r3
-	add		r3, r2
-	mov.w	$RAM_Writer_XOffset, r3
-	add		r3, r2
+	mov.w	$RAM_Writer_YOffset, r6
+	add		r6, r2
+	mov.w	$RAM_Writer_XOffset, r6
+	add		r6, r2
 	
 	sub		#'!', r0
 	mov		r0, r1
@@ -584,10 +634,16 @@ FUNC_DrawChar_Loop:
 	add		#!2, r1
 	sub		#!1, r6
 	bra.pn	#!FUNC_DrawChar_Loop
-
 	movb	(r1), r4
 	movb	r4, (r2)
 
+	mov.w 	$RAM_Writer_AdvanceCursor, r2
+	ext16	r2
+	add		#!0, r2
+	bra.np	#!FUNC_DrawChar_AdvanceCursor
+	rts
+	
+FUNC_DrawChar_AdvanceCursor:
 	mov.w	$RAM_Writer_XOffset, r2
 	add		#!1, r2
 	mov.w	$RAM_Writer_Width, r3

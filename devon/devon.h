@@ -145,9 +145,9 @@ namespace Devon
 				struct { uWORD REG:3, UNU:2, WLS:1, WHS:1, LS:1, OPC:3, POPC:5; }	Type7; // SWP
 				struct { uWORD OP:4, AM:3, UNU:1, OPC:3, POPC:5; }					Type8; // NOT, TRAP, NEG, VBASE
 				struct { uWORD OP:8, OPC:3, POPC:5; }								Type9; // INTMASK
+				struct { uWORD REG:3, UNU:3, M:2, OPC:3, POPC:5; }					Type11; // EXT
 
 				struct { uWORD OPC:8, POPC:8; }										Type10;
-				struct { uWORD REG:3, UNU:3, M:2, OPC:3, POPC:5; }					Type11; // EXT
 			} Helper;
 
 			unsigned char SrcRegister;

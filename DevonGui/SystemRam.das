@@ -14,6 +14,7 @@ define RAM_Writer_BkSav				RAM_Writer_LineWidth		+ 1
 define RAM_Writer_BkSavAdd			RAM_Writer_BkSav			+ 7	
 define RAM_ConsoleString			RAM_Writer_BkSavAdd			+ 2
 define RAM_ConsoleStringCsr			RAM_ConsoleString			+ 256
-define RAM_ConsoleString_ByteSpace	RAM_ConsoleStringCsr		+ 2 
+define RAM_ConsoleString_ByteSpace	RAM_ConsoleStringCsr		+ 2
+define RAM_Writer_AdvanceCursor		RAM_ConsoleString_ByteSpace	+ 2
 
-define RAM_FirstAvailable			RAM_ConsoleString_ByteSpace	+ 2
+define RAM_FirstAvailable			RAM_ConsoleString_ByteSpace	+ 1
