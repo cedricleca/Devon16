@@ -702,7 +702,7 @@ KrakenStrike:
 	jsr		#FUNC_ResetDefaultClut	; Reset Clut
 	jsr		#FUNC_ClearScreen
 	mov		#0xf40, r2
-	mov.w		r2, $Cort_Clut01
+	mov.w	r2, $Cort_Clut01
 	mov		#!0, r2
 	mov		r2, $RAM_Writer_YOffset ; resets X & Y
 	mov		#KrakenStrike_Title, r2
@@ -723,53 +723,26 @@ StoreCursorBack:
 	add		#0x40000, r2
 	mov		r2, $RAM_Writer_BkSavAdd
 	mov		#RAM_Writer_BkSav, r3
-
+	movi	#7, r0
+StoreCursorBack_Loop:
 	mov.w	(r2), r1
 	mov.w	r1, (r3)+
 	add		r5, r2
-	mov.w	(r2), r1
-	mov.w	r1, (r3)+
-	add		r5, r2
-	mov.w	(r2), r1
-	mov.w	r1, (r3)+
-	add		r5, r2
-	mov.w	(r2), r1
-	mov.w	r1, (r3)+
-	add		r5, r2
-	mov.w	(r2), r1
-	mov.w	r1, (r3)+
-	add		r5, r2
-	mov.w	(r2), r1
-	mov.w	r1, (r3)+
-	add		r5, r2
-	mov.w	(r2), r1
-	mov.w	r1, (r3)+
+	sub		#!1, r0
+	bra.p	#!StoreCursorBack_Loop
 	rts
 
 RemoveCursor:
 	mov.w	$RAM_Writer_LineWidth, r5
 	mov		$RAM_Writer_BkSavAdd, r2
 	mov		#RAM_Writer_BkSav, r3
+	movi	#7, r0
+RemoveCursor_Loop:
 	mov.w	(r3)+, r1
 	mov.w	r1, (r2)
 	add		r5, r2
-	mov.w	(r3)+, r1
-	mov.w	r1, (r2)
-	add		r5, r2
-	mov.w	(r3)+, r1
-	mov.w	r1, (r2)
-	add		r5, r2
-	mov.w	(r3)+, r1
-	mov.w	r1, (r2)
-	add		r5, r2
-	mov.w	(r3)+, r1
-	mov.w	r1, (r2)
-	add		r5, r2
-	mov.w	(r3)+, r1
-	mov.w	r1, (r2)
-	add		r5, r2
-	mov.w	(r3)+, r1
-	mov.w	r1, (r2)
+	sub		#!1, r0
+	bra.p	#!RemoveCursor_Loop
 	rts
 
 DrawCursor:
@@ -785,7 +758,6 @@ DrawCursor:
 	bra.np	#DrawCursor_	
 	lsli	#8, r4
 DrawCursor_:
-	mov		#RAM_Writer_BkSav, r3
 	or.w	r4, (r2)
 	add		r5, r2
 	or.w	r4, (r2)
@@ -864,7 +836,7 @@ KrakenStrike_Text:				byte "\nThis is an unrecoverable event\nPlease reset", 0
 KrakenStrike_BusError:			byte "Bus error", 0
 KrakenStrike_InstructionError:	byte "Bad instruction", 0
 KrakenStrike_DivideByZero:		byte "Divide by zero", 0
-		
+
 WelcomeMsg:		byte "Devon16 prototype, welcome.\n", 0
 ReadyMsg:		byte "Ready\n", 0
 CpuRamTestOK:	byte "CPU RAM Check OK.\n", 0
