@@ -9,3 +9,4 @@ define FUNC_ClearScreen			7
 define FUNC_Memclr				8
 define FUNC_Memset				9
 define FUNC_DrawChar_Color		10
+define FUNC_PrintColor			11

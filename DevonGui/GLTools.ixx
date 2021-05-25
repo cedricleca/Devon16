@@ -131,7 +131,7 @@ namespace GLTools
 
 	GLuint glQuadBuffer;
 
-	const uint32_t PrimaryH = 512;
+	export const uint32_t PrimaryH = 512;
 	const uint32_t PrimaryW = 512;
 
 	int PreviousW = 0;

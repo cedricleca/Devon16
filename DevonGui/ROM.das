@@ -53,6 +53,7 @@ Trap0_FUNC_Table:
 	long	FUNC_Memclr
 	long	FUNC_Memset
 	long	FUNC_DrawChar_Color
+	long	FUNC_PrintColor
 
 DefaultClut:
 	word	0x000, 0xAAA, 0xFFF, 0xC33, 0xE79, 0x543, 0xA62, 0xF93, 0xFE6, 0x244, 0x481, 0xAC2, 0x123, 0x058, 0x3AF, 0xBDE
@@ -81,8 +82,9 @@ ROM_EntryPoint:
 
 	jsr		#FUNC_ClearScreen	
 	
+	movi	#14, r3
 	mov		#WelcomeMsg, r2
-	jsr		#FUNC_Print
+	jsr		#FUNC_PrintColor
 
 	mov		#NoCartMsg, r2
 	jsr		#FUNC_Print
@@ -119,22 +121,10 @@ GFXRAMTest:
 	mov		#GfxRamTestOK, r2
 	jsr		#FUNC_Print
 
+	movi	#2, r3
 	mov		#ReadyMsg, r2
-	jsr		#FUNC_Print
-	
-	mov		#!0, r3
-	mov		#'A', r2
-testXXX:
-	mov		r2, (r7)+
-	mov		r3, (r7)+
-	jsr		#FUNC_DrawChar_Color
-	mov		-(r7), r3
-	mov		-(r7), r2
-	add		#!1, r3
-	add		#!1, r2
-	cmp		#15, r3
-	bra.n	#testXXX
-	
+	jsr		#FUNC_PrintColor
+
 	mov		#!0, r1
 	mov		#RAM_ConsoleString, r2
 	mov		r1, (r2) ; null terminate the string
@@ -693,6 +683,40 @@ FUNC_Print_DrawChar:
 	sload	#%00000001
 	bra		#FUNC_Print_Loop
 FUNC_Print_Ret:
+	rts
+
+FUNC_PrintColor:
+	mov		r2, r0
+	add		r0, r0
+FUNC_PrintColor_Loop:
+	movb	(r0)+, r2
+	add		#!0, r2
+	bra.z	#FUNC_Print_Ret
+	cmp		#'\n', r2
+	bra.np	#FUNC_PrintColor_DrawChar
+	
+	mov		#!0, r2
+	mov.w	r2, $RAM_Writer_XOffset
+
+	mov.w	$Cort_BPL0_HEnd, r5
+	mov.w	$Cort_BPL0_HStart, r6
+	sub		r6, r5
+	mov.w	$Cort_BPL0_Stride, r6
+	ext16	r6
+	add		r6, r5
+	mul		#18, r5
+
+	mov.w	$RAM_Writer_YOffset, r2
+	add		r5, r2
+	mov.w	r2, $RAM_Writer_YOffset
+	jmp		#FUNC_PrintColor_Loop
+	
+FUNC_PrintColor_DrawChar:
+	ssave	#%00001001
+	jsr		#FUNC_DrawChar_Color
+	sload	#%00001001
+	bra		#FUNC_PrintColor_Loop
+FUNC_PrintColor_Ret:
 	rts
 
 ; unrecoverable error : r2=Error message to display
