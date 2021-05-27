@@ -700,7 +700,7 @@ bool DevonASM::Assembler::AssembleFile(const char * FileName)
 	}
 
 	AssemblyCompleteMessage();
-	return true;
+	return 	NbErrors == 0;
 }
 
 bool DevonASM::Assembler::ExportROMFile(const char * FileName, int ROMBaseAddress, int MaxSize, int MinSize)

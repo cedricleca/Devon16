@@ -108,7 +108,7 @@ RAMTest:
 	; ********* GFX RAM Test *********
 	mov		#0x10000, r1
 	mov		$MMU_MemLayout, r0
-	btsti	#0, r0 ; check if we have gfx ran extension
+	btsti	#0, r0 ; check if we have gfx ram extension
 	mov		#0x40000, r0
 	bra.z	#GFXRAMTest
 	lsli	#1, r1
