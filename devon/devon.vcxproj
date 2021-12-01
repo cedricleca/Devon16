@@ -163,6 +163,7 @@
   <ItemGroup>
     <ClCompile Include="Cortico.cpp" />
     <ClCompile Include="devon.cpp" />
+    <ClCompile Include="KeyB.cpp" />
     <ClCompile Include="MTUChip.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

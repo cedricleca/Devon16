@@ -10,8 +10,6 @@
 #include <vector>
 #include <memory>
 
-//using namespace Devon;
-
 class DevonMMU
 {
 	std::array<uWORD, 128*1024> RAMBuf;

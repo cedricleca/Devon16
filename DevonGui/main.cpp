@@ -1,13 +1,18 @@
 // ImGui - standalone example application for DirectX 11
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 
-#include <imgui.h>
+#include "windows.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+#include <stdio.h>
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+#include <GLES2/gl2.h>
+#endif
+#include <GLFW/glfw3.h> // Will drag system OpenGL headers
 
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
-
-#include <dsound.h>
-#define DIRECTINPUT_VERSION 0x0800
+//#include <dsound.h>
+//#define DIRECTINPUT_VERSION 0x0800
 
 #include <math.h>
 #include <tchar.h>
@@ -19,6 +24,8 @@
 #include <thread>
 #include <sys/types.h>
 #include <sys/stat.h> 
+#include <fstream>
+#include <streambuf>
 
 #include "..\DevonASMLib\DASM.h"
 #include "..\devon\DevonMachine.h"
@@ -27,43 +34,12 @@
 #include "LogWindow.h"
 #include "TextEditor.h"
 #include "PictureToolWindow.h"
-#include <fstream>
-#include <streambuf>
 #include "ImFileDialog.h"
 #include "resource1.h"
 
 import SoundTools;
 import GLTools;
 import Settings;
-
-// About Desktop OpenGL function loaders:
-//  Modern desktop OpenGL doesn't have a standard portable header file to load OpenGL function pointers.
-//  Helper libraries are often used for this purpose! Here we are supporting a few common ones (gl3w, glew, glad).
-//  You may use another loader/header of your choice (glext, glLoadGen, etc.), or chose to manually implement your own.
-#if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
-#include <GL/gl3w.h>            // Initialize with gl3wInit()
-#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
-#include <GL/glew.h>            // Initialize with glewInit()
-#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD)
-#include <glad/glad.h>          // Initialize with gladLoadGL()
-#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLAD2)
-#include <glad/gl.h>            // Initialize with gladLoadGL(...) or gladLoaderLoadGL()
-#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLBINDING2)
-#define GLFW_INCLUDE_NONE       // GLFW including OpenGL headers causes ambiguity or multiple definition errors.
-#include <glbinding/Binding.h>  // Initialize with glbinding::Binding::initialize()
-#include <glbinding/gl/gl.h>
-using namespace gl;
-#elif defined(IMGUI_IMPL_OPENGL_LOADER_GLBINDING3)
-#define GLFW_INCLUDE_NONE       // GLFW including OpenGL headers causes ambiguity or multiple definition errors.
-#include <glbinding/glbinding.h>// Initialize with glbinding::initialize()
-#include <glbinding/gl/gl.h>
-using namespace gl;
-#else
-#include IMGUI_IMPL_OPENGL_LOADER_CUSTOM
-#endif
-
-// Include glfw3.h after our OpenGL definitions
-#include <GLFW/glfw3.h>
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
 // To link with VS2010-era libraries, VS2015+ requires linking with legacy_stdio_definitions.lib, which we do using this pragma.
@@ -82,7 +58,6 @@ static DevonASM::Assembler ASM;
 static const char * IniName = "DevonGui.ini";
 static std::string DCAExportName;
 static std::string DROExportName;
-static PictureToolWindow PicToolWindow;
 time_t ROMFileTimeStamp;
 time_t CARTFileTimeStamp;
 
@@ -279,7 +254,7 @@ void AssembleAndExport(LogWindow & LogWindow)
 	AssemblySuccess = ASM.AssembleFile(Settings::DASFileName.c_str()) && (ASM.NbErrors == 0);
 	AssemblyDone = true;
 	LogWindow.Show = true;
-	
+
 	if(AssemblySuccess)
 	{
 		std::string outfname = Settings::DASFileName;
@@ -356,7 +331,13 @@ int main(int argn, char**arg)
 		return 1;
 
 	// Decide GL+GLSL versions
-#ifdef __APPLE__
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+	// GL ES 2.0 + GLSL 100
+	const char* glsl_version = "#version 100";
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+	glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
+#elif defined(__APPLE__)
 	// GL 3.2 + GLSL 150
 	const char* glsl_version = "#version 150";
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -402,7 +383,7 @@ int main(int argn, char**arg)
 	glfwMakeContextCurrent(window);
 	glfwSwapInterval(1); // Enable vsync
 
-	// Initialize OpenGL loader
+						 // Initialize OpenGL loader
 #if defined(IMGUI_IMPL_OPENGL_LOADER_GL3W)
 	bool err = gl3wInit() != 0;
 #elif defined(IMGUI_IMPL_OPENGL_LOADER_GLEW)
@@ -449,23 +430,8 @@ int main(int argn, char**arg)
 	ImGui_ImplOpenGL3_Init(glsl_version);
 
 	// ImFileDialog requires you to set the CreateTexture and DeleteTexture
-	ifd::FileDialog::Instance().CreateTexture = [](uint8_t* data, int w, int h, char fmt) -> void* 
-	{
-		union { GLuint tex[2]; void * V; } Ret;
+	ifd::FileDialog::Instance().CreateTexture = GLTools::FileDiagCreateTex;
 
-		glGenTextures(1, &Ret.tex[0]);
-		glBindTexture(GL_TEXTURE_2D, Ret.tex[0]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, (fmt == 0) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, 0);
-
-		return Ret.V;
-	};
-	
 	ifd::FileDialog::Instance().DeleteTexture = [](void* tex) 
 	{
 		union { GLuint tex[2]; void * V = tex; } In;
@@ -663,7 +629,7 @@ int main(int argn, char**arg)
 
 				if (ImGui::BeginMenu("Tools"))
 				{
-					if (ImGui::MenuItem("Image Tool", "", false, !PicToolWindow.Show))
+					if (ImGui::MenuItem("Image Tool", "", false, !PictureToolWindow::GetShow()))
 						LaunchImageTool();
 
 					ImGui::EndMenu();
@@ -726,10 +692,10 @@ int main(int argn, char**arg)
 				ImGui::EndMainMenuBar();
 			}
 
-					//bool bShowTestWindow = true;
-					//ImGui::ShowDemoWindow(&bShowTestWindow);
+			//bool bShowTestWindow = true;
+			//ImGui::ShowDemoWindow(&bShowTestWindow);
 
-					//        ImGui::SetNextWindowSize(ImVec2(600,400));
+			//        ImGui::SetNextWindowSize(ImVec2(600,400));
 			ImGui::Begin("Devon");
 
 			if(ImGui::IsKeyPressed(GLFW_KEY_F5, false))
@@ -845,7 +811,7 @@ int main(int argn, char**arg)
 			ImGui::SliderFloat("BloomRadius",		&Settings::Current.BloomRadius, 1.f, 100.f);
 			Settings::Lock(false);
 
-			if (!PicToolWindow.Show && ImGui::Button("Image Tool"))
+			if (!PictureToolWindow::GetShow() && ImGui::Button("Image Tool"))
 				LaunchImageTool();
 
 			ImGui::End();
@@ -894,8 +860,8 @@ int main(int argn, char**arg)
 			// BMP file dialog result
 			OnClosedFileDialog("OpenImgDialog", [&](const std::string & filename)  
 			{
-				if(PicToolWindow.LoadBMP(filename.c_str()))
-					PicToolWindow.Show = true;
+				if(PictureToolWindow::LoadBMP(filename.c_str()))
+					PictureToolWindow::SetShow(true);
 			});
 
 			// DAS file dialog result
@@ -921,8 +887,8 @@ int main(int argn, char**arg)
 					Teditor.SaveText(Settings::DASFileName);
 			});
 
-			if(PicToolWindow.Show)
-				PicToolWindow.Draw("Image Tool");
+			if(PictureToolWindow::GetShow())
+				PictureToolWindow::Draw("Image Tool");
 
 			if (Show_TextEditor_Window)
 				TextEditor::EditorWindow(Teditor, Settings::DASFileName, &Show_TextEditor_Window);
@@ -946,7 +912,7 @@ int main(int argn, char**arg)
 		glfwGetFramebufferSize(window, &display_w, &display_h);
 		GLTools::UpdateRenderTargets(display_w, display_h); // maybe resize
 
-		// Machine evaluation
+															// Machine evaluation
 		if(CartridgeReadyToPlugin)
 		{
 			PlugCartridge(LogWindow);
@@ -976,22 +942,22 @@ int main(int argn, char**arg)
 		Machine.TickFrame();
 
 		DSoundTools::Render(Machine, Settings::Current.Volume);
-		
+
 		GLTools::SetupPostProcessRenderStates();
 		GLTools::UpdatePrimaryTexture();
 		GLTools::SetRenderTarget(GLTools::RenderTextureId::CRT);
 		GLTools::RenderCRT(GLTools::RenderTextureId::Primary, display_w, display_h, 
-							 Settings::Current.Scanline, 
-							 Settings::Current.Roundness, 
-							 Settings::Current.BorderSharpness,
-							 Settings::Current.Vignetting,
-							 Settings::Current.Brightness,
-							 Settings::Current.Contrast,
-							 Settings::Current.Sharpness,
-							 Settings::Current.GridDep,
-							 Settings::Current.GhostAmount,
-							 Settings::Current.ChromaAmount
-							);
+						   Settings::Current.Scanline, 
+						   Settings::Current.Roundness, 
+						   Settings::Current.BorderSharpness,
+						   Settings::Current.Vignetting,
+						   Settings::Current.Brightness,
+						   Settings::Current.Contrast,
+						   Settings::Current.Sharpness,
+						   Settings::Current.GridDep,
+						   Settings::Current.GhostAmount,
+						   Settings::Current.ChromaAmount
+		);
 
 		// Bloom H
 		GLTools::SetRenderTarget(GLTools::RenderTextureId::BloomH);
@@ -1005,7 +971,7 @@ int main(int argn, char**arg)
 		glViewport(0, 0, display_w, display_h);
 		glClearColor(0.f, 0.f, 0.f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT);
-		
+
 		GLTools::RenderFinal(GLTools::RenderTextureId::CRT, GLTools::RenderTextureId::BloomV, display_w, display_h, Settings::Current.BloomAmount);
 
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

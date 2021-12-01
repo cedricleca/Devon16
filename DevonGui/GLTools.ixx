@@ -2,7 +2,7 @@ module;
 
 #include <stdio.h>
 #include <vector>
-#include "..\imgui\examples\libs\gl3w\GL\gl3w.h"
+#include "gl43.h"
 #include "LogWindow.h"
 
 export module GLTools;
@@ -165,6 +165,24 @@ namespace GLTools
 	GLint   g_AttribLocationBloomRadius = 0;
 
 	static ShaderHandles ShaderTab[ShaderId::Max];
+
+	
+	export void * FileDiagCreateTex(uint8_t* data, int w, int h, char fmt)
+	{
+		union { GLuint tex[2]; void * V; } Ret;
+
+		glGenTextures(1, &Ret.tex[0]);
+		glBindTexture(GL_TEXTURE_2D, Ret.tex[0]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, (fmt == 0) ? GL_BGRA : GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		return Ret.V;
+	};
 
 	export void SetRenderTarget(RenderTextureId::Value TextureId)
 	{

@@ -180,25 +180,26 @@
   <ItemGroup>
     <ClCompile Include="..\imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="..\imgui\backends\imgui_impl_opengl3.cpp" />
-    <ClCompile Include="..\imgui\examples\libs\gl3w\GL\gl3w.c" />
     <ClCompile Include="..\imgui\imgui.cpp" />
     <ClCompile Include="..\imgui\imgui_demo.cpp" />
     <ClCompile Include="..\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="DisassemblyWindow.cpp" />
+    <ClCompile Include="gl43.c" />
     <ClCompile Include="GLTools.ixx" />
     <ClCompile Include="ImFileDialog.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="PictureToolWindow.cpp" />
     <ClCompile Include="Settings.ixx" />
     <ClCompile Include="SoundTools.ixx" />
     <ClCompile Include="TextEditor.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\imgui\examples\libs\gl3w\GL\gl3w.h" />
-    <ClInclude Include="..\imgui\examples\libs\gl3w\GL\glcorearb.h" />
     <ClInclude Include="..\imgui\imgui.h" />
     <ClInclude Include="..\imgui\imgui_internal.h" />
     <ClInclude Include="DisassemblyWindow.h" />
+    <ClInclude Include="gl43.h" />
     <ClInclude Include="ImFileDialog.h" />
     <ClInclude Include="LogWindow.h" />
     <ClInclude Include="MemoryEditor.h" />
