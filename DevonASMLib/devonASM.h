@@ -7,8 +7,7 @@
 #include <pegtl.hpp>
 #include "DASM.h"
 
-namespace pegtl = TAO_PEGTL_NAMESPACE;
-using namespace pegtl;
+using namespace tao::pegtl;
 using namespace Devon;
 
 namespace DevonASM
@@ -535,12 +534,12 @@ namespace DevonASM
 			ASM.IncludePathStack.push_back(filepath);
 			try
 			{
-				pegtl::file_input<> inFile( filepath );
+				file_input inFile( filepath );
 				try
 				{
-					pegtl::parse< DevonASM::grammar, DevonASM::action >(inFile, ASM);
+					parse< DevonASM::grammar, DevonASM::action >(inFile, ASM);
 				}
-				catch (pegtl::parse_error & err)
+				catch (parse_error & err)
 				{
 					ASM.IncludePathStack.pop_back();
 					std::cout << err.what() << "\n";

@@ -1,6 +1,7 @@
 [submodule "PEGTL"]
 	path = PEGTL
 	url = https://github.com/taocpp/PEGTL
+	branch = main
 [submodule "imgui"]
 	path = imgui
 	url = https://github.com/ocornut/imgui

@@ -656,14 +656,14 @@ bool DevonASM::Assembler::AssembleFile(const char * FileName)
 
 	try
 	{
-		pegtl::file_input<> in( FileName );
+		file_input in( FileName );
 
 		// pass 0
 		try
 		{
-			pegtl::parse< DevonASM::grammar, DevonASM::action >(in, *this);
+			parse< DevonASM::grammar, DevonASM::action >(in, *this);
 		}
-		catch (pegtl::parse_error & err)
+		catch (parse_error & err)
 		{
 			std::cout << err.what();
 			AssemblyCompleteMessage();
@@ -685,14 +685,14 @@ bool DevonASM::Assembler::AssembleFile(const char * FileName)
 	std::cout << "Pass 1\n";
 	Pass1();
 
-	pegtl::file_input<> in2( FileName );
+	file_input<> in2( FileName );
 
 	// pass 1
 	try
 	{
-		pegtl::parse< DevonASM::grammar, DevonASM::action >(in2, *this);
+		parse< DevonASM::grammar, DevonASM::action >(in2, *this);
 	}
-	catch (pegtl::parse_error & err)
+	catch (parse_error & err)
 	{
 		std::cout << err.what();
 		AssemblyCompleteMessage();
