@@ -698,7 +698,7 @@ int main(int argn, char**arg)
 			//        ImGui::SetNextWindowSize(ImVec2(600,400));
 			ImGui::Begin("Devon");
 
-			if(ImGui::IsKeyPressed(GLFW_KEY_F5, false))
+			if(ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_F5, false))
 				CompileShaders();
 
 			if (ImGui::Button("Set ROM (.dro) File"))
@@ -738,19 +738,19 @@ int main(int argn, char**arg)
 				Show_Disassembly_Window = DisassemblyWindow.Open;
 			}
 
-			if (!Settings::DASFileName.empty() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(GLFW_KEY_F7, false))
+			if (!Settings::DASFileName.empty() && ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_F7, false))
 			{
 				SaveDASFile(Teditor);
 				StartCompileThread = true;
 			}
 
-			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed('S', false))
+			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_S, false))
 			{
 				SaveDASFile(Teditor);
 				CRTShaderEditor.SaveText("CRTShader.glsl");
 			}
 
-			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed('8', false))
+			if (ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_8, false))
 			{
 				Settings::Lock(true);
 				Settings::Current.bShowWhiteSpaces = !Settings::Current.bShowWhiteSpaces;
@@ -901,10 +901,10 @@ int main(int argn, char**arg)
 			}
 		}
 
-		if (ImGui::IsKeyPressed(GLFW_KEY_F9, false))
+		if (ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_F9, false))
 			Machine.HardReset();
 
-		if (ImGui::IsKeyPressed(GLFW_KEY_F11, false))
+		if (ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_F11, false))
 			Show_UI = !Show_UI;
 
 		ImGui::Render();

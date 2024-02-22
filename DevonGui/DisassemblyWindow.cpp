@@ -55,11 +55,11 @@ void DisassemblyWindow::DrawWindow(const char* title, DevonMMU & MMU, Devon::CPU
 			if(ImGui::Button("Run (Ctrl-F11)"))
 				CPU.Halt(false);
 
-			if(ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(VK_F11, false))
+			if(ImGui::GetIO().KeyCtrl && ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_F11, false))
 				CPU.Halt(false);
 
 			ImGui::SameLine();
-			if(ImGui::Button("Step (F11)") || ImGui::IsKeyPressed(VK_F11, false))
+			if(ImGui::Button("Step (F11)") || ImGui::IsKeyPressed(ImGuiKey::ImGuiKey_F11, false))
 				CPU.Trace();
 		}
 
@@ -97,7 +97,8 @@ void DisassemblyWindow::DrawWindow(const char* title, DevonMMU & MMU, Devon::CPU
 			}
 		}
 
-		ImGuiListClipper clipper(0xA0000, ImGui::GetTextLineHeightWithSpacing());
+		ImGuiListClipper clipper;
+		clipper.Begin(0xA0000, ImGui::GetTextLineHeightWithSpacing());
 		while(clipper.Step())
 		{
 			unsigned int CurAdr = clipper.DisplayStart;

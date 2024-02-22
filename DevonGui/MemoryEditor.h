@@ -178,7 +178,8 @@ struct MemoryEditor
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
 
         const int line_total_count = (int)((mem_size + Rows - 1) / Rows);
-        ImGuiListClipper clipper(line_total_count, s.LineHeight);
+        ImGuiListClipper clipper;
+        clipper.Begin(line_total_count, s.LineHeight);
         const size_t visible_start_addr = clipper.DisplayStart * Rows;
         const size_t visible_end_addr = clipper.DisplayEnd * Rows;
 
@@ -298,7 +299,7 @@ struct MemoryEditor
                     UserData user_data;
                     user_data.CursorPos = -1;
                     sprintf_s(user_data.CurrentBufOverwrite, "%04X", ReadFn ? ReadFn(mem_data, addr) : mem_data[addr]);
-                    ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoHorizontalScroll | ImGuiInputTextFlags_AlwaysInsertMode | ImGuiInputTextFlags_CallbackAlways;
+                    ImGuiInputTextFlags flags = ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll | ImGuiInputTextFlags_NoHorizontalScroll | ImGuiInputTextFlags_CallbackAlways;
                     if (ImGui::InputText("##data", DataInputBuf, 32, flags, UserData::Callback, &user_data))
                         data_write = data_next = true;
                     else if (!DataEditingTakeFocus && !ImGui::IsItemActive())
