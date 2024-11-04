@@ -270,7 +270,7 @@ struct MemoryEditor
                     if (DataEditingTakeFocus)
                     {
                         ImGui::SetKeyboardFocusHere();
-                        ImGui::CaptureKeyboardFromApp(true);
+//                        ImGui::CaptureKeyboardFromApp(true);
                         sprintf_s(AddrInputBuf, "%0*" _PRISizeT, s.AddrDigitsCount, base_display_addr + addr);
                         sprintf_s(DataInputBuf, "%04X", ReadFn ? ReadFn(mem_data, addr) : mem_data[addr]);
                     }

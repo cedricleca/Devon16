@@ -788,12 +788,16 @@ int main(int argn, char**arg)
 			Settings::Lock(true);
 			ImGui::SliderFloat("Sound Volume",		&Settings::Current.Volume, 0.0f, 1.0f, "%.2f");
 			ImGui::Text("");
+			int OscIdx = 0;
+			const char * OscLabels[] = {"Osc0","Osc1","Osc2","Osc3"};
 			for(auto & Oscillo : Machine.JKev.OscilloTab)
 			{
 				std::array<float, 80> X;
 				for(int i = 0; i < 80; i++)
 					X[i] = Oscillo.Data[(Oscillo.OscilloWriteCursor + i) % Oscillo.Data.size()];
-				ImGui::SameLine(0, 15.f); ImGui::PlotLines("", X.data(), (int)X.size(), 0, nullptr, -128.0f, 128.0f, ImVec2(80.f, 80.0f));
+				ImGui::SameLine(0, 15.f);
+				ImGui::PlotLines(OscLabels[OscIdx], X.data(), (int)X.size(), 0, nullptr, -128.0f, 128.0f, ImVec2(80.f, 80.0f));
+				++OscIdx;
 			}
 
 			ImGui::Text("CRT effect:");

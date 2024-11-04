@@ -1121,7 +1121,7 @@ namespace ifd
 					filename = entry.Path; // drive
 				std::string filenameStr(ifd::utf8_encode(filename));
 
-				if (FileIcon(filenameStr.c_str(), entry.HasIconPreview ? entry.IconPreview : (ImTextureID)m_getIcon(entry.Path), ImVec2(32 + 16 * m_zoom, 32 + 16 * m_zoom), entry.HasIconPreview, entry.IconPreviewWidth, entry.IconPreviewHeight)) {
+				if (FileIcon(filenameStr.c_str(), ImTextureID(entry.HasIconPreview ? entry.IconPreview : m_getIcon(entry.Path)), ImVec2(32 + 16 * m_zoom, 32 + 16 * m_zoom), entry.HasIconPreview, entry.IconPreviewWidth, entry.IconPreviewHeight)) {
 					std::error_code ec;
 					bool isDir = std::filesystem::is_directory(entry.Path, ec);
 
