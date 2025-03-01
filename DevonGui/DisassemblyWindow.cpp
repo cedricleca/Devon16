@@ -83,16 +83,16 @@ void DisassemblyWindow::DrawWindow(const char* title, DevonMMU & MMU, Devon::CPU
 		{
 			if(ImGui::IsWindowFocused())
 			{
-				if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_PageUp)))
+				if(ImGui::IsKeyPressed(ImGuiKey_PageUp))
 					ImGui::SetScrollY(ImGui::GetScrollY() - window->ClipRect.GetHeight());
 
-				if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_PageDown)))
+				if(ImGui::IsKeyPressed(ImGuiKey_PageDown))
 					ImGui::SetScrollY(ImGui::GetScrollY() + window->ClipRect.GetHeight());
 
-				if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_UpArrow)))
+				if(ImGui::IsKeyPressed(ImGuiKey_UpArrow))
 					ImGui::SetScrollY(ImGui::GetScrollY() - ImGui::GetTextLineHeightWithSpacing());
 
-				if(ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_DownArrow)))
+				if(ImGui::IsKeyPressed(ImGuiKey_DownArrow))
 					ImGui::SetScrollY(ImGui::GetScrollY() + ImGui::GetTextLineHeightWithSpacing());
 			}
 		}
