@@ -733,6 +733,13 @@ bool DevonASM::Assembler::ExportROMFile(const char * FileName, int ROMBaseAddres
 					std::cout << "ExportROMFile : check chunk overlaps : overlap error\n";
 					return false;
 				}
+
+				if(it->BaseAddress + it->WordSize > it2->BaseAddress && it->BaseAddress < it2->BaseAddress + it2->WordSize)
+				{
+					// overlap error
+					std::cout << "ExportROMFile : check chunk overlaps : overlap error\n";
+					return false;
+				}
 			}
 		}
 	}
