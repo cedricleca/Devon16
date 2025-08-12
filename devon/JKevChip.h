@@ -114,8 +114,10 @@ public:
 
 		if(OutputBuffer)
 		{
-			Push(Channel[0].Out + Channel[1].Out); // R
-			Push(Channel[2].Out + Channel[3].Out); // L
+			int mixR = std::clamp<int>(Channel[0].Out + Channel[1].Out, -128, 127);
+			int mixL = std::clamp<int>(Channel[2].Out + Channel[3].Out, -128, 127);
+			Push(static_cast<char>(mixR)); // R
+			Push(static_cast<char>(mixL)); // L
 		}
 	}
 
@@ -134,27 +136,33 @@ public:
 	{
 		OutputBuffer = _OutputBuffer;
 		OutputBufferSize = Size;
+		OutputWriteIndex = 0;
+		OutputReadIndex  = 0;
 	}
 
 	inline void Push(char Value)
 	{
-		if(OutputWriteIndex+1 == OutputReadIndex)
+		if(!OutputBuffer || OutputBufferSize <= 1)
 			return;
 
-		OutputBuffer[OutputWriteIndex++] = Value;
-		if(OutputWriteIndex >= OutputBufferSize)
-			OutputWriteIndex = 0;
+		const int next = (OutputWriteIndex + 1) % OutputBufferSize;        // proper wrap
+		if(next == OutputReadIndex)
+			return;                          // buffer full -> drop
+
+		OutputBuffer[OutputWriteIndex] = Value;
+		OutputWriteIndex = next;
 	}
 
 	inline bool Pop(char & Out)
 	{
-		if(OutputReadIndex+1 == OutputWriteIndex)
+		if(!OutputBuffer)
 			return false;
 
-		Out = OutputBuffer[OutputReadIndex++];
-		if(OutputReadIndex >= OutputBufferSize)
-			OutputReadIndex = 0;
+		if(OutputReadIndex == OutputWriteIndex)
+			return false;        // empty
 
+		Out = OutputBuffer[OutputReadIndex];
+		OutputReadIndex = (OutputReadIndex + 1) % OutputBufferSize;   // wrap
 		return true;
 	}
 

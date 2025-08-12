@@ -10,7 +10,6 @@ static const unsigned int SO_PRIMARY_BUFFER_SIZE = (40000 * 2 * 2);
 
 IDirectSound*			g_DS = nullptr;
 LPDIRECTSOUNDBUFFER		pDSB = nullptr;
-DWORD					OldPlayCursor;
 char *					JKevOutBuf = nullptr;
 
 namespace DSoundTools
@@ -51,15 +50,19 @@ namespace DSoundTools
 		// Init Secondary Buffer_____________    
 		HRESULT Res = g_DS->CreateSoundBuffer( &dsbd, &pDSB, nullptr );
 
-		void *P1, *P2;
-		DWORD N1, N2;
+		void *P1 = nullptr, *P2 = nullptr;
+		DWORD N1 = 0, N2 = 0;
 		pDSB->Lock(0, SO_PRIMARY_BUFFER_SIZE, &P1, &N1, &P2, &N2, 0);
-		N1 /= 2;
-		memset(P1, 0, N1);
+
+		if(P1 && N1)
+			memset(P1, 0, N1);
+
+		if(P2 && N2)
+			memset(P2, 0, N2);
+
 		pDSB->Unlock(P1, N1, P2, N2);
 	
 		pDSB->Play( 0, 0, DSBPLAY_LOOPING );	
-		OldPlayCursor = 0;
 
 		JKevOutBuf = new char[SO_PRIMARY_BUFFER_SIZE];
 		Machine.JKev.SetOutputSurface(JKevOutBuf, SO_PRIMARY_BUFFER_SIZE);
@@ -72,36 +75,50 @@ namespace DSoundTools
 		static const DWORD NbChunks = 8;
 		static const DWORD ChunkSize = SO_PRIMARY_BUFFER_SIZE / NbChunks;
 		assert(ChunkSize*NbChunks == SO_PRIMARY_BUFFER_SIZE);
+		static DWORD NextChunkToWrite = 0;
 
 		pDSB->GetCurrentPosition(&PlayCursor, &WriteCursor);
 
-		int CurChunk = PlayCursor / ChunkSize;
-		int OldChunk = OldPlayCursor / ChunkSize;
-		if(CurChunk != OldChunk)
-		{
-			DWORD Cursor = ((CurChunk+1) % NbChunks) * ChunkSize;
+		DWORD  CurChunk = PlayCursor / ChunkSize;
 
-			void *P[2];
-			DWORD N[2];
+		while (NextChunkToWrite != ((CurChunk + NbChunks - 1) % NbChunks))
+		{
+			DWORD Cursor = NextChunkToWrite * ChunkSize;
+
+			void* P[2] = {nullptr, nullptr};
+			DWORD N[2] = {0, 0};
 			pDSB->Lock(Cursor, ChunkSize, &P[0], &N[0], &P[1], &N[1], 0);
 
 			auto Output = [&](int BufIdx) 
 			{
 				assert(N[BufIdx] % 4 == 0);
-				N[BufIdx] /= 2;
+			    unsigned int sampleCount16 = N[BufIdx] / sizeof(short);
 				short * Buf = static_cast<short *>(P[BufIdx]);
-				char Val;
-				for(unsigned int i = 0; i < N[BufIdx] && Machine.JKev.Pop(Val); i++)
-					Buf[i] = short(float(Val<<8) * Volume);
+				for(unsigned int i = 0; i < sampleCount16; i++)
+				{
+					char Val;
+					if(Machine.JKev.Pop(Val))
+					{
+						// safe sign extension then scale
+						const int s = static_cast<int>(static_cast<signed char>(Val));
+						int sample = static_cast<int>(s * 256);      // 8-bit -> 16-bit
+						sample = static_cast<int>(sample * Volume);  // apply volume
+						Buf[i] = static_cast<short>(std::clamp(sample, -32768, 32767));
+					}
+					else
+					{
+						Buf[i] = 0;
+					}
+				}
 			};
 
 			Output(0);
 			Output(1);
 		
 			pDSB->Unlock(P[0], N[0], P[1], N[1]);
-		}
 
-		OldPlayCursor = PlayCursor;
+		    NextChunkToWrite = (NextChunkToWrite + 1) % NbChunks;
+		}
 	}
 
 	export void Release()
