@@ -84,40 +84,48 @@ void DevonASM::Assembler::CheckAdModeOPRanges(uWORD & OP0, uWORD & OP1, bool NoI
 		else
 		{
 			if (LastAdmodeOP < -8 || LastAdmodeOP > 7)
-			{
 				ErrorMessage(ErrorRange4);// error
-			}
+
 			OP0 = LastAdmodeOP & 0xF;
 		}
 		break;
 	case CPU::EAdMode::Imm20:
 	case CPU::EAdMode::XEA20W:
 	case CPU::EAdMode::XEA20L:
-		if (LastAdmode == CPU::EAdMode::Imm20 && NoImm)
+		if(LastAdmode == CPU::EAdMode::Imm20 && NoImm)
 		{
 			ErrorMessage(ErrorForbiddenImmAdMode);// error
 		}
 		else
 		{
-			if (LastAdmodeOP < -(2 << 19) || LastAdmodeOP >(2 << 19) - 1)
+			if(LastAdmode == CPU::EAdMode::Imm20)
 			{
-				ErrorMessage(ErrorRange20);// error
+				if(LastAdmodeOP < -(1 << 19) || LastAdmodeOP > (1 << 19) - 1) // signed check
+					ErrorMessage(ErrorRange20);// error
 			}
-			OP0 = LastAdmodeOP >> 16;
-			OP1 = LastAdmodeOP & 0xFFFF;
+			else
+			{
+				uint32_t u = static_cast<uint32_t>(LastAdmodeOP);
+				if(u > 0xFFFFF)
+					ErrorMessage(ErrorRange20);
+			}
+
+			uint32_t v20 = static_cast<uint32_t>(LastAdmodeOP) & 0xFFFFF; // 20-bit view
+			OP0 = static_cast<uWORD>((v20 >> 16) & 0xF);
+			OP1 = static_cast<uWORD>(v20 & 0xFFFF);
 		}
 
 		if(!LastOPLong && LastAdmode == CPU::EAdMode::XEA20L)
 			LastAdmode = CPU::EAdMode::XEA20W;
+
 		break;
 	case CPU::EAdMode::Reg:
 	case CPU::EAdMode::XReg:
 	case CPU::EAdMode::XRegDec:
 	case CPU::EAdMode::XRegInc:
-		if (LastAdmodeOP > 7)
-		{
+		if(LastAdmodeOP < 0 || LastAdmodeOP > 7)
 			ErrorMessage(ErrorRegIndex);
-		}
+
 		OP0 = LastAdmodeOP & 0x7;
 		break;
 	}
@@ -271,10 +279,10 @@ AssembleType0:
 			Inst.Helper.Type4.M = (M == DevonASM::EMnemonic::BSR || M == DevonASM::EMnemonic::BRA) ? 1 : 0;
 			Inst.Helper.Type4.OP = OP0;
 			Inst.Helper.Type4.AM = LastAdmode0;
-			if(Inst.Helper.Type0.AM == CPU::EAdMode::Reg
-				|| Inst.Helper.Type0.AM == CPU::EAdMode::XReg
-				|| Inst.Helper.Type0.AM == CPU::EAdMode::XRegInc
-				|| Inst.Helper.Type0.AM == CPU::EAdMode::XRegDec
+			if(Inst.Helper.Type4.AM == CPU::EAdMode::Reg
+				|| Inst.Helper.Type4.AM == CPU::EAdMode::XReg
+				|| Inst.Helper.Type4.AM == CPU::EAdMode::XRegInc
+				|| Inst.Helper.Type4.AM == CPU::EAdMode::XRegDec
 				)
 			{
 				Inst.Helper.Type4.OP <<= 1;
@@ -637,10 +645,10 @@ void DevonASM::Assembler::Incbin(const char * FileName)
 std::string DevonASM::Assembler::FilePath(const std::string & FileName)
 {
 	size_t cur = FileName.size() - 1;
-	for(; cur > 0 && FileName[cur] != '//' && FileName[cur] != '\\'; --cur);
+	for(; cur > 0 && FileName[cur] != '/' && FileName[cur] != '\\'; --cur);
 
 	if(cur > 0)
-		return FileName.substr(0, cur).append("//");
+		return FileName.substr(0, cur).append("/");
 	else
 		return "";
 }

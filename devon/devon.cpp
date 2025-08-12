@@ -248,7 +248,6 @@ void CPU::Tick_Decode()
 			Tick = &Devon::CPU::Tick_PreDecrGet;
 		else
 			Tick = &Devon::CPU::Tick_GetOp0;
-
 	}
 
 	bMemWriteOperand = !(ExecInstruction.Dir == EDirection::ToRegister
