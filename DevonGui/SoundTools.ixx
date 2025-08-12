@@ -5,8 +5,11 @@ module;
 
 export module SoundTools;
 
-static const unsigned int SO_PLAYBACK_FREQ = 44100;
-static const unsigned int SO_PRIMARY_BUFFER_SIZE = (40000 * 2 * 2);
+static const unsigned int SO_PLAYBACK_FREQ			= 44100;
+static const unsigned int SO_NB_CHUNKS				= 8;
+static const unsigned int SO_CHUNK_FRAMES			= 512;      // 11.6 ms
+static const unsigned int SO_BYTES_PER_FRAME		= 2 * 2;    // 16-bit stereo
+static const unsigned int SO_PRIMARY_BUFFER_SIZE	= SO_NB_CHUNKS * SO_CHUNK_FRAMES * SO_BYTES_PER_FRAME; // 16,384 bytes (~93 ms)
 
 IDirectSound*			g_DS = nullptr;
 LPDIRECTSOUNDBUFFER		pDSB = nullptr;
@@ -14,6 +17,8 @@ char *					JKevOutBuf = nullptr;
 
 namespace DSoundTools
 {
+	export void Render(DevonMachine & Machine, float Volume);
+
 	export void Init(HWND  hWnd, DevonMachine & Machine)
 	{
 		// Init DSound_____________
@@ -63,6 +68,7 @@ namespace DSoundTools
 		pDSB->Unlock(P1, N1, P2, N2);
 	
 		pDSB->Play( 0, 0, DSBPLAY_LOOPING );	
+		Render(Machine, 0.f);
 
 		JKevOutBuf = new char[SO_PRIMARY_BUFFER_SIZE];
 		Machine.JKev.SetOutputSurface(JKevOutBuf, SO_PRIMARY_BUFFER_SIZE);
@@ -72,16 +78,25 @@ namespace DSoundTools
 	{
 		DWORD PlayCursor, WriteCursor;
 
-		static const DWORD NbChunks = 8;
-		static const DWORD ChunkSize = SO_PRIMARY_BUFFER_SIZE / NbChunks;
+		static const DWORD NbChunks = SO_NB_CHUNKS;
+		static const DWORD ChunkSize = SO_CHUNK_FRAMES * SO_BYTES_PER_FRAME;
 		assert(ChunkSize*NbChunks == SO_PRIMARY_BUFFER_SIZE);
 		static DWORD NextChunkToWrite = 0;
+		static bool  Primed = false;
 
 		pDSB->GetCurrentPosition(&PlayCursor, &WriteCursor);
 
 		DWORD  CurChunk = PlayCursor / ChunkSize;
 
-		while (NextChunkToWrite != ((CurChunk + NbChunks - 1) % NbChunks))
+		// Prime once: start writing at the next chunk after the one currently playing
+		if (!Primed)
+		{
+			NextChunkToWrite = (CurChunk + 1) % NbChunks;
+			Primed = true;
+		}
+
+		DWORD SafeTail = (CurChunk + NbChunks - 1) % NbChunks;
+		while(NextChunkToWrite != SafeTail)
 		{
 			DWORD Cursor = NextChunkToWrite * ChunkSize;
 
