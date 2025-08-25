@@ -1,6 +1,7 @@
 #include "devon.h"
 #include "devonMMU.h"
 #include <cassert>
+#include <bit>
 
 using namespace Devon;
 
@@ -802,6 +803,10 @@ bool CPU::FetchInstruction(const uLONG Add)
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type0.REG;
 		break;
 	case MUL:
+		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type0.AM;
+		FetchedInstruction.Op = FetchedInstruction.Helper.Type0.OP;
+		FetchedInstruction.Dir = FetchedInstruction.Helper.Type0.DIR;
+		FetchedInstruction.Register = FetchedInstruction.Helper.Type0.REG;
 		{
 			int SrcBits = 0;
 			int DstBits = 0;
@@ -812,30 +817,81 @@ bool CPU::FetchInstruction(const uLONG Add)
 			}
 
 			FetchedInstruction.CycleCount = 17 + ((SrcBits > DstBits ? DstBits : SrcBits) << 1);
+
+			// Determine src/dst regs for reg-reg form
+			int dst = -1, src = -1;
+			if(FetchedInstruction.AdMode == Reg)
+			{
+				if(FetchedInstruction.Dir == ToRegister) 
+				{
+					dst = FetchedInstruction.Register;
+					src = FetchedInstruction.Op;
+				}
+				else
+				{
+					dst = FetchedInstruction.Op;
+					src = FetchedInstruction.Register;
+				}
+			}
+
+			if(dst >= 0 && src >= 0) 
+			{
+				const unsigned pop_src = std::popcount(R[src].u & 0xFFFFu);
+				const unsigned pop_dst = std::popcount(R[dst].u & 0xFFFFu);
+				const unsigned m = (pop_src < pop_dst) ? pop_src : pop_dst;
+				FetchedInstruction.CycleCount = 17 + (m << 1); // your model, but now using fetched regs
+			}
+			else
+			{
+				FetchedInstruction.CycleCount = 17 + (16 << 1); // conservative when operand not in a GPR
+			}
 		}
-		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type0.AM;
-		FetchedInstruction.Op = FetchedInstruction.Helper.Type0.OP;
-		FetchedInstruction.Dir = FetchedInstruction.Helper.Type0.DIR;
-		FetchedInstruction.Register = FetchedInstruction.Helper.Type0.REG;
+
 		break;
 	case DIV:
-		{
-			int num_bits = 32;
-			unsigned int remainder = 0;
-			int dividend = R[ExecInstruction.DstRegister].u;
-			while (remainder < R[ExecInstruction.SrcRegister].u) 
-			{
-				const int bit = (dividend & 0x80000000) >> 31;
-				remainder = (remainder << 1) | bit;
-				dividend = dividend << 1;
-				num_bits--;
-			}
-			FetchedInstruction.CycleCount = 9 + (num_bits<<3);
-		}
 		FetchedInstruction.AdMode = FetchedInstruction.Helper.Type0.AM;
 		FetchedInstruction.Op = FetchedInstruction.Helper.Type0.OP;
 		FetchedInstruction.Dir = FetchedInstruction.Helper.Type0.DIR;
 		FetchedInstruction.Register = FetchedInstruction.Helper.Type0.REG;
+		{
+			auto msb_idx = [](uint32_t x)->int { return x ? 31 - std::countl_zero(x) : -1; };
+
+			int dst = -1, src = -1;
+			if (FetchedInstruction.AdMode == Reg)
+			{
+				if (FetchedInstruction.Dir == ToRegister)
+				{
+					dst = FetchedInstruction.Register;
+					src = FetchedInstruction.Op;
+				}
+				else
+				{
+					dst = FetchedInstruction.Op;
+					src = FetchedInstruction.Register;
+				}
+			}
+
+			if (dst >= 0 && src >= 0)
+			{
+				uint32_t dividend = (uint32_t)R[dst].u;
+				uint32_t divisor  = (uint32_t)R[src].u;
+				if (divisor == 0)
+				{
+					FetchedInstruction.CycleCount = 9 + (32u << 3); // worst case; actual trap later
+				}
+				else
+				{
+					// Restoring-div estimate: align divisor to dividend MSB, then one step per bit
+					int a = msb_idx(dividend), b = msb_idx(divisor);
+					unsigned steps = (a >= 0 && b >= 0 && a >= b) ? (unsigned)(a - b + 1) : 1u;
+					FetchedInstruction.CycleCount = 9 + (steps << 3);
+				}
+			}
+			else
+			{
+				FetchedInstruction.CycleCount = 9 + (32u << 3); // conservative
+			}
+		}
 		break;
 	case MOVI:
 		FetchedInstruction.AdMode = Devon::CPU::Imm8;
