@@ -584,7 +584,7 @@ void CPU::Tick_Exec()
 			if((R[ExecInstruction.Register].u & (1<<19)) != 0)
 				R[ExecInstruction.Register].u |= 0xFFF00000;
 			else
-				R[ExecInstruction.DstRegister].u &= 0x000FFFFF;
+				R[ExecInstruction.Register].u &= 0x000FFFFF;
 			break;
 		}
 		TestReg(ExecInstruction.Register);
