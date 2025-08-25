@@ -595,7 +595,7 @@ void CPU::Tick_Exec()
 		bInstructionExtensionPreFetched = false;
 		break;
 	case NOT:	R[ExecInstruction.SrcRegister].u = ~R[ExecInstruction.SrcRegister].u;		
-		TestReg(ExecInstruction.DstRegister);
+		TestReg(ExecInstruction.SrcRegister);
 		break;					
 	case NEG:	R[ExecInstruction.SrcRegister].s = -R[ExecInstruction.SrcRegister].s;	
 		TestReg(ExecInstruction.SrcRegister);	
