@@ -877,7 +877,7 @@ bool CPU::FetchInstruction(const uLONG Add)
 				uint32_t divisor  = (uint32_t)R[src].u;
 				if (divisor == 0)
 				{
-					FetchedInstruction.CycleCount = 9 + (32u << 3); // worst case; actual trap later
+					FetchedInstruction.CycleCount = unsigned char(9 + (32u << 3)); // worst case; actual trap later
 				}
 				else
 				{
@@ -889,7 +889,7 @@ bool CPU::FetchInstruction(const uLONG Add)
 			}
 			else
 			{
-				FetchedInstruction.CycleCount = 9 + (32u << 3); // conservative
+				FetchedInstruction.CycleCount = unsigned char(9 + (32u << 3)); // conservative
 			}
 		}
 		break;
