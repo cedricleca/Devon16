@@ -464,36 +464,50 @@ void CPU::Tick_Exec()
 			switch(ExecInstruction.Helper.Type5.M)
 			{
 			case CPU::EShiftMode::LSL:
-				SR.Flags.X = (R[ExecInstruction.DstRegister].s < 0);
+				SR.Flags.X = (R[ExecInstruction.DstRegister].u >> 31) & 1;
 				R[ExecInstruction.DstRegister].u <<= Shift;
 				break;
 			case CPU::EShiftMode::ASR:
-				SR.Flags.X = (R[ExecInstruction.DstRegister].u & 1) != 0;
+				SR.Flags.X = R[ExecInstruction.DstRegister].u & 1;
 				R[ExecInstruction.DstRegister].s >>= Shift;
+				if(Shift)
+				{
+					const uint32_t x = R[ExecInstruction.DstRegister].u;
+					const uint32_t signmask = (x & 0x80000000u) ? ~0u << (32 - Shift) : 0u;
+					R[ExecInstruction.DstRegister].u = (x >> Shift) | signmask; // explicit arithmetic shift
+				}
 				break;
 			case CPU::EShiftMode::LSR:
-				SR.Flags.X = (R[ExecInstruction.DstRegister].u & 1) != 0;
+				SR.Flags.X = R[ExecInstruction.DstRegister].u & 1;
 				R[ExecInstruction.DstRegister].u >>= Shift;
 				break;
 			case CPU::EShiftMode::ROL:
-				R[ExecInstruction.DstRegister].u = (R[ExecInstruction.DstRegister].u << Shift) | (R[ExecInstruction.DstRegister].u >> (31-Shift));
+				if(Shift)
+				{
+					const uint32_t x = R[ExecInstruction.DstRegister].u;
+					R[ExecInstruction.DstRegister].u = (x << Shift) | (x >> (32 - Shift));
+				}
 				break;
 			case CPU::EShiftMode::ROR:
-				R[ExecInstruction.DstRegister].u = (R[ExecInstruction.DstRegister].u >> Shift) | (R[ExecInstruction.DstRegister].u << (31-Shift));
+				if(Shift)
+				{
+					const uint32_t x = R[ExecInstruction.DstRegister].u;
+					R[ExecInstruction.DstRegister].u = (x >> Shift) | (x << (32 - Shift));
+				}
 				break;
 			case CPU::EShiftMode::ROXL:
-				for(int i = 0; i < Shift; i++)
+				for(int i = 0; i < Shift; ++i)
 				{
-					const bool tmp = (R[ExecInstruction.DstRegister].s < 0);
-					R[ExecInstruction.DstRegister].u = (R[ExecInstruction.DstRegister].u << 1) | SR.Flags.X;
+					const bool tmp = (R[ExecInstruction.DstRegister].u >> 31) & 1;
+					R[ExecInstruction.DstRegister].u = (R[ExecInstruction.DstRegister].u << 1) | (SR.Flags.X ? 1u : 0u);
 					SR.Flags.X = tmp;
 				}
 				break;
 			case CPU::EShiftMode::ROXR:
-				for(int i = 0; i < Shift; i++)
+				for(int i = 0; i < Shift; ++i)
 				{
-					const bool tmp = (R[ExecInstruction.DstRegister].s < 0);
-					R[ExecInstruction.DstRegister].u = (R[ExecInstruction.DstRegister].u >> 1) | (SR.Flags.X<<31);
+					const bool tmp = R[ExecInstruction.DstRegister].u & 1;
+					R[ExecInstruction.DstRegister].u = (R[ExecInstruction.DstRegister].u >> 1) | (uint32_t(SR.Flags.X) << 31);
 					SR.Flags.X = tmp;
 				}
 				break;
