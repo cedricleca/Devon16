@@ -23,7 +23,7 @@
 #include <locale>
 #include <codecvt>
 
-#define ICON_SIZE ImGui::GetFont()->FontSize + 3
+#define ICON_SIZE GImGui->FontSize + 3
 #define GUI_ELEMENT_SIZE 24
 #define DEFAULT_ICON_SIZE 32
 #define PI 3.141592f

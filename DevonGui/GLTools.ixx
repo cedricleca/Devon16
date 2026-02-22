@@ -415,8 +415,8 @@ namespace GLTools
 		case ShaderId::Final:
 			glEnableVertexAttribArray(Shader.g_AttribLocationPos);
 			glEnableVertexAttribArray(Shader.g_AttribLocationUV);
-			glVertexAttribPointer(Shader.g_AttribLocationPos,	2, GL_FLOAT, GL_FALSE,	sizeof(PPVertex), (GLvoid*)IM_OFFSETOF(PPVertex, Pos));
-			glVertexAttribPointer(Shader.g_AttribLocationUV,	2, GL_FLOAT, GL_FALSE,	sizeof(PPVertex), (GLvoid*)IM_OFFSETOF(PPVertex, UV));
+			glVertexAttribPointer(Shader.g_AttribLocationPos,	2, GL_FLOAT, GL_FALSE,	sizeof(PPVertex), (GLvoid*)offsetof(PPVertex, Pos));
+			glVertexAttribPointer(Shader.g_AttribLocationUV,	2, GL_FLOAT, GL_FALSE,	sizeof(PPVertex), (GLvoid*)offsetof(PPVertex, UV));
 			break;
 		}
 	}
